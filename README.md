@@ -1,5 +1,3 @@
-# MLOps_Endesa
-
 # Electricity Demand Forecasting with Amazon Chronos
 
 An end-to-end Machine Learning project for short-term electricity demand forecasting using pre-trained and fine-tuned Foundation Models for time-series forecasting.
@@ -40,7 +38,7 @@ We use the **Australian Electricity Demand Dataset** from the [Monash Time Serie
 ## Repository Structure
 
 ```text
-.
+
 ├── data/                  # Raw and processed datasets (git-ignored)
 ├── notebooks/             # Exploratory Data Analysis & experimentation
 ├── requirements.txt       # Project dependencies
