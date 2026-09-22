@@ -12,9 +12,9 @@ Remaining repository settings are tracked in
 | Milestone | Assessed practice | Points / 100 | Current evidence | Evidence still needed |
 | --- | --- | ---: | --- | --- |
 | M1 | Problem selection and requirements engineering | 6 | [Project overview](../README.md) | Reviewed success criteria, dataset card, and model card. |
-| M1 | Project coordination and communication | 4 | [Working agreement](../CONTRIBUTING.md), [EDN-001](edn/0001-team-workflow.md), [Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3), [issue #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1), [verified setup](project-setup.md) | Native repository link, access/assignment setup, documentation PR review, weekly updates, and feedback follow-up. |
+| M1 | Project coordination and communication | 4 | [Working agreement](../CONTRIBUTING.md), [EDN-001](edn/0001-team-workflow.md), [Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3), [issue #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1), [verified setup](project-setup.md) | Pending access invitations, Project access confirmation, documentation PR review, weekly updates, and feedback follow-up. |
 | M2 | Project structure | 5 | No implementation evidence recorded. | Adapted project structure, environment setup, and a teammate's setup check. |
-| M2 | Code and data versioning | 15 | [Documented workflow](../CONTRIBUTING.md#github-flow-and-review) | Reviewed PR history, verified branch controls, DVC versions, and artifact retrieval from a clean checkout. |
+| M2 | Code and data versioning | 15 | [Workflow](../CONTRIBUTING.md#github-flow-and-review) and [verified branch controls](project-setup.md#repository-settings) | Reviewed PR history, DVC versions, and artifact retrieval from a clean checkout. |
 | M2 | Experiment tracking | 5 | No implementation evidence recorded. | Comparable MLflow runs with configuration, code/data/model versions, metrics, and conclusions. |
 | M3 | Energy efficiency awareness | 5 | No implementation evidence recorded. | CodeCarbon measurements, measurement limitations, and interpretation of efficiency trade-offs. |
 | M3 | Quality assurance for ML | 10 | No implementation evidence recorded. | Static analysis and meaningful code/data/model tests, including failure cases and data validation results. |

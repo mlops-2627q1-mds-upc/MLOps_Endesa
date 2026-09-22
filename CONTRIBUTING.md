@@ -36,6 +36,11 @@ For blocked work, keep the current status and add `blocked`, a dependency link,
 and the next action. Close abandoned or duplicate work as **Not planned** and
 exclude it from completed-work reporting.
 
+Owners add issues to the Project and update their cards manually. Project
+automations are disabled: linking a draft PR or closing an abandoned issue must
+not mark work as reviewed or Done. Move an issue to Done after checking its
+acceptance criteria and merge status.
+
 ### Fields and labels
 
 Use Project fields for Status, Priority, Size, and weekly Iteration, and native
@@ -89,10 +94,24 @@ Use your own Git identity and credit shared work accurately. Merge commits retai
 the individual commits; reviews, experiments, documentation, and support also
 matter when assessing contributions.
 
-The intended branch controls require one peer approval, passing applicable CI
-checks, resolved conversations, and no force pushes or deletion. Apply the review
-policy manually until protection is enabled. Add required checks only after those
-jobs exist and have run successfully; see the setup record for enforcement status.
+### Repository enforcement
+
+The following settings apply to `main`. The [setup record](docs/project-setup.md)
+records their verification and any outstanding setup.
+
+| Setting | Reason |
+| --- | --- |
+| PR with at least one peer approval | A second contributor checks the change before it reaches the shared branch. |
+| Dismiss approvals when new reviewable commits are pushed | Approval must cover the current change, not an earlier version. |
+| Resolve review conversations before merge | Review findings must be addressed or explicitly resolved. |
+| Apply protection to administrators too | The same review process applies to every contributor. |
+| Block force pushes and deletion of `main` | Preserve shared history, contribution records, and reproducible versions. |
+| Allow merge commits; disable squash and rebase merging | Retain the individual commits and the PR boundary. Linear history is not required because it would conflict with merge commits. |
+| Automatically delete merged branches in this repository | Keep the branch list focused on active work. Contributors clean up branches in their own forks. |
+
+Required CI checks are not configured yet. Add them after the jobs exist and have
+run successfully, so the rule refers to working checks. Peer review and local
+validation apply now; they do not replace the planned code, data, and model CI.
 
 Use `Closes #<issue>` when merging completes the task; otherwise use
 `Related to #<issue>`. Keep deployment tasks open until the deployment is verified.

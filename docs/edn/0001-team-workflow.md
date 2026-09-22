@@ -33,6 +33,12 @@ person should keep that manageable; the team can revise these limits after use.
 Completion depends on reviewed results and merged changes, rather than a card
 movement alone.
 
+The [enforcement settings](../../CONTRIBUTING.md#repository-enforcement) put this
+review policy into practice. Protection covers administrators, and new reviewable
+commits invalidate earlier approvals. Project transitions remain manual so draft
+PRs and Not planned closures cannot automatically count as completed work.
+Required CI checks will follow working CI jobs.
+
 ## AI Involvement
 
 Information seeking; Alternative generation; Alternative assessment;

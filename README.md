@@ -52,7 +52,7 @@ following the course's Cookiecutter Data Science guidance.
 | Didac Cayuela | [@didicayu](https://github.com/didicayu)                 |
 | Pablo Perez   | [@PabloPerezCano](https://github.com/PabloPerezCano)     |
 | Pau Adal      | [@NIU1638529](https://github.com/NIU1638529)             |
-| Antoni Lopera | [@toni646](https://github.com/toni464)                   |
+| Antoni Lopera | [@toni646](https://github.com/toni646)                   |
 
 ## Citations
 
