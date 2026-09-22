@@ -1,38 +1,34 @@
-# MLOps_Endesa: Engineering Decision Notebook
+# Engineering Decision Notebook
 
-This directory is the team's single Engineering Decision Notebook (EDN). Each
-numbered entry records one selected decision, its rationale, participants, and the
-role of AI where applicable. Entries can be included in the report annex.
+The EDN records selected engineering choices: what was decided, why, who took
+part, and how AI contributed where applicable.
 
-| ID | Date | Decision | Milestone | Recorded status |
-| --- | --- | --- | --- | --- |
-| [EDN-001](0001-team-workflow.md) | 2026-09-22 | Team workflow, review, and evidence policy | M1; also relevant to M2 and M5 | Accepted by Dídac Cayuela for initial adoption; wider team review pending |
+| Entry | Date | Milestone | Status |
+| --- | --- | --- | --- |
+| [EDN-001: Task planning and review](0001-team-workflow.md) | 2026-09-22 | M1; related to M2 and M5 | Initial adoption by Dídac; team review pending |
 
-## When and how to record a decision
+## Adding an entry
 
-Create an entry when a choice has meaningful consequences and could reasonably
-have been made differently, or involves a significant AI contribution to the
-decision-making process. Merely using a course-prescribed tool does not by itself
-require an entry. Neither every task nor every AI interaction needs an entry.
+Use the [template](TEMPLATE.md) for a choice with meaningful consequences that
+could reasonably have been made differently. Using a prescribed course tool,
+finishing a task, or asking AI a routine question does not by itself need an entry.
 
-Copy [TEMPLATE.md](TEMPLATE.md), use the next available ID, and add the entry to
-this index. Keep entries short, record the actual participants, and distinguish
-the decision from implementation or verification that has not happened yet.
-Record disagreements and changes accurately; do not infer team consensus.
+Keep the rationale specific to this project: the constraint, alternatives, and
+trade-off that explain the choice. List the people who took part. For AI-assisted
+decisions, name the tool's contribution, the human response, and the assessment.
+Keep that account brief and accurate; the decision belongs to the team members.
 
-Use the course categories for AI involvement and response. Evidence can be an
-issue, PR, experiment, test result, diagram, or relevant prompt/response excerpt.
-A full conversation link is optional. Remove personal or sensitive material from
-any excerpts shared in the repository.
+Conversation links and prompt excerpts are optional. Include them only when they
+help explain the decision, and remove personal or sensitive material. A link to
+the relevant PR, experiment, or design is often enough supporting evidence.
+Keep setup logs and task progress in their issues.
 
-Review entries with the related work. If a decision changes later, add a dated
-amendment or a new entry identifying the superseded decision; preserve the earlier
-record. Missing evidence should be stated explicitly rather than reconstructed.
+If a decision changes, add a dated amendment or a new entry and link the previous
+one. Add each entry to the table above.
 
 ## Source
 
-The fields and guidance follow *Engineering Decision Notebook for the MLOps
-Project*, v2026.0.2, sections 2-4, provided through
-[Atenea](https://atenea.upc.edu/pluginfile.php/7268356/mod_resource/content/1/Instruction_EDN_MLOps_v2026.pdf).
-The document may require a course login. The course also provides an
-[EDN entry template](https://atenea.upc.edu/mod/folder/view.php?id=5643133).
+This notebook follows *Engineering Decision Notebook for the MLOps Project*,
+v2026.0.2, sections 2-4: [course instructions](https://atenea.upc.edu/pluginfile.php/7268356/mod_resource/content/1/Instruction_EDN_MLOps_v2026.pdf)
+and [entry template](https://atenea.upc.edu/mod/folder/view.php?id=5643133).
+Atenea may require a course login.

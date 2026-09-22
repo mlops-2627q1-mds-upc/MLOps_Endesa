@@ -1,6 +1,6 @@
 ## Problem and result
 
-Explain the problem and resulting behavior or documented outcome.
+What problem does this change solve? Describe the result.
 
 ## Related work
 
@@ -9,19 +9,15 @@ completes all acceptance criteria; otherwise use `Related to #<issue>`.
 
 ## Validation and evidence
 
-Record checks actually performed, their results, and the relevant version. Link
-experiment runs, DVC references, reports, or deployment evidence as applicable.
-State checks not run and any remaining limitations.
+List the checks run and their results. Link relevant runs, data versions, or other
+evidence. Note any limitations that matter for review.
 
 ## Review checklist
 
-- [ ] The change is scoped to the linked task and its acceptance criteria.
-- [ ] Evidence supports the stated result; pending work is identified.
-- [ ] Reproduction instructions and documentation are updated where needed.
-- [ ] Shared data/model artifacts are retrievable, or this does not apply.
-- [ ] A consequential decision is recorded in the EDN, or this does not apply.
-- [ ] Relevant rubric evidence links are updated, or this does not apply.
+- [ ] The change meets the linked task's acceptance criteria.
+- [ ] Checks, documentation, and reproduction steps are up to date.
+- [ ] Shared data/model artifacts can be retrieved, if used.
+- [ ] Relevant EDN and course evidence links are updated.
 
-Request review from another team member. Peer approval is recorded through GitHub
-review, not by the author checking a box. Identify any additional contributors
-accurately.
+Request a teammate's review before merging. Credit additional contributors where
+applicable.

@@ -1,48 +1,40 @@
-# EDN entry template
+# EDN-NNN: Decision title
 
-Copy this file into a numbered entry and replace the instructional text with the
-actual decision record. Remove inapplicable optional fields.
+Copy this template into a numbered entry and replace the prompts below.
 
-- **ID and title:** Use the next available ID and a short decision title.
-- **Date:** Record the decision date.
+- **Date:** Decision date.
 - **Milestone:** M1 / M2 / M3 / M4 / M5 / M6 / Other.
-- **Activity / Topic (optional):** Name the topic.
-- **Decision Participants:** List the actual participants; use "All team members"
-  only when all participated.
-- **Status:** State whether the decision is proposed, accepted, or superseded, by
-  whom, and whether implementation or review remains pending.
+- **Activity / Topic (optional):** Topic.
+- **Decision Participants:** Team members who took part.
+- **Status:** Proposed, accepted, or superseded; note any pending review.
 
 ## Decision
 
-Describe the choice and its scope briefly.
+What did the participants choose, and what does it change?
 
 ## Rationale
 
-Explain the alternatives, constraints, trade-offs, and evidence supporting the
-choice. Distinguish an independent choice from use of a prescribed course tool.
+Which constraint, alternative, or trade-off explains the choice? A short paragraph
+is usually enough. Link existing measurements or comparisons when relevant.
 
 ## AI Involvement
 
-Select all applicable course categories: No AI involvement; Information seeking;
+Select the applicable course categories: No AI involvement; Information seeking;
 Alternative generation; Alternative assessment; Recommendation; Solution
-generation; Other. Do not combine No AI involvement with another category.
+generation; Other. If AI was used, name the tool and briefly describe its role.
 
 ## Response to AI
 
-If AI contributed, select one: Accepted; Accepted with modifications; Rejected;
-Used as input for further analysis; Other. Explain any modifications.
+If applicable: Accepted; Accepted with modifications; Rejected; Used as input for
+further analysis; Other. State what was kept or changed.
 
 ## Assessment of the AI Contribution
 
-If AI contributed, explain why the contribution was accepted, modified, rejected,
-or otherwise used, and how it was assessed. State any assessment still pending.
-
-## AI Interaction Evidence (optional)
-
-Include a relevant prompt/response excerpt or an accessible conversation link.
-Identify the relevant part and remove personal or sensitive information.
+If applicable, explain the participants' reason for accepting, changing, rejecting,
+or otherwise using the contribution. Identify a pending assessment if needed.
 
 ## Other Evidence (optional)
 
-Link the relevant issues, PRs, commits, experiments, tests, or documentation. State
-what remains unverified. Add later evidence with its date and version.
+Link the relevant PR, experiment, test, diagram, or document. Add an optional
+AI Interaction Evidence section only if a short, relevant excerpt or conversation
+link would help explain the decision; omit personal and sensitive content.

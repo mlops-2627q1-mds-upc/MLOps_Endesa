@@ -1,17 +1,13 @@
-# MLOps_Endesa: Course Practice Evidence
+# Course evidence
 
-This register links the 13 assessed practices to project evidence. The points are
-the rubric weights, not a self-awarded score. Update the corresponding row when
-evidence is available, including the issue/PR, artifact or run, version, reviewer,
-and validation date. Detailed outcomes belong in the linked artifacts.
+Use this register to find the work supporting each assessed practice. Points are
+the course rubric weights. Add links with the version, result, reviewer, and date
+as work is completed.
 
-**Updated: 2026-09-22.** The repository documentation contains a project overview and the
-initial workflow documentation. The organization Project and documentation issue
-are live. The rows below distinguish verified setup from work still to be
-reviewed or implemented. Publication and peer review are tracked in
-[issue #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1);
-[issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2) holds the
-outstanding repository setup checklist.
+**Updated: 2026-09-22.** The working agreement is in
+[PR #3](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/3).
+Remaining repository settings are tracked in
+[issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2).
 
 | Milestone | Assessed practice | Points / 100 | Current evidence | Evidence still needed |
 | --- | --- | ---: | --- | --- |
@@ -30,10 +26,8 @@ outstanding repository setup checklist.
 | M6 | Model performance monitoring | 5 | No implementation evidence recorded. | Data/model monitoring signals, delayed ground-truth handling, and a demonstrated response to degradation. |
 | | **Total** | **100** | | |
 
-The evidence descriptions explain what could substantiate each practice for this
-project; they do not introduce additional official grading requirements. Record
-the actual outcome and limitations rather than claiming success from a completed
-issue or an installed tool. Keep the EDN focused on selected decisions.
+The last column is a planning guide for this project, not an additional grading
+rubric. Record outcomes and limitations in the linked work.
 
 Source: course laboratory slides, *Machine Learning Systems in Production
 (MLOps)*, 2026-27, slides 22-32 and 35-41. The supplied course materials in Atenea

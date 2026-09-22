@@ -1,116 +1,62 @@
-# EDN-001: Team workflow, review, and evidence policy
+# EDN-001: Task planning and review
 
-- **Date:** 2026-09-22.
-- **Milestone:** M1 - Project Inception; also relevant to M2 and M5.
-- **Activity / Topic:** Project coordination, code review, and traceability.
-- **Decision Participants:** Dídac Cayuela (`didicayu`). Codex assisted the
-  discussion and drafted the documentation. Participation or approval by the
-  other four team members has not been recorded.
-- **Status:** Accepted by Dídac for initial adoption and documentation; wider
-  team review is pending. See the implementation update below for remote setup.
+- **Date:** 2026-09-22
+- **Milestone:** M1 - Project Inception; related to M2 and M5
+- **Decision Participants:** Dídac Cayuela (`didicayu`)
+- **Status:** Adopted for initial setup; team review in [PR #3](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/3)
 
 ## Decision
 
-Adopt the [team working agreement](../../CONTRIBUTING.md): one GitHub Project,
-issue-based planning across M1-M6, five workflow states, and separate Priority and
-Size fields. Implement changes through short-lived branches and peer-reviewed PRs
-to `main`, using merge commits to preserve meaningful contribution history.
-Connect completed work to reproducibility evidence and selected EDN entries.
+Use one GitHub Project with Backlog, Ready, In progress, In review, and Done.
+Track tasks as issues, with separate Priority and Size fields. Each task has an
+owner and links to its branch, PR, and supporting results. Require one teammate's
+review before merging, and use merge commits to retain the individual commits.
 
-GitHub Flow is already prescribed by the course. The choices recorded here concern
-how the team organizes its board, reviews changes, preserves authorship, and
-connects work to evidence.
+Dídac proposed GitHub Flow, the Project board, its five states, priorities, and
+sizes as the starting point. GitHub Flow is also prescribed by the course; this
+entry records the planning and review choices around it.
 
 ## Rationale
 
-A shared issue tracker keeps ownership, dependencies, and review discussions near
-the code. Single-select fields avoid contradictory priority/size labels. One peer
-approval and small tasks provide review without making every change depend on the
-whole team. Weekly planning and rotating reviewers support shared knowledge.
+- **One issue per task:** the issue holds scope and progress; the PR holds the
+  change and review. Separate cards for both would duplicate progress tracking.
+- **Priority and Size as fields:** each task has one value for each. Labels remain
+  available for type, area, and blockers without competing priority labels.
+- **One peer approval:** gives each change a second reader without requiring all
+  five members to approve it. Reviewers rotate to share knowledge of the work.
+- **Merge commits:** keep the sequence and authorship of meaningful changes
+  visible for review and contribution assessment. The cost is a longer history
+  than squash merging.
 
-Alternatives considered in the AI-assisted proposal were duplicating priority and
-size in labels, tracking both issues and PRs as task cards, squashing contribution
-history, and introducing more board automation immediately. The selected policy
-reduces duplicate tracking, retains original authorship, and starts with explicit
-manual transitions. The trade-offs are a less compact Git history and some manual
-board maintenance; the team can revisit them after using the workflow.
-
-The course assesses coordination, versioning, reproducibility, and individual
-contributions (lab slides 22, 24, and 40). Evidence links make these practices
-inspectable; task counts and configured tools alone do not establish their quality.
+The board needs regular maintenance. Weekly planning and one active task per
+person should keep that manageable; the team can revise these limits after use.
+Completion depends on reviewed results and merged changes, rather than a card
+movement alone.
 
 ## AI Involvement
 
 Information seeking; Alternative generation; Alternative assessment;
 Recommendation; Solution generation.
 
-Codex read the supplied course materials and demo repository, compared workflow
-choices, and proposed the agreement and supporting templates.
+Codex checked the course materials and demo repository, helped compare planning
+and review options, and drafted the agreement and templates from Dídac's initial
+proposal. Dídac chose to adopt the resulting workflow.
 
 ## Response to AI
 
-**Accepted.** Dídac instructed Codex to create the files documenting the proposed
-working method and to add agent instructions if useful.
+**Accepted** for the initial working agreement. Dídac subsequently requested
+shorter documentation and clearer attribution of the original proposal.
 
 ## Assessment of the AI Contribution
 
-The proposal connected a concrete workflow to the course requirements and supplied
-definitions for task readiness, completion, review, and evidence. The observable
-human response was authorization to document and adopt it initially. No separate
-written assessment from Dídac or review by the full team was provided in this
-interaction. Its practical effectiveness remains to be assessed through use.
-
-## AI Interaction Evidence
-
-Selected excerpts from the interaction on 2026-09-22:
-
-- Initial user proposal: "maybe we can use github flow with github projects to
-  keep track of issues and branches. having a backlog, ready, in progres, in
-  review, done."
-- Assistant recommendation: "I recommend **GitHub Flow + one GitHub Project +
-  the six course milestones**, with each completed task linked to evidence that
-  helps you write and defend the report."
-- User response: "Go ahead and create the necessary files to leave evidence of
-  the decision made on how to work within the group. keep in mind this will be
-  read by the teacher. Create the agents.md if necessary too"
-
-These excerpts document the proposal and authorization; they are not minutes of a
-meeting involving the full team.
+The draft turned the initial workflow into concrete field definitions, review
+rules, and templates. Dídac's feedback identified excessive process detail in the
+EDN and asked for more focus on the engineering choices. This revision addresses
+that feedback; the workflow's practical value remains to be assessed through use.
 
 ## Other Evidence
 
-- [Working agreement](../../CONTRIBUTING.md).
-- [Task template](../../.github/ISSUE_TEMPLATE/task.md),
-  [experiment template](../../.github/ISSUE_TEMPLATE/experiment.md), and
-  [PR template](../../.github/pull_request_template.md).
-- [Rubric evidence register](../rubric-evidence.md) and
-  [agent instructions](../../AGENTS.md).
-- Course lab slides, 2026-27, slides 22, 24, 30, and 38-41; and the
-  [EDN instructions](README.md#source).
-
-At initial drafting, the evidence consisted of this discussion and the local
-documentation. No issue/PR identifiers, peer approval, Project URL, successful CI
-run, or configured branch protection had been recorded.
-
-## Implementation update - 2026-09-22
-
-Dídac subsequently instructed Codex to create the organization Project and a task
-for the documentation work. The
-[Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3) was created with
-the five agreed states, Priority, Size, weekly Iteration, and three views.
-[Issue #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1) was created
-after the local draft and added as In progress, P1, and M. This sequence is
-explicit in the issue; its creation is not backdated.
-
-GitHub denied native repository linking, changing the Project's visibility, and
-assigning the issue to Dídac. The issue body records the accountable owner, while
-the native assignee remains unset. The [setup record](../project-setup.md) lists
-the verified configuration and outstanding access requirements. A separate
-[setup task #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2)
-tracks the remaining settings. Backlog priority sorting and Milestones grouping
-were subsequently configured and verified through the API.
-
-Dídac also authorized pushing the documentation and opening a PR. Read-only
-repository access requires publishing the branch through his own fork. Issue #1
-tracks publication and review evidence. No peer approval or merge has been
-recorded, and the task has not been marked Done.
+- [Working agreement](../../CONTRIBUTING.md) and [Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3).
+- [Documentation task #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1) and [PR #3](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/3).
+- [Setup status](../project-setup.md), including the outstanding settings in [issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2).
+- [Course EDN instructions](README.md#source).

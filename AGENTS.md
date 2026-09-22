@@ -28,6 +28,17 @@ canonical workflow policy; this file describes how agents should apply it.
 - Write repository documentation in clear English for teammates and course
   instructors. Explain the problem, choice, rationale, and evidence without claims
   about grades or unsupported claims of quality.
+- Keep prose short and specific to this project. Prefer concrete constraints,
+  alternatives, and trade-offs to promotional language or generic assurances.
+  Remove repeated caveats and unnecessary headings; keep tables for comparisons
+  and numbered lists for procedures.
+- Keep each document focused: README for the project, CONTRIBUTING for the working
+  rules, EDN for decisions, and issues/setup notes for operational progress.
+- Credit human proposals and choices accurately. Describe AI's actual support
+  briefly in the EDN; retain the course's involvement, response, and assessment
+  fields. Prompt transcripts are optional and should appear only when useful.
+  Do not invent deliberation, consensus, or a participant's assessment to make a
+  record more persuasive, or reduce substantive AI work to proofreading.
 - Distinguish a documented policy, implemented configuration, successful check,
   and verified deployment. State limitations and checks not performed.
 - Record consequential decisions using the EDN fields. Name only participants

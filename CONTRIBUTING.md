@@ -1,34 +1,17 @@
-# MLOps_Endesa: Team Working Agreement
+# Working agreement
 
-This agreement defines how the five team members coordinate, review, and document
-work on the electricity-demand forecasting component. Its purpose is to make
-responsibilities clear, integrate changes safely, and leave a reproducible record
-of the engineering work.
+Use this agreement for planning, branches, and reviews. The reasoning is recorded
+in [EDN-001](docs/edn/0001-team-workflow.md); current GitHub settings and remaining
+setup are in the [setup record](docs/project-setup.md).
 
-The initial decision is recorded in [EDN-001](docs/edn/0001-team-workflow.md).
-The organization Project and documentation issue have been created. Repository
-linking and access setup remain incomplete; branch protection and CI are separate
-implementation steps. See the [verified setup record](docs/project-setup.md).
+## Planning
 
-## Planning and responsibilities
+Track work in the [MLOps_Endesa Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3).
+Each task has one issue and one accountable owner. Link its implementation PR to
+the issue instead of adding a second task card. Other contributors can help;
+record their contributions in the PR or commits.
 
-Use the [MLOps_Endesa Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3)
-owned by **mlops-2627q1-mds-upc** for this repository. Issues represent work items;
-branches and pull requests are linked to their issues. Avoid adding the issue and
-its implementation PR as separate task cards.
-
-[Issue #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1) tracks this
-documentation; its Project card carries the current status, Priority P1, and
-Size M. [Issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2)
-tracks remaining repository access and workflow enforcement. The Project is
-private; its native repository link and team/lecturer access need a maintainer
-or Project administrator, as detailed in the setup record.
-
-Each issue has one accountable owner. Other contributors can collaborate and
-should be credited in the issue, PR, or commits. Reviewers should rotate so that
-knowledge is shared across the team.
-
-Use the six course milestones:
+Assign each issue to the relevant course milestone:
 
 | Milestone | Scope |
 | --- | --- |
@@ -41,148 +24,122 @@ Use the six course milestones:
 
 ### Board states
 
-| Status | Entry condition |
+| Status | When to use it |
 | --- | --- |
-| Backlog | A candidate task has been recorded. Scope or priority may still need discussion. |
-| Ready | Outcome, acceptance criteria, dependencies, milestone, priority, and size are clear; blocking dependencies are resolved. |
-| In progress | An owner is actively working on the task. |
-| In review | The result and evidence are available for a teammate to assess. A draft PR alone does not meet this condition. |
-| Done | Acceptance criteria are met, review is complete, and supporting evidence is linked. Repository changes are merged. |
+| Backlog | Task recorded; scope or priority may still need discussion. |
+| Ready | Outcome, acceptance criteria, owner, milestone, priority, and size are clear. Blocking dependencies are resolved. |
+| In progress | The owner is working on the task. |
+| In review | Results and checks are available for a teammate to review. A draft PR alone is not enough. |
+| Done | Acceptance criteria met, review complete, evidence linked, and repository changes merged. |
 
-A blocked task retains its current status and receives the `blocked` label, a
-dependency link, and a comment describing the next action and who can take it.
-If work is abandoned or duplicated, close the issue as **Not planned** with an
-explanation and exclude it from completed-work reporting.
+For blocked work, keep the current status and add `blocked`, a dependency link,
+and the next action. Close abandoned or duplicate work as **Not planned** and
+exclude it from completed-work reporting.
 
 ### Fields and labels
 
-Store Status, Priority, and Size as single-select Project fields. Use the native
-Assignees and Milestone fields, plus a weekly Iteration field for planned work.
-Do not duplicate priority, size, or status in labels.
+Use Project fields for Status, Priority, Size, and weekly Iteration, and native
+Assignees and Milestone fields. Keep priority, size, and status out of labels.
 
 | Priority | Meaning |
 | --- | --- |
-| P0 | Urgent blocker threatening team progress or a delivery; use sparingly. |
-| P1 | Required for the agreed milestone outcome. |
-| P2 | A valuable extension that strengthens quality or the demonstration. |
-| P3 | An optional idea to revisit when essential work is secure. |
+| P0 | Urgent blocker threatening progress or a delivery. |
+| P1 | Required for the milestone outcome. |
+| P2 | Useful extension once required work is covered. |
+| P3 | Optional idea. |
 
-| Size | Initial estimate of active human effort |
+| Size | Estimated active human effort |
 | --- | --- |
 | S | 1-2 hours |
 | M | 3-5 hours |
 | L | 6-10 hours |
-| XL | More than 10 hours or too uncertain to estimate; split or investigate before Ready. |
+| XL | More than 10 hours or too uncertain; split or investigate before Ready. |
 
-Estimates support planning and are recalibrated from experience. They are not
-individual productivity targets. Record machine runtime and compute constraints
-separately when relevant.
+Revise estimates as the team gains experience. Record training time and compute
+constraints separately; estimates are for planning, not individual assessment.
 
-Use a small set of repository labels:
+Choose one primary type and the relevant areas:
 
 - Type: `type:feature`, `type:bug`, `type:experiment`, `type:docs`, `type:chore`.
 - Area: `area:data`, `area:model`, `area:api`, `area:infra`, `area:monitoring`.
 - Flags: `blocked`, `needs-decision`.
 
-Choose one primary type and the relevant areas. Use the
-[task template](.github/ISSUE_TEMPLATE/task.md) or the
-[experiment template](.github/ISSUE_TEMPLATE/experiment.md).
-
-Maintain three views of the same Project: **Current week** (board), **Backlog**
-(table ordered by priority), and **Milestones** (table grouped by milestone).
+Start from the [task template](.github/ISSUE_TEMPLATE/task.md) or
+[experiment template](.github/ISSUE_TEMPLATE/experiment.md). Use **Current week**
+for the status board, **Backlog** for priority order, and **Milestones** for work
+grouped by course milestone.
 
 ## GitHub Flow and review
 
-1. Select a Ready issue, assign its owner, and update the local `main` branch.
-2. Create a short-lived branch from `main`. Use `<type>/<issue>-<description>`,
-   for example `feat/12-temporal-splits`, `fix/19-missing-intervals`, or
-   `docs/23-dataset-card`.
-3. Commit coherent changes with descriptive messages. Open a draft PR when early
-   feedback is useful. Keep unrelated changes in separate PRs.
-4. Complete the [PR template](.github/pull_request_template.md), link evidence,
-   and request review from another team member.
-5. Address review comments, pass the applicable checks, and merge into `main`.
+1. Pick a Ready issue and create a branch from the latest `main`.
+2. Name it `<type>/<issue>-<description>`, such as `feat/12-temporal-splits` or
+   `docs/23-dataset-card`. Commit small, coherent changes.
+3. Open a PR using the [template](.github/pull_request_template.md). A draft PR
+   is useful for early discussion; mark it ready when the work can be reviewed.
+4. Link checks and results, request a teammate's review, and address comments.
+5. After one peer approval and passing applicable checks, merge with a merge
+   commit. Resolve review conversations before merging.
 6. Delete the merged branch and update the issue and evidence links.
 
-`main` is the only long-lived development branch. For the initial repository
-setup, a descriptive branch without an issue number is acceptable; add the issue
-link when the issue tracker is configured. Do not fabricate historical issues,
-reviews, or approvals to reconstruct an earlier workflow.
+`main` is the only long-lived branch. The initial setup branch predates issue #1;
+subsequent task branches use issue numbers. Contributors with read access can
+push to their own fork and open a PR against the organization's `main`.
 
-If a contributor has read access only, push the task branch to their own fork
-and open a PR against this repository's `main`. Keep the issue and Project card
-in the organization repository. This is a contribution path while maintainers
-resolve team access; it does not confer permission to change repository settings.
+Use your own Git identity and credit shared work accurately. Merge commits retain
+the individual commits; reviews, experiments, documentation, and support also
+matter when assessing contributions.
 
-Use **merge commits** by default to preserve meaningful commits and authorship.
-Each contributor uses their own Git identity associated with their GitHub account.
-Credit shared work accurately. Contribution assessment also considers reviews,
-experiments, documentation, and support to teammates; commit or line counts alone
-do not describe contribution quality.
+The intended branch controls require one peer approval, passing applicable CI
+checks, resolved conversations, and no force pushes or deletion. Apply the review
+policy manually until protection is enabled. Add required checks only after those
+jobs exist and have run successfully; see the setup record for enforcement status.
 
-Configure protection for `main` to require one approving peer review, successful
-applicable CI checks, and resolved review conversations, and to block force pushes
-and deletion. Register required checks after the jobs exist and have run
-successfully. Until enforcement is configured, apply the review policy manually.
-
-Use `Closes #<issue>` in the PR description only when merging completes the issue.
-Use `Related to #<issue>` for partial progress. A deployment task remains open
-until the deployment itself has been verified. A documentation task is reviewed
-for accuracy and usable links; an experiment is reviewed for method, results, and
-interpretation. A negative experimental result can satisfy its acceptance criteria.
+Use `Closes #<issue>` when merging completes the task; otherwise use
+`Related to #<issue>`. Keep deployment tasks open until the deployment is verified.
+An experiment can be complete with a negative result if its method and conclusion
+have been reviewed.
 
 ## Reproducibility and evidence
 
-Maintain the connection between an issue, its PR/code commit, the DVC data version,
-the MLflow run, the model artifact, and the release that uses it, as applicable.
+Link the issue and PR to the relevant code, data, configuration, run, and model
+version so a teammate can reproduce the result.
 
-- Git stores source, configuration, dependency locks, DVC metadata, tests, and
-  concise documentation. Keep credentials, local environments, raw datasets, and
-  model weights out of Git.
-- DVC versions shared datasets and model artifacts. Before merging new artifact
-  references, push the artifacts to the shared remote and have a teammate verify
-  that they can retrieve them.
-- MLflow records experiments. Important runs identify the Git commit and any
-  uncommitted changes, data version, base-model revision, split configuration,
-  seed, environment, metrics, and artifact references.
-- Use configuration and run IDs to distinguish experiments; create a branch when
-  the experiment requires a code or configuration change.
-- Run fast checks on PRs as CI becomes available. Trigger expensive training and
-  evaluation separately. Promoting a model requires its evaluation evidence.
-- Update [rubric evidence](docs/rubric-evidence.md) when work provides evidence
-  for a course practice. State what was checked, by whom, and on which version.
+- **Git:** source, configuration, dependency locks, tests, and DVC metadata.
+  Keep credentials, environments, raw data, and model weights out of Git.
+- **DVC:** shared data and model artifacts. Push artifacts before merging new
+  references and have a teammate check that they can retrieve them.
+- **MLflow:** runs with Git commit/dirty state, data and base-model versions,
+  split configuration, seed, environment, metrics, and artifacts.
 
-Record selected consequential decisions in the
-[Engineering Decision Notebook](docs/edn/README.md). When AI contributes, record
-its role, the human response, and the assessment of its contribution. An AI
-suggestion or a completed configuration file is not evidence that a system works.
+Use run IDs and configurations to distinguish experiments. Create a branch when
+code or configuration changes. Run fast checks on PRs once CI is available;
+expensive training and evaluation run separately. Model promotion needs evaluation
+results.
+
+Update the [course evidence register](docs/rubric-evidence.md) with the version,
+check, result, and reviewer. Record consequential choices in the
+[EDN](docs/edn/README.md), including the role and assessment of AI where applicable.
 
 ## Weekly coordination and deliveries
 
-- Hold a 20-30 minute planning meeting to review lecturer feedback, dependencies,
-  availability, and the next week's work. Rotate the coordinator.
-- Aim for one active implementation task per person. Finish reviews and help with
-  blockers before starting additional tasks.
-- Aim to review within one working day when availability permits; communicate
-  delays explicitly.
-- Demonstrate progress each week. Add a short Project status update with the date,
-  participants, evidence links, feedback, and next actions. Record decisions and
-  tasks in their linked EDN entries and issues.
-- Update the relevant report material throughout each milestone. Each delivery
-  includes an evidence-based team contribution assessment following the course's
-  consensus/CATME instructions.
+Hold a 20-30 minute planning meeting each week. Review feedback, dependencies,
+availability, and the next tasks. Rotate the coordinator and reviewers, aim for
+one active task per person, and review PRs within one working day when possible.
+Communicate delays and help with blockers before starting more work.
 
-The supplied lab schedule lists the initial report deadline as **19 October 2026,
-23:55** and the final report deadline as **14 December 2026, 23:55**, with the
-presentations on the following days. The report limits are 15 and 30 pages,
-respectively, excluding annexes. Atenea remains authoritative for any changes.
-Agree internal freezes several days before submission and identify the exact
-submitted repository version with a release tag and replication instructions.
+Add a short Project update with participants, progress links, feedback, and next
+actions. Build report material throughout the project and follow the course's
+consensus/CATME process for the contribution assessment at each delivery.
+
+The supplied lab schedule gives **19 October 2026, 23:55** for the initial report
+and **14 December 2026, 23:55** for the final report, with presentations the next
+day. Limits are 15 and 30 pages, excluding annexes. Check Atenea for changes.
+Agree internal freezes before submission and tag the submitted version with
+replication instructions.
 
 ## References
 
-- Course laboratory slides, *Machine Learning Systems in Production (MLOps)*,
-  2026-27: slides 18-19, 22-24, 34, and 38-41.
+- Course laboratory slides, 2026-27: slides 18-19, 22-24, 34, and 38-41.
 - [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow).
-- [GitHub Projects practices](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/best-practices-for-projects).
+- [Projects practices](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/best-practices-for-projects).
 - [Branch protection](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches).

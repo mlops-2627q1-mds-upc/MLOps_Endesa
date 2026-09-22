@@ -8,29 +8,26 @@ assignees: ''
 
 ## Problem and intended outcome
 
-Describe the problem, why it matters, and the observable result.
+What needs to change, and what should the result be?
 
 ## Planning
 
-Set the native assignee and milestone, the Project Priority and Size fields, and
-the relevant type/area labels according to CONTRIBUTING.md. Identify the course
-practice supported by this task here.
+Set the owner, milestone, Project Priority and Size, and type/area labels using
+CONTRIBUTING.md. Note the course practice this task supports.
 
 ## Acceptance criteria
 
-- [ ] Describe an observable condition for completion.
+- [ ] State a condition that a reviewer can check.
 
 ## Dependencies and scope
 
-Link blocking or related issues. State any boundary needed to keep this task
-small enough to review.
+Link dependencies and related issues. State what falls outside this task.
 
 ## Required evidence
 
-Specify the appropriate checks, reproduction instructions, documentation, or
-operational evidence. Add links and the relevant version as work is completed.
+List the checks or results needed for review. Add links, versions, and reproduction
+steps as the work is completed.
 
 ## Engineering decision
 
-Link an EDN entry when the task involves a consequential choice, or state why an
-entry is not needed. Using a prescribed tool alone does not require an entry.
+Link an EDN entry if this task involves a consequential engineering choice.
