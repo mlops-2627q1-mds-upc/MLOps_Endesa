@@ -2,8 +2,8 @@
 
 - **Date:** 2026-09-22
 - **Milestone:** M1 - Project Inception; related to M2 and M5
-- **Decision Participants:** Dídac Cayuela (`didicayu`)
-- **Status:** Adopted for initial setup; team review in [PR #3](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/3)
+- **Decision Participants:** All team members
+- **Status:** Accepted by all five team members; documentation PR review pending in [PR #3](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/3)
 
 ## Decision
 
@@ -40,12 +40,13 @@ Recommendation; Solution generation.
 
 Codex checked the course materials and demo repository, helped compare planning
 and review options, and drafted the agreement and templates from Dídac's initial
-proposal. Dídac chose to adopt the resulting workflow.
+proposal. All five team members agreed to adopt the resulting workflow.
 
 ## Response to AI
 
-**Accepted** for the initial working agreement. Dídac subsequently requested
-shorter documentation and clearer attribution of the original proposal.
+**Accepted.** All five team members agreed to the proposed workflow. Dídac
+subsequently requested shorter documentation and clearer attribution of the
+original proposal.
 
 ## Assessment of the AI Contribution
 

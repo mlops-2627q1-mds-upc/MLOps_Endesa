@@ -1,8 +1,8 @@
 # Working agreement
 
-Use this agreement for planning, branches, and reviews. The reasoning is recorded
-in [EDN-001](docs/edn/0001-team-workflow.md); current GitHub settings and remaining
-setup are in the [setup record](docs/project-setup.md).
+All five team members agreed to this workflow for planning, branches, and reviews.
+The reasoning is recorded in [EDN-001](docs/edn/0001-team-workflow.md); current
+GitHub settings and remaining setup are in the [setup record](docs/project-setup.md).
 
 ## Planning
 

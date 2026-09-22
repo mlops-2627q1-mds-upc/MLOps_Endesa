@@ -5,7 +5,7 @@ part, and how AI contributed where applicable.
 
 | Entry | Date | Milestone | Status |
 | --- | --- | --- | --- |
-| [EDN-001: Task planning and review](0001-team-workflow.md) | 2026-09-22 | M1; related to M2 and M5 | Initial adoption by Dídac; team review pending |
+| [EDN-001: Task planning and review](0001-team-workflow.md) | 2026-09-22 | M1; related to M2 and M5 | Accepted by all team members; documentation PR review pending |
 
 ## Adding an entry
 
