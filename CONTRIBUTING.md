@@ -76,7 +76,8 @@ grouped by course milestone.
 
 ## GitHub Flow and review
 
-1. Pick a Ready issue and create a branch from the latest `main`.
+1. Pick a Ready issue and create a branch from the latest `main` in the
+   organization repository.
 2. Name it `<type>/<issue>-<description>`, such as `feat/12-temporal-splits` or
    `docs/23-dataset-card`. Commit small, coherent changes.
 3. Open a PR using the [template](.github/pull_request_template.md). A draft PR
@@ -86,9 +87,9 @@ grouped by course milestone.
    commit. Resolve review conversations before merging.
 6. Delete the merged branch and update the issue and evidence links.
 
-`main` is the only long-lived branch. The initial setup branch predates issue #1;
-subsequent task branches use issue numbers. Contributors with read access can
-push to their own fork and open a PR against the organization's `main`.
+`main` is the only long-lived branch. Team branches and PRs stay in the
+organization repository. If you cannot push a task branch, ask a repository
+administrator to check your access before starting it.
 
 Use your own Git identity and credit shared work accurately. Merge commits retain
 the individual commits; reviews, experiments, documentation, and support also
@@ -107,7 +108,7 @@ records their verification and any outstanding setup.
 | Apply protection to administrators too | The same review process applies to every contributor. |
 | Block force pushes and deletion of `main` | Preserve shared history, contribution records, and reproducible versions. |
 | Allow merge commits; disable squash and rebase merging | Retain the individual commits and the PR boundary. Linear history is not required because it would conflict with merge commits. |
-| Automatically delete merged branches in this repository | Keep the branch list focused on active work. Contributors clean up branches in their own forks. |
+| Automatically delete merged branches in this repository | Keep the branch list focused on active work. |
 
 Required CI checks are not configured yet. Add them after the jobs exist and have
 run successfully, so the rule refers to working checks. Peer review and local

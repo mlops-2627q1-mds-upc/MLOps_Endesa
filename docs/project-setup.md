@@ -1,6 +1,7 @@
 # GitHub setup status
 
-Verified through GitHub's API on **2026-09-22**, using `didicayu`.
+Settings verified through GitHub's API on **2026-09-22**, using `didicayu`.
+Branch location and documentation links updated on **2026-09-24**.
 The [working agreement](../CONTRIBUTING.md) explains the workflow and
 [reasons for each protection rule](../CONTRIBUTING.md#repository-enforcement).
 
@@ -16,7 +17,7 @@ The [working agreement](../CONTRIBUTING.md) explains the workflow and
 | Branch cleanup | Automatic deletion of merged branches enabled for this repository. |
 | Required CI checks | None yet. Add working checks after CI jobs are introduced and run successfully. |
 | Labels and milestones | All 12 agreed labels and milestones M1-M6 created. Milestone due dates are unset. |
-| Existing work | Issues #1 and #2 and PR #3 assigned to `didicayu`, with M1 and the relevant type/area labels. |
+| Existing work | Issues #1 and #2 and PR #4 assigned to `didicayu`, with M1 and the relevant type/area labels. |
 
 Dídac, Pablo, and Sindri have repository Admin access. Write invitations have been
 sent to Pau (`NIU1638529`) and Antoni (`toni646`); their access remains Read until
@@ -41,7 +42,7 @@ when merged. This avoids treating draft links or Not planned closures as Done.
 
 [Documentation issue #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1)
 is **In review**, P1, M, and links to
-[PR #3](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/3).
+[PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4).
 [Setup issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2) is
 **In progress**, P1, S, with `blocked` for the remaining access dependencies.
 Both are assigned to the current iteration, Week of 2026-09-22.
@@ -54,5 +55,6 @@ team/lecturer access and arrange editing access for the contributors. Pau and
 Antoni also need to accept their repository invitations. Issue #2 tracks these
 remaining steps.
 
-PR #3 was opened from Dídac's fork before repository Admin access was granted.
-It remains there to preserve the review thread and awaits peer approval and merge.
+Documentation is on `docs/1-team-working-agreement` in the organization repository.
+PR #4 targets `main` and awaits peer approval and merge. The initial commits are
+preserved; the superseded PR links to this review.

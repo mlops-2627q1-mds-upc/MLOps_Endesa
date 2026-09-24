@@ -3,7 +3,7 @@
 - **Date:** 2026-09-22
 - **Milestone:** M1 - Project Inception; related to M2 and M5
 - **Decision Participants:** All team members
-- **Status:** Accepted by all five team members; documentation PR review pending in [PR #3](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/3)
+- **Status:** Accepted by all five team members; documentation PR review pending in [PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4)
 
 ## Decision
 
@@ -64,6 +64,6 @@ that feedback; the workflow's practical value remains to be assessed through use
 ## Other Evidence
 
 - [Working agreement](../../CONTRIBUTING.md) and [Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3).
-- [Documentation task #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1) and [PR #3](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/3).
+- [Documentation task #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1) and [PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4).
 - [Setup status](../project-setup.md), including the outstanding settings in [issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2).
 - [Course EDN instructions](README.md#source).

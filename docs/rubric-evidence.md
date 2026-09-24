@@ -4,8 +4,8 @@ Use this register to find the work supporting each assessed practice. Points are
 the course rubric weights. Add links with the version, result, reviewer, and date
 as work is completed.
 
-**Updated: 2026-09-22.** The working agreement is in
-[PR #3](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/3).
+**Updated: 2026-09-24.** The working agreement is in
+[PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4).
 Remaining repository settings are tracked in
 [issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2).
 
