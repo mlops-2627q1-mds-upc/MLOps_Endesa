@@ -1,7 +1,6 @@
 # GitHub setup status
 
 Settings verified through GitHub's API on **2026-09-22**, using `didicayu`.
-Branch location and documentation links updated on **2026-09-24**.
 The [working agreement](../CONTRIBUTING.md) explains the workflow and
 [reasons for each protection rule](../CONTRIBUTING.md#repository-enforcement).
 
@@ -56,5 +55,4 @@ Antoni also need to accept their repository invitations. Issue #2 tracks these
 remaining steps.
 
 Documentation is on `docs/1-team-working-agreement` in the organization repository.
-PR #4 targets `main` and awaits peer approval and merge. The initial commits are
-preserved; the superseded PR links to this review.
+PR #4 targets `main` and awaits peer approval and merge.

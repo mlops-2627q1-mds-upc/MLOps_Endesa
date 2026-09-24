@@ -10,9 +10,8 @@ canonical workflow policy; this file describes how agents should apply it.
 - Work within the user's authorized task. Preserve unrelated changes; inspect
   `git status` and the relevant files before editing. Do not reset, clean, or
   overwrite another contributor's work.
-- Follow GitHub Flow using a short-lived task branch. Link the issue when one
-  exists. Before issue tracking is configured, use a descriptive branch and record
-  the bootstrap context without inventing an issue number.
+- Follow GitHub Flow using a short-lived task branch in the organization
+  repository. Link the task issue and use the branch naming rules in CONTRIBUTING.
 - Keep changes reviewable and use the repository's PR template. Respect the
   recorded merge and review policy. Do not supply an agent's own approval as the
   required human peer review or change authorship to imply another person worked
