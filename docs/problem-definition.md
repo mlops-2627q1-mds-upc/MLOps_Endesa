@@ -24,4 +24,4 @@ The dataset and checkpoint are described in the [dataset card](DATASET_CARD.md) 
 
 ## Course context
 
-The [course M1 guidance](https://github.com/mlops-2627q1-mds-upc/MLOps-2627q1-demos#project-milestones) asks for problem selection, requirements engineering, and project-specific model and dataset cards. It links the [Hugging Face model-card guide](https://huggingface.co/docs/hub/model-card-annotated) and [dataset-card guide](https://github.com/huggingface/datasets/blob/main/templates/README_guide.md). This document and the two cards adapt those sections to the team's proposed component.
+The [course M1 guidance](https://github.com/mlops-2627q1-mds-upc/MLOps-2627q1-demos#project-milestones) asks for problem selection, requirements engineering, and model and dataset cards. It links the [Hugging Face model-card guide](https://huggingface.co/docs/hub/model-card-annotated) and [dataset-card guide](https://github.com/huggingface/datasets/blob/main/templates/README_guide.md). Our cards extend the existing Monash and Chronos cards with what this project selects, verifies, and later measures.

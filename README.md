@@ -26,7 +26,7 @@ Use a task branch and a reviewed PR for changes to `main`.
 
 - [Working agreement](CONTRIBUTING.md): planning, ownership, branches, and reviews.
 - [M1 problem definition](docs/problem-definition.md): forecasting scope and open requirements.
-- [Dataset card](docs/DATASET_CARD.md) and [model card](docs/MODEL_CARD.md): project-specific inception drafts and the evidence still needed.
+- [Dataset card](docs/DATASET_CARD.md) and [model card](docs/MODEL_CARD.md): M1 extensions of the selected upstream cards, with project evidence still needed.
 - [Engineering Decision Notebook](docs/edn/README.md): decisions and their rationale.
 - [Course evidence](docs/rubric-evidence.md): links to work for each assessed practice.
 - [GitHub setup status](docs/project-setup.md): configured settings and open tasks.
@@ -34,13 +34,16 @@ Use a task branch and a reviewed PR for changes to `main`.
 ## Repository structure
 
 ```text
-.github/                Issue and PR templates
-docs/edn/               Decision records and template
-docs/project-setup.md   GitHub configuration status
-docs/rubric-evidence.md Course evidence
-AGENTS.md               Instructions for AI-assisted contributions
-CONTRIBUTING.md         Working agreement
-README.md               Project outline
+.github/                     Issue and PR templates
+docs/edn/                    Decision records and template
+docs/problem-definition.md   M1 forecasting scope and open requirements
+docs/DATASET_CARD.md         Extension of the selected Monash dataset card
+docs/MODEL_CARD.md           Extension of the selected Chronos model card
+docs/project-setup.md        GitHub configuration status
+docs/rubric-evidence.md      Course evidence
+AGENTS.md                    Instructions for AI-assisted contributions
+CONTRIBUTING.md              Working agreement
+README.md                    Project outline
 ```
 
 The implementation structure and dependency environment will be introduced in M2,
