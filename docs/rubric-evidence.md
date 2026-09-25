@@ -4,14 +4,14 @@ Use this register to find the work supporting each assessed practice. Points are
 the course rubric weights. Add links with the version, result, reviewer, and date
 as work is completed.
 
-**Updated: 2026-09-24.** The working agreement is in
+**Updated: 2026-09-25.** The working agreement is in
 [PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4).
 Remaining repository settings are tracked in
 [issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2).
 
 | Milestone | Assessed practice | Points / 100 | Current evidence | Evidence still needed |
 | --- | --- | ---: | --- | --- |
-| M1 | Problem selection and requirements engineering | 6 | [Project overview](../README.md); [problem definition](problem-definition.md), [dataset-card extension](DATASET_CARD.md), and [model-card extension](MODEL_CARD.md) drafted in [issue #5](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/5) | Review of the inception draft; agreed horizon, metrics, and success criteria; data validation in [#6](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/6); trained-model evidence in [#7](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/7). |
+| M1 | Problem selection and requirements engineering | 6 | [Project overview](../README.md); [problem and evaluation proposal](problem-definition.md), [model-card extension](MODEL_CARD.md) in [#5](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/5); pinned archive inspection in the [dataset-card extension](DATASET_CARD.md) for [#6](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/6) | Peer review; agreed horizon, splits, metrics, and success criterion; verified source units and calendar semantics if obtainable; trained-model evidence in [#7](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/7). |
 | M1 | Project coordination and communication | 4 | [Working agreement](../CONTRIBUTING.md), [EDN-001](edn/0001-team-workflow.md), [Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3), [issue #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1), [verified setup](project-setup.md) | Pending access invitations, Project access confirmation, documentation PR review, weekly updates, and feedback follow-up. |
 | M2 | Project structure | 5 | No implementation evidence recorded. | Adapted project structure, environment setup, and a teammate's setup check. |
 | M2 | Code and data versioning | 15 | [Workflow](../CONTRIBUTING.md#github-flow-and-review) and [verified branch controls](project-setup.md#repository-settings) | Reviewed PR history, DVC versions, and artifact retrieval from a clean checkout. |
