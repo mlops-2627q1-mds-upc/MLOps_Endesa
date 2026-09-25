@@ -95,6 +95,30 @@ Use your own Git identity and credit shared work accurately. Merge commits retai
 the individual commits; reviews, experiments, documentation, and support also
 matter when assessing contributions.
 
+### Commit messages
+
+Write task commit subjects as `<type>: <imperative summary> (#<issue>)`.
+Use the task issue number, not the PR number. Keep the subject to 72 characters
+or fewer, start the summary with a verb such as `add`, `fix`, or `record`, and
+omit a final period. Describe the change, not just the file:
+`docs: record demand units and source version (#5)` is clearer than
+`docs: update README`.
+
+Choose the type by the commit's main purpose:
+
+- `feat`: new behavior; `fix`: corrected behavior.
+- `test`: tests only; `docs`: documentation only.
+- `refactor`: code restructuring without a behavior change.
+- `chore`: repository setup, dependencies, tooling, or DVC tracking metadata.
+- `experiment`: versioned experiment configuration or recorded findings.
+
+Keep related code and tests together when they form one coherent change; use
+`feat` or `fix` for that commit. If the reason or constraint is not clear from
+the subject, add a blank line and a short body explaining it. Put detailed run
+results and reproduction evidence in the PR or experiment record. Reserve
+`Closes #<issue>` for the PR description when merging completes the task, as
+described below; `(#<issue>)` in a commit subject only links the work.
+
 ### Repository enforcement
 
 The following settings apply to `main`. The [setup record](docs/project-setup.md)
