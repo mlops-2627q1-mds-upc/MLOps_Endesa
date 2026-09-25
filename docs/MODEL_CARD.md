@@ -27,9 +27,9 @@ The immediate use is a reproducible course comparison of the base checkpoint wit
 
 ## Project training and evaluation extension
 
-Compare a seasonal naive forecast, the pinned checkpoint without project fine-tuning, and the fine-tuned version on the same states, horizon, cutoffs, preprocessing, and metrics. A 48-step day is a candidate horizon; the Monash Hub card lists 60 steps for the selected configuration, and the model configuration defaults to 64. Select the comparison protocol before tuning or inspecting the held-out test period. Report per-state results as well as an aggregate so differences in scale do not disappear.
+The [M1 problem definition](problem-definition.md#proposed-evaluation-contract-for-m2) proposes a common 48-step horizon, chronological train/validation/test indices, a weekly seasonal baseline, and per-state MAE plus equally weighted state-level MASE. These choices need team review before use. The Monash Hub card's 60-step horizon and this checkpoint's 64-step default are different comparison settings. Report the same origins and targets for the baseline, pinned checkpoint, and later fine-tuned model.
 
-Possible outputs include point-forecast error and interval behavior; metric definitions, aggregation, and success criteria have not been chosen. Record run IDs, data and code versions, seeds, training settings, compute cost, and inference conditions when results exist. A "zero-shot" label would mean no training *in this project*; it does not by itself establish that the pretrained model never saw these public series.
+For the proposed point comparison, use the median of sampled trajectories and record the seed and sample count. Prediction interval quality can be reported once its coverage and width are measured; neither is available yet. Record run IDs, data and code versions, training settings, compute cost, and inference conditions when results exist. A "zero-shot" label would mean no training *in this project*; it does not establish that the pretrained model never saw these public series.
 
 ## Limitations, risks, and future evidence
 
