@@ -25,6 +25,8 @@ Tasks are tracked in the [organization Project](https://github.com/orgs/mlops-26
 Use a task branch and a reviewed PR for changes to `main`.
 
 - [Working agreement](CONTRIBUTING.md): planning, ownership, branches, and reviews.
+- [M1 problem definition](docs/problem-definition.md): forecasting scope and open requirements.
+- [Dataset card](docs/DATASET_CARD.md) and [model card](docs/MODEL_CARD.md): project-specific inception drafts and the evidence still needed.
 - [Engineering Decision Notebook](docs/edn/README.md): decisions and their rationale.
 - [Course evidence](docs/rubric-evidence.md): links to work for each assessed practice.
 - [GitHub setup status](docs/project-setup.md): configured settings and open tasks.
