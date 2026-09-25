@@ -32,9 +32,14 @@ Assign each issue to the relevant course milestone:
 | In review | Results and checks are available for a teammate to review. A draft PR alone is not enough. |
 | Done | Acceptance criteria met, review complete, evidence linked, and repository changes merged. |
 
-For blocked work, keep the current status and add `blocked`, a dependency link,
-and the next action. Close abandoned or duplicate work as **Not planned** and
-exclude it from completed-work reporting.
+For blocked work, keep the current status and add `blocked`. When adding that
+label or otherwise reporting that an issue cannot progress, post an issue
+comment with `Blocked by: ...`, `Unblock when: ...`, and `Next action: ...`.
+Name the specific obstacle and the condition that will let work resume; include
+the responsible person if known and link any dependency or evidence. If the
+blocker changes, add an update comment. When it clears, comment with the
+evidence and remove `blocked`. Close abandoned or duplicate work as
+**Not planned** and exclude it from completed-work reporting.
 
 Owners add issues to the Project and update their cards manually. Project
 automations are disabled: linking a draft PR or closing an abandoned issue must
