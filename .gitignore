@@ -1,0 +1,56 @@
+# Temporary working files (from the team working agreement, PR #4)
+temporary/
+
+# Data: folders are kept with .gitkeep; contents are versioned with DVC, not Git
+/data/*/*
+!/data/*/.gitkeep
+
+# Model weights and checkpoints (versioned with DVC / MLflow)
+/models/*
+!/models/.gitkeep
+
+# Secrets and local configuration
+.env
+.env.*
+
+# Python environments (the environment is reproduced with `uv sync` from uv.lock)
+.venv/
+venv/
+
+# Experiment tracking and energy logs produced locally
+mlruns/
+mlartifacts/
+emissions.csv
+
+# Python caches and build outputs
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+.cache
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
