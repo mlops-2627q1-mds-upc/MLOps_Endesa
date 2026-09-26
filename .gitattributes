@@ -1,0 +1,14 @@
+# Normalize line endings in the repository so Windows, macOS and Linux
+# contributors produce the same diffs.
+* text=auto
+
+# Files that must keep LF line endings on every platform
+Makefile  text eol=lf
+*.sh      text eol=lf
+
+# Binary files
+*.png     binary
+*.jpg     binary
+*.pdf     binary
+*.zip     binary
+*.parquet binary
