@@ -4,8 +4,8 @@ MLOps course project on half-hourly electricity demand in Australia. We plan to
 compare Chronos-T5-small's zero-shot forecasts with a fine-tuned version, then
 build the training, serving, and monitoring workflow around that model.
 
-The repository currently contains the project outline and working agreement.
-Implementation and experiments are still to come.
+The repository contains the project structure, development environment, working
+agreement, and M1 documentation. Data pipelines and experiments are still to come.
 
 ## Dataset and model
 
@@ -25,6 +25,7 @@ Tasks are tracked in the [organization Project](https://github.com/orgs/mlops-26
 Use a task branch and a reviewed PR for changes to `main`.
 
 - [Working agreement](CONTRIBUTING.md): planning, ownership, branches, and reviews.
+- [Development setup](docs/setup.md): environment installation, directory layout, and adaptations from the CCDS template.
 - [M1 problem definition](docs/problem-definition.md): forecasting scope and open requirements.
 - [Dataset card](docs/DATASET_CARD.md) and [model card](docs/MODEL_CARD.md): M1 extensions of the selected upstream cards, with project evidence still needed.
 - [Engineering Decision Notebook](docs/edn/README.md): decisions and their rationale.
@@ -33,21 +34,27 @@ Use a task branch and a reviewed PR for changes to `main`.
 
 ## Repository structure
 
+The layout follows [Cookiecutter Data Science](https://cookiecutter-data-science.drivendata.org/),
+adapted to this repository as described in [docs/setup.md](docs/setup.md).
+
 ```text
-.github/                     Issue and PR templates
-docs/edn/                    Decision records and template
-docs/problem-definition.md   M1 forecasting scope and open requirements
-docs/DATASET_CARD.md         Extension of the selected Monash dataset card
-docs/MODEL_CARD.md           Extension of the selected Chronos model card
-docs/project-setup.md        GitHub configuration status
-docs/rubric-evidence.md      Course evidence
-AGENTS.md                    Instructions for AI-assisted contributions
-CONTRIBUTING.md              Working agreement
-README.md                    Project outline
+.github/            Issue and PR templates
+data/               Raw, interim, processed, and external data (contents versioned with DVC)
+docs/               Problem definition, dataset and model cards, setup guide, EDN
+models/             Model checkpoints and predictions
+notebooks/          Exploration notebooks
+references/         Data dictionaries and explanatory material
+reports/figures/    Generated figures
+src/                Python package: config, dataset, features, modeling, plots
+tests/              Pytest suite
+AGENTS.md           Instructions for AI-assisted contributions
+CONTRIBUTING.md     Working agreement
+Makefile            Shortcuts for common tasks
+pyproject.toml      Package metadata, dependencies, and tool configuration
+uv.lock             Locked dependency versions
 ```
 
-The implementation structure and dependency environment will be introduced in M2,
-following the course's Cookiecutter Data Science guidance.
+Quick start: `uv sync` to create the environment, then `uv run pytest`.
 
 ## Team members
 
