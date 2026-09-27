@@ -16,6 +16,8 @@ classifiers = [
     
 ]
 dependencies = [
+    "dvc>=3.67.1",
+    "dvc-http>=2.32.0",
     "ipython",
     "jupyterlab",
     "loguru",
@@ -24,6 +26,7 @@ dependencies = [
     "numpy",
     "pandas",
     "pip",
+    "pyarrow>=25.0.1",
     "python-dotenv",
     "scikit-learn",
     "tqdm",
