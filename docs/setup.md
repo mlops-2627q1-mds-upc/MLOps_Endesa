@@ -36,8 +36,9 @@ Commit `pyproject.toml` and `uv.lock` together whenever dependencies change.
 ## Pull request checks
 
 The [CI workflow](../.github/workflows/ci.yml) runs on pull requests to `main`
-and pushes to `main`. It installs Python 3.11 and the committed lockfile, then
-runs `make lint` and `make test` in separate jobs. Run the same checks locally:
+and pushes to `main`. It uses Ubuntu 24.04 and Python 3.11, installs from the
+committed lockfile, then runs `make lint` and `make test` in separate jobs. Run
+the same checks locally:
 
 ```sh
 uv sync --locked --dev
