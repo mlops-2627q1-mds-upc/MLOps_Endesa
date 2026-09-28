@@ -33,6 +33,24 @@ Other useful commands:
 Commit `pyproject.toml` and `uv.lock` together whenever dependencies change.
 `make` targets (`make test`, `make lint`) are available on systems with GNU Make.
 
+## Pull request checks
+
+The [CI workflow](../.github/workflows/ci.yml) runs on pull requests to `main`
+and pushes to `main`. It installs Python 3.11 and the committed lockfile, then
+runs `make lint` and `make test` in separate jobs. Run the same checks locally:
+
+```sh
+uv sync --locked --dev
+make lint
+make test
+```
+
+If a job fails, open its GitHub Actions log and run the failing command locally.
+The current pytest suite only checks package imports and directory structure;
+data, forecast, model, and API tests belong with their future implementations.
+CI does not download datasets or model weights or run training. Requiring these
+checks before merge is tracked separately in [issue #20](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/20).
+
 ### Troubleshooting on Windows
 
 If Python 3.11 is not installed, `uv sync` downloads its own Python 3.11. On Windows 11,
