@@ -13,19 +13,27 @@ from src.config import RAW_DATA_DIR
 
 app = typer.Typer()
 
-STATE_NAMES = ["VIC", "NSW", "QLD", "SA", "TAS"]
-
 # Original source — Zenodo record pinned by DATASET_CARD.md SHA-256
 ZENODO_URL = (
     "https://zenodo.org/records/4659727/files/"
     "australian_electricity_demand_dataset.zip"
 )
 
+# Mapping from TSF series IDs to state codes.
+# Order and IDs derived from the source archive; QUN renamed to QLD.
+TSF_ID_TO_STATE = {
+    "T1": "NSW",
+    "T2": "VIC",
+    "T3": "QLD",  # source uses "QUN"
+    "T4": "SA",
+    "T5": "TAS",
+}
 
-def _parse_tsf(content: bytes) -> tuple[list[str], list[datetime], list[np.ndarray]]:
-    """Parse raw .tsf bytes; return (names, starts, value_arrays)."""
+
+def _parse_tsf(content: bytes) -> tuple[list[str], list[np.ndarray]]:
+    """Parse raw .tsf bytes; return (tsf_ids, value_arrays)."""
     col_names, col_types = [], []
-    names, starts, series_list = [], [], []
+    tsf_ids, series_list = [], []
     found_data = False
 
     for line in content.decode("cp1252").splitlines():
@@ -41,19 +49,16 @@ def _parse_tsf(content: bytes) -> tuple[list[str], list[datetime], list[np.ndarr
             found_data = True
         elif found_data:
             parts = line.split(":")
-            # attributes: parts[0..n-2], values: parts[-1]
-            for i, (name, typ) in enumerate(zip(col_names, col_types)):
-                if typ == "string" and name == "series_name":
-                    names.append(parts[i])
-                elif typ == "date" and name == "start_timestamp":
-                    starts.append(datetime.strptime(parts[i], "%Y-%m-%d %H-%M-%S"))
+            for i, (col, typ) in enumerate(zip(col_names, col_types)):
+                if typ == "string" and col == "series_name":
+                    tsf_ids.append(parts[i])
             values = np.array(
                 [float(v) if v != "?" else np.nan for v in parts[-1].split(",")],
                 dtype=np.float32,
             )
             series_list.append(values)
 
-    return names, starts, series_list
+    return tsf_ids, series_list
 
 
 @app.command()
@@ -68,16 +73,18 @@ def main(
         tsf_name = next(n for n in zf.namelist() if n.endswith(".tsf"))
         tsf_bytes = zf.read(tsf_name)
 
-    names, starts, series_list = _parse_tsf(tsf_bytes)
+    tsf_ids, series_list = _parse_tsf(tsf_bytes)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    for i, (start, values) in enumerate(zip(starts, series_list)):
-        name = STATE_NAMES[i]
-        index = pd.date_range(start=start, periods=len(values), freq="30min")
-        series = pd.Series(values, index=index, name=name)
-        out_path = output_dir / f"{name}.parquet"
+    for tsf_id, values in zip(tsf_ids, series_list):
+        state = TSF_ID_TO_STATE[tsf_id]
+        # Positional index: timestamps from the source are unverified
+        # for timezone and DST — use step index to avoid misleading callers.
+        index = pd.RangeIndex(len(values), name="timestep")
+        series = pd.Series(values, index=index, name=state)
+        out_path = output_dir / f"{state}.parquet"
         series.to_frame().to_parquet(out_path)
-        logger.info(f"Saved {name}: {len(series):,} observations -> {out_path}")
+        logger.info(f"Saved {tsf_id} -> {state}: {len(series):,} observations -> {out_path}")
 
     logger.success("Dataset download complete.")
 
