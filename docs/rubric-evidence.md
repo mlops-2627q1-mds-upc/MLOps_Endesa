@@ -4,7 +4,7 @@ Use this register to find the work supporting each assessed practice. Points are
 the course rubric weights. Add links with the version, result, reviewer, and date
 as work is completed.
 
-**Updated: 2026-09-25.** The working agreement is in
+**Updated: 2026-09-28.** The working agreement was merged in
 [PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4).
 Remaining repository settings are tracked in
 [issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2).
@@ -21,7 +21,7 @@ Remaining repository settings are tracked in
 | M4 | ML system design | 15 | No implementation evidence recorded. | Architecture, component responsibilities, constraints, and justified design decisions. |
 | M4 | APIs for ML | 10 | No implementation evidence recorded. | API contract, examples, endpoint tests, and verification of the deployed component. |
 | M5 | Containers and orchestration | 5 | No implementation evidence recorded. | Reproducible container build, runtime verification, and portability evidence. |
-| M5 | CI/CD for ML | 10 | [Review and check policy](../CONTRIBUTING.md#github-flow-and-review) | Successful and failing workflow evidence, model promotion criteria, and deployment verification. |
+| M5 | CI/CD for ML | 10 | [Review and check policy](../CONTRIBUTING.md#github-flow-and-review); draft [CI PR #21](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/21), with a [passing run](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/actions/runs/36479318510) and a [deliberately failing test run](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/actions/runs/36479405313) on 2026-09-28 | Reviewed merge; required checks on main (#20); meaningful data/model/API tests, model promotion criteria, and verified deployment. |
 | M6 | Resource monitoring | 5 | No implementation evidence recorded. | Resource/service metrics, dashboards, alert behavior, and an investigation example. |
 | M6 | Model performance monitoring | 5 | No implementation evidence recorded. | Data/model monitoring signals, delayed ground-truth handling, and a demonstrated response to degradation. |
 | | **Total** | **100** | | |
