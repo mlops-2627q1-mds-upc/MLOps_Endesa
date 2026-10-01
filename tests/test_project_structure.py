@@ -17,7 +17,6 @@ def test_config_paths_point_inside_the_project():
 
 def test_expected_directories_exist():
     for path in (
-        config.RAW_DATA_DIR,
         config.INTERIM_DATA_DIR,
         config.PROCESSED_DATA_DIR,
         config.EXTERNAL_DATA_DIR,
@@ -25,3 +24,8 @@ def test_expected_directories_exist():
         config.FIGURES_DIR,
     ):
         assert path.is_dir(), f"missing directory: {path}"
+
+
+def test_raw_data_has_dvc_metadata():
+    # DVC creates raw/ when data is pulled; a clean checkout only has raw.dvc.
+    assert (config.DATA_DIR / "raw.dvc").is_file()

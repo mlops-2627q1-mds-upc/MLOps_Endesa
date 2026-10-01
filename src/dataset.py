@@ -1,12 +1,11 @@
 import io
-import zipfile
-from datetime import datetime
 from pathlib import Path
+import zipfile
 
+from loguru import logger
 import numpy as np
 import pandas as pd
 import requests
-from loguru import logger
 import typer
 
 from src.config import RAW_DATA_DIR
@@ -14,10 +13,7 @@ from src.config import RAW_DATA_DIR
 app = typer.Typer()
 
 # Original source — Zenodo record pinned by DATASET_CARD.md SHA-256
-ZENODO_URL = (
-    "https://zenodo.org/records/4659727/files/"
-    "australian_electricity_demand_dataset.zip"
-)
+ZENODO_URL = "https://zenodo.org/records/4659727/files/australian_electricity_demand_dataset.zip"
 
 # Mapping from TSF series IDs to state codes.
 # Order and IDs derived from the source archive; QUN renamed to QLD.
