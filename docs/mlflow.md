@@ -108,6 +108,15 @@ configuration, notebook state, and the smoke command. They require neither
 remote credentials nor raw data/model weights. Shared run IDs and verification
 results are recorded in the implementation PR and #12.
 
+On 2026-10-02, shared run
+[`eb71bd9c444c4af39fb4857bec087ac1`](https://dagshub.com/pauadal03/MLOps_Endesa.mlflow/#/experiments/0/runs/eb71bd9c444c4af39fb4857bec087ac1)
+finished in `MLOps_Endesa-smoke` with MLflow 3.16.1 at clean Git commit
+`501fd85f53657aa5d0b012f8ced8eecf86d637bf`. Parameter/metric readback and all five
+artifact downloads were verified: predictions, configuration, provenance,
+environment, and lockfile. The fixture produced `smoke.rows = 4` and
+`smoke.mae = 0.75`; these are synthetic verification values. This checks shared
+tracking access, not model performance or a second teammate's reproduction.
+
 See [EDN-002](edn/0002-mlflow-tracking.md) for the logging choice and AI involvement.
 Setup alone does not complete #12: comparable real runs and teammate reproduction
 of a recorded result are still required.
