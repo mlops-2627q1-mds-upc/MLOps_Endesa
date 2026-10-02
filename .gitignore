@@ -12,6 +12,7 @@ temporary/
 # Secrets and local configuration
 .env
 .env.*
+!.env.template
 
 # Python environments (the environment is reproduced with `uv sync` from uv.lock)
 .venv/
@@ -20,6 +21,8 @@ venv/
 # Experiment tracking and energy logs produced locally
 mlruns/
 mlartifacts/
+mlflow.db
+mlflow.db-*
 emissions.csv
 
 # Python caches and build outputs

@@ -6,6 +6,7 @@ part, and how AI contributed where applicable.
 | Entry | Date | Milestone | Status |
 | --- | --- | --- | --- |
 | [EDN-001: Task planning and review](0001-team-workflow.md) | 2026-09-22 | M1; related to M2 and M5 | Accepted by all team members; documentation PR review pending |
+| [EDN-002: Explicit MLflow run records](0002-mlflow-tracking.md) | 2026-10-02 | M2 | Implementation proposed for peer review; tracking work authorized by Dídac |
 
 ## Adding an entry
 
