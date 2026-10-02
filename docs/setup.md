@@ -18,7 +18,7 @@ machines with Smart App Control (see [Troubleshooting on Windows](#troubleshooti
 git clone https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa.git
 cd MLOps_Endesa
 uv sync          # creates .venv with the exact versions in uv.lock
-uv run pytest    # smoke test: package imports and directory layout
+uv run pytest    # smoke test: package imports, layout, and DVC metadata
 ```
 
 Other useful commands:
@@ -47,7 +47,8 @@ make test
 ```
 
 If a job fails, open its GitHub Actions log and run the failing command locally.
-The current pytest suite only checks package imports and directory structure;
+The current pytest suite only checks package imports, checked-in directories,
+and the presence of raw-data DVC metadata;
 data, forecast, model, and API tests belong with their future implementations.
 CI does not download datasets or model weights or run training. Requiring these
 checks before merge is tracked separately in [issue #20](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/20).
@@ -98,6 +99,6 @@ Makefile          Shortcuts for common tasks
 | `pytest` and `ruff` moved to a `dev` dependency group | Keeps runtime dependencies separate from development tools, as in the course setup guide |
 | Template `README.md`, `docs/` (mkdocs) and `LICENSE` not used | The project README and `docs/` already exist; the licence is a team decision |
 | `.env` not committed | It is meant for local secrets; it is listed in `.gitignore` |
-| `.gitignore` keeps the `data/` and `models/` folders but ignores their contents | Folders exist after cloning; their contents will be versioned with DVC (issue #11) |
+| `.gitignore` excludes generated data and model files; `data/raw.dvc` tracks raw data | Checked-in placeholders retain the other layout directories. `data/raw/` is created when DVC data is pulled and is absent from a clean checkout. |
 | `.gitattributes` normalises line endings | The team works on Windows and Unix systems; avoids whole-file diffs caused by CRLF/LF |
 | Placeholder failing test replaced by smoke tests | Gives a working check from a clean checkout; real data and model tests come in M3 |
