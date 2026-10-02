@@ -9,7 +9,7 @@ import typer
 
 from src.tracking import tracked_run
 
-app = typer.Typer()
+app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
 def smoke_run(
