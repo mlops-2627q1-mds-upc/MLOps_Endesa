@@ -4,7 +4,7 @@ Use this register to find the work supporting each assessed practice. Points are
 the course rubric weights. Add links with the version, result, reviewer, and date
 as work is completed.
 
-**Updated: 2026-10-01.** The working agreement was merged in
+**Updated: 2026-10-02.** The working agreement was merged in
 [PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4).
 Remaining repository settings are tracked in
 [issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2).
@@ -15,7 +15,7 @@ Remaining repository settings are tracked in
 | M1 | Project coordination and communication | 4 | [Working agreement](../CONTRIBUTING.md), [EDN-001](edn/0001-team-workflow.md), [Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3), [issue #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1), [verified setup](project-setup.md) | Pending access invitations, Project access confirmation, documentation PR review, weekly updates, and feedback follow-up. |
 | M2 | Project structure | 5 | Adapted CCDS layout and locked uv environment in [PR #14](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/14) for [#10](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/10); [setup guide and adaptations](setup.md) | A teammate's clean-checkout setup check recorded in the PR review. |
 | M2 | Code and data versioning | 15 | [Workflow](../CONTRIBUTING.md#github-flow-and-review) and [verified branch controls](project-setup.md#repository-settings) | Reviewed PR history, DVC versions, and artifact retrieval from a clean checkout. |
-| M2 | Experiment tracking | 5 | No implementation evidence recorded. | Comparable MLflow runs with configuration, code/data/model versions, metrics, and conclusions. |
+| M2 | Experiment tracking | 5 | Tracking helper and local tests on the task branch for [#12](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/12); [shared synthetic run verified on 2026-10-02](https://dagshub.com/pauadal03/MLOps_Endesa.mlflow/#/experiments/0/runs/eb71bd9c444c4af39fb4857bec087ac1) at clean commit `501fd85`; [setup and reproduction commands](mlflow.md); [EDN-002](edn/0002-mlflow-tracking.md). | Reviewed merge; comparable baseline/Chronos runs after #17, with configuration, code/data/model versions, metrics, conclusions, and teammate reproduction. |
 | M3 | Energy efficiency awareness | 5 | No implementation evidence recorded. | CodeCarbon measurements, measurement limitations, and interpretation of efficiency trade-offs. |
 | M3 | Quality assurance for ML | 10 | No implementation evidence recorded. | Static analysis and meaningful code/data/model tests, including failure cases and data validation results. |
 | M4 | ML system design | 15 | No implementation evidence recorded. | Architecture, component responsibilities, constraints, and justified design decisions. |
