@@ -28,6 +28,7 @@ dependencies = [
     "pip",
     "pyarrow>=25.0.1",
     "python-dotenv",
+    "pyyaml>=6.0.3",
     "scikit-learn",
     "tqdm",
     "typer",

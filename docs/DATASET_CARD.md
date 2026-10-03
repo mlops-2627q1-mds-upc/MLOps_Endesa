@@ -36,7 +36,7 @@ On 2026-09-25, the pinned archive was downloaded and inspected outside Git. Its 
 
 Each raw record contains a series ID (`T1`-`T5`), state code, the same start string (`2002-01-01 00-00-00`), and comma-separated targets. The upstream card describes the Hub loader's `start`, `target`, `feat_static_cat`, optional `feat_dynamic_real`, and `item_id` fields. Its train, validation, and test entries each list five series. Those are source-format and Hub metadata observations, not this project's training table or validated calendar.
 
-## Retrieval and project split proposal
+## Retrieval and project split
 
 Download the pinned archive **outside the repository** and compare its SHA-256 with the value above:
 
@@ -45,13 +45,13 @@ curl -fL 'https://huggingface.co/datasets/Monash-University/monash_tsf/resolve/5
 shasum -a 256 /tmp/australian_electricity_demand_dataset.zip
 ```
 
-The inspection counted comma-separated targets after each TSF `@data` record and checked every parsed number for finiteness, zero, and negative sign. It did not reconstruct per-observation timestamps. The [problem definition](problem-definition.md#proposed-evaluation-contract-for-m2) proposes a common 230,736-position prefix per state and train/validation/test index boundaries of 195,696 and 213,216. Queensland's additional 1,536 values and South Australia's additional 48 would be excluded from that comparison. This is a **proposal**, pending team review. Fit any scaler or transformation on training positions only; never use future targets when forming an origin's forecast context. DVC tracking and a versioned loader belong to M2.
+The inspection counted comma-separated targets after each TSF `@data` record and checked every parsed number for finiteness, zero, and negative sign. It did not reconstruct per-observation timestamps. The [problem definition](problem-definition.md#evaluation-contract-for-m2) uses a common 230,736-position prefix per state and train/validation/test index boundaries of 195,696 and 213,216. Queensland's additional 1,536 values and South Australia's additional 48 are excluded from that comparison. The team [agreed these boundaries in #5](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/5#issuecomment-5972245779); the DVC `split` stage applies them. Fit any scaler or transformation on training positions only; never use future targets when forming an origin's forecast context. DVC tracking and a versioned loader belong to M2.
 
 ## Considerations for using the data
 
 - The TSF file does not state a demand unit or time zone. Its single start string per series provides no individual observation timestamps. Duplicate or skipped civil times and daylight-saving behavior cannot be verified from this archive alone. Use positional time until a more detailed primary source establishes calendar semantics.
 - Tasmania has 22 negative values. Their meaning is unknown; preserve and investigate them rather than silently clipping or declaring them errors. Percentage errors would be hard to interpret around zero or negative targets.
-- The state series have different lengths. The proposed common prefix and chronological split need team acceptance and implementation checks before evaluation.
+- The state series have different lengths. The common prefix and chronological split, agreed in #5, drop the extra Queensland and South Australia values; `tests/test_splits.py` checks the boundaries and origins.
 - Historical demand may not represent current grid conditions. The base model's possible exposure to these public series also needs investigation before claims of unseen-data generalization.
 
 No raw dataset, generated table, or DVC metadata is committed by this card.
