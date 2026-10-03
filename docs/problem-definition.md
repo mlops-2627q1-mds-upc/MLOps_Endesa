@@ -23,6 +23,8 @@ The project-specific question is the trade-off among forecast error, uncertainty
 | Decision rule | Before test evaluation, select the configuration on validation data. Report whether the fine-tuned model beats both comparators on held-out mean MASE, with per-state MAE and compute cost. An unchanged or worse result is still a valid finding. |
 | Traceability | Pin source archive, base checkpoint, code, split configuration, seed, environment, and later trained artifact. Link DVC and MLflow records when M2 introduces them. |
 
+The split and origin values are versioned in [`params.yaml`](../params.yaml) and implemented in [`src/splits.py`](../src/splits.py) ([issue #17](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/17)). The DVC stage `split` cuts each state to the common prefix and writes `train`, `validation` and `test` blocks plus the forecast origins to `data/processed/`; reproduce it with `uv run dvc pull` and `uv run dvc repro split`. Changing a boundary in `params.yaml` reruns the stage.
+
 This proposal uses a 48-step horizon for the project's one-day task. The [Monash dataset card](DATASET_CARD.md) lists 60 steps for its Hub configuration, and the [Chronos checkpoint](MODEL_CARD.md) defaults to 64; published scores under different horizons or splits are not directly comparable. The team must review the forecast horizon, split, metrics, and decision rule before implementing or tuning against them. The [dataset validation issue #6](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/6) tracks source semantics and checks; [issue #7](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/7) tracks the later trained-model evidence.
 
 ## Course context
