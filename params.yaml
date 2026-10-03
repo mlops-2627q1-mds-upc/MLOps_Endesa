@@ -1,0 +1,14 @@
+# Evaluation protocol proposed in docs/problem-definition.md (#5), pending team approval.
+# Positions count 30-minute steps from the start of each series.
+data:
+  states: [NSW, VIC, QLD, SA, TAS]
+  common_length: 230736  # shared prefix; later QLD and SA steps are dropped
+
+split:
+  train_end: 195696  # training block [0, train_end)
+  validation_end: 213216  # validation [train_end, validation_end), test up to common_length
+
+forecast:
+  context_length: 512
+  horizon: 48
+  origin_stride: 48  # one origin per nominal day in validation and test
