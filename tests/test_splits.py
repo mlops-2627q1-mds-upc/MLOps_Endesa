@@ -27,7 +27,7 @@ def small_config(**changes):
     return replace(cfg, **changes)
 
 
-def test_params_hold_the_proposed_protocol():
+def test_params_hold_the_agreed_protocol():
     assert CFG.states == ("NSW", "VIC", "QLD", "SA", "TAS")
     assert CFG.bounds("train") == (0, 195_696)
     assert CFG.bounds("validation") == (195_696, 213_216)

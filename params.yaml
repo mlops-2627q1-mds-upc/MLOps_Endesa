@@ -1,4 +1,4 @@
-# Evaluation protocol proposed in docs/problem-definition.md (#5), pending team approval.
+# Evaluation protocol in docs/problem-definition.md, agreed in #5 on 2026-10-03.
 # Positions count 30-minute steps from the start of each series.
 data:
   states: [NSW, VIC, QLD, SA, TAS]
