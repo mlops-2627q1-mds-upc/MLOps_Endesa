@@ -1,0 +1,15 @@
+stages:
+  split:
+    cmd: python -m src.splits
+    deps:
+      - data/raw
+      - src/splits.py
+    params:
+      - data
+      - split
+      - forecast
+    outs:
+      - data/processed/train.parquet
+      - data/processed/validation.parquet
+      - data/processed/test.parquet
+      - data/processed/origins.parquet

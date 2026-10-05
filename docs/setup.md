@@ -47,9 +47,9 @@ make test
 ```
 
 If a job fails, open its GitHub Actions log and run the failing command locally.
-The current pytest suite only checks package imports, checked-in directories,
-and the presence of raw-data DVC metadata;
-data, forecast, model, and API tests belong with their future implementations.
+The pytest suite checks package imports, checked-in directories, the presence of
+raw-data DVC metadata, and the split and forecast-origin rules on synthetic series;
+model and API tests belong with their future implementations.
 CI does not download datasets or model weights or run training. Requiring these
 checks before merge is tracked separately in [issue #20](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/20).
 
@@ -71,7 +71,7 @@ If `uv` is not recognised after `pip install uv`, the Python `Scripts` folder is
 data/
   raw/            Original, immutable source data (DVC, issue #11)
   interim/        Intermediate transformed data
-  processed/      Final datasets used for modelling
+  processed/      Train/validation/test blocks and forecast origins (DVC stage `split`)
   external/       Third-party data
 models/           Model checkpoints and predictions (DVC / MLflow)
 notebooks/        Exploration notebooks, named like 1.0-tl-initial-eda.ipynb

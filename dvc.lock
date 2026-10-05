@@ -1,0 +1,48 @@
+schema: '2.0'
+stages:
+  split:
+    cmd: python -m src.splits
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: ab1300b4a36e9e1df9fabfeec15b0f90.dir
+      size: 7046290
+      nfiles: 6
+    - path: src/splits.py
+      hash: md5
+      md5: 4f54035f0bb941160d2d979262768ec1
+      size: 5772
+    params:
+      params.yaml:
+        data:
+          states:
+          - NSW
+          - VIC
+          - QLD
+          - SA
+          - TAS
+          common_length: 230736
+        forecast:
+          context_length: 512
+          horizon: 48
+          origin_stride: 48
+        split:
+          train_end: 195696
+          validation_end: 213216
+    outs:
+    - path: data/processed/origins.parquet
+      hash: md5
+      md5: dcfc26b69903b4d59a72b1b7b6ffcc00
+      size: 24210
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: f07bd910922aa740f36f6c0b91516a4f
+      size: 518151
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: 76fc8921b85ad9d35e98b9b2451c1c09
+      size: 5952247
+    - path: data/processed/validation.parquet
+      hash: md5
+      md5: 7d3a853328e8e21438ef90a4a17fcf03
+      size: 518215
