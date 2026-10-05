@@ -28,6 +28,7 @@ Use a task branch and a reviewed PR for changes to `main`.
 - [Working agreement](CONTRIBUTING.md): planning, ownership, branches, and reviews.
 - [Development setup](docs/setup.md): environment installation, directory layout, and adaptations from the CCDS template.
 - [MLflow tracking](docs/mlflow.md): shared setup, a small verification command, and run records for experiments.
+- [Validation comparison](docs/evaluation.md): comparable seasonal-baseline and pinned Chronos runs, metrics, and reproduction commands.
 - [M1 problem definition](docs/problem-definition.md): forecasting scope and open requirements.
 - [Dataset card](docs/DATASET_CARD.md) and [model card](docs/MODEL_CARD.md): M1 extensions of the selected upstream cards, with project evidence still needed.
 - [Engineering Decision Notebook](docs/edn/README.md): decisions and their rationale.

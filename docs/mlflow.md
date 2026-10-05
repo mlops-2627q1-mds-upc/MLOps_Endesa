@@ -86,8 +86,9 @@ Before a real evaluation, retrieve the intended DVC artifact and check
 not validate the contents of locally modified data or pin/load a model for you.
 Use the pinned model revision in [the model card](MODEL_CARD.md).
 
-The baseline/Chronos comparison awaits the reviewed split and forecast-origin
-implementation in [#17](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/17).
+The split and forecast-origin implementation in
+[#17](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/17) is merged.
+Use the [validation evaluator](evaluation.md) to record real baseline/Chronos comparisons.
 Record the selected evaluation settings and compute budget before running it.
 Use identical validation targets for each method and keep final test targets out
 of model selection. Keep source-unit/calendar and upstream pretraining limits
