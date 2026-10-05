@@ -119,8 +119,10 @@ environment, and lockfile. The fixture produced `smoke.rows = 4` and
 tracking access, not model performance or a second teammate's reproduction.
 
 See [EDN-002](edn/0002-mlflow-tracking.md) for the logging choice and AI involvement.
-Setup alone does not complete #12: comparable real runs and teammate reproduction
-of a recorded result are still required.
+The [first real validation comparison](experiments/001-baseline-chronos.md)
+records completed seasonal-baseline and untuned Chronos runs with verified
+predictions, metrics and versions. Teammate reproduction, interpretation review
+and the reviewed merge remain required before #12 is complete.
 
 References: [MLflow client API](https://mlflow.org/docs/latest/api_reference/python_api/mlflow.client.html)
 and [DagsHub MLflow integration](https://dagshub.com/docs/integration_guide/mlflow_tracking/).

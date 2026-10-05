@@ -28,7 +28,8 @@ unavailable while positional error metrics and worst-origin shares can be measur
 
 Information seeking; Alternative assessment; Recommendation; Solution generation.
 OpenAI Codex checked the merged split and upstream Chronos disclosure, selected
-the initial inference settings, and implemented the evaluator, tests and records.
+the initial inference settings, implemented the evaluator and tests, executed
+the comparison, and verified the shared predictions, scores and version records.
 
 ## Response to AI
 
@@ -46,4 +47,5 @@ No peer reproduction or forecast improvement is inferred from authorization.
 - [Issue #12](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/12).
 - [Reviewed split PR #27](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/27).
 - [Evaluation commands and limitations](../evaluation.md).
+- [Completed comparison and reproduction target](../experiments/001-baseline-chronos.md).
 - Source: `src/evaluation.py`, `src/modeling/evaluate.py`; tests: `tests/test_evaluation.py`.

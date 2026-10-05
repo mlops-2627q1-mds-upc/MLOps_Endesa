@@ -5,6 +5,9 @@ uses the [agreed protocol](problem-definition.md) and the split implementation
 merged in [PR #27](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/27).
 It reads the DVC training and validation blocks. It never opens final test targets.
 
+The [first recorded comparison](experiments/001-baseline-chronos.md) links the
+completed runs, scores, execution conditions and expected baseline reproduction.
+
 ## Reproduction
 
 1. Install `uv sync --locked --dev --extra forecast`. The optional `forecast`

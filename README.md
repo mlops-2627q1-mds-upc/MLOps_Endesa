@@ -4,16 +4,19 @@ MLOps course project on half-hourly electricity demand in Australia. We plan to
 compare Chronos-T5-small's zero-shot forecasts with a fine-tuned version, then
 build the training, serving, and monitoring workflow around that model.
 
-The repository contains the project structure, development environment, working
-agreement, M1 documentation, DVC data metadata, and MLflow tracking setup.
-Forecast evaluation and training are still to come.
+The repository contains the development environment, working agreement, M1
+documentation, DVC chronological splits, and MLflow tracking. The first
+[baseline/Chronos validation comparison](docs/experiments/001-baseline-chronos.md)
+is recorded; peer reproduction and review are pending. Project fine-tuning,
+serving, and monitoring remain later work.
 
 ## Dataset and model
 
 The planned dataset is **Australian Electricity Demand** from the
 [Monash Time Series Forecasting Repository](https://huggingface.co/datasets/Monash-University/monash_tsf/tree/main/data):
 five Australian states, half-hourly measurements, and roughly 231,000 observations
-per state. The dataset card will confirm units and evaluation splits before use.
+per state. Splits are versioned in `params.yaml`; the dataset card tracks the
+remaining source-unit and calendar checks.
 
 The base model is [amazon/chronos-t5-small](https://huggingface.co/amazon/chronos-t5-small),
 a pretrained time-series model with 46 million parameters. It takes a historical
