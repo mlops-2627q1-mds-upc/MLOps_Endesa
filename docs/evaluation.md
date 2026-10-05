@@ -16,6 +16,30 @@ It reads the DVC training and validation blocks. It never opens final test targe
 4. Run `uv run --extra forecast python -m src.modeling.evaluate`. Each invocation
    creates new runs and a new ignored directory under `reports/evaluation/`.
 
+DVC authenticates separately from MLflow. If the CLI is not already configured,
+the same local `.env` credentials can be passed to DVC in memory:
+
+```sh
+uv run python - <<'PY'
+import os
+from dvc.repo import Repo
+from src.config import PROJ_ROOT
+
+remote = {
+    "url": "https://dagshub.com/pauadal03/MLOps_Endesa.dvc",
+    "auth": "basic",
+    "user": os.environ["MLFLOW_TRACKING_USERNAME"],
+    "password": os.environ["MLFLOW_TRACKING_PASSWORD"],
+}
+with Repo(str(PROJ_ROOT), config={"remote": {"origin": remote}}) as repo:
+    repo.pull(remote="origin")
+PY
+```
+
+This uses the constructor's configuration override; changing `repo.config`
+after initialization can leave the remote filesystem using its earlier settings.
+The command does not save credentials to DVC configuration or shell history.
+
 For a fast reproduction of one real baseline, run:
 
 ```sh

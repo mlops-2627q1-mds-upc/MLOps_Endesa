@@ -113,8 +113,9 @@ def chronos_forecast(
                 .numpy()
             )
             predictions.append(sample_median(samples, len(batch), horizon))
-            logger.info(
-                f"Chronos: {min(offset + cfg.batch_size, len(contexts))}/{len(contexts)} origins"
+            typer.echo(
+                f"Chronos: {min(offset + cfg.batch_size, len(contexts))}/{len(contexts)} origins",
+                err=True,
             )
     return np.concatenate(predictions), {
         "model_load_seconds": load_seconds,
@@ -174,7 +175,12 @@ def evaluate(
     for name in methods:
         lag = None if name == "chronos" else int(name.removeprefix("seasonal_lag"))
         revision = settings.model_revision if lag is None else f"seasonal-naive-v1:lag-{lag}"
-        config = {**common, "method": name, "seasonal_lag": lag}
+        config = {
+            **common,
+            "method": name,
+            "seasonal_lag": lag,
+            "forecast_device": settings.device if lag is None else "cpu",
+        }
         output = directory / name
         output.mkdir()
         with tracked_run(
