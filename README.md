@@ -5,7 +5,8 @@ compare Chronos-T5-small's zero-shot forecasts with a fine-tuned version, then
 build the training, serving, and monitoring workflow around that model.
 
 The repository contains the project structure, development environment, working
-agreement, and M1 documentation. Data pipelines and experiments are still to come.
+agreement, M1 documentation, DVC data metadata, and MLflow tracking setup.
+Forecast evaluation and training are still to come.
 
 ## Dataset and model
 
@@ -26,6 +27,7 @@ Use a task branch and a reviewed PR for changes to `main`.
 
 - [Working agreement](CONTRIBUTING.md): planning, ownership, branches, and reviews.
 - [Development setup](docs/setup.md): environment installation, directory layout, and adaptations from the CCDS template.
+- [MLflow tracking](docs/mlflow.md): shared setup, a small verification command, and run records for experiments.
 - [M1 problem definition](docs/problem-definition.md): forecasting scope and open requirements.
 - [Dataset card](docs/DATASET_CARD.md) and [model card](docs/MODEL_CARD.md): M1 extensions of the selected upstream cards, with project evidence still needed.
 - [Engineering Decision Notebook](docs/edn/README.md): decisions and their rationale.
