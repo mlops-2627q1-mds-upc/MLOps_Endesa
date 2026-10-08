@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -125,7 +126,11 @@ def test_validation_rejects_wrong_positions_and_nonfinite_predictions(validation
         ValidationData.load(directory, cfg)
 
 
-def test_evaluator_records_comparable_runs_and_artifacts(validation_files, monkeypatch, tmp_path):
+@pytest.mark.parametrize("native_linesep", ["\n", "\r\n"], ids=["lf", "windows-crlf"])
+def test_evaluator_records_comparable_runs_and_artifacts(
+    validation_files, monkeypatch, tmp_path, native_linesep
+):
+    monkeypatch.setattr(evaluator.os, "linesep", native_linesep)
     root, params, directory = validation_files
     (root / "uv.lock").write_text("version = 1\n")
     (root / "dvc.lock").write_text("schema: '2.0'\n")
@@ -167,6 +172,13 @@ def test_evaluator_records_comparable_runs_and_artifacts(validation_files, monke
         output_dir=tmp_path / "outputs",
         tracking_uri=uri,
     )
+    expected_csv = "state,origin,timestep,target\n" + "".join(
+        f"{state},{origin},{position},{multiplier * position}\n"
+        for state, multiplier in (("A", 1), ("B", 2))
+        for origin in (400, 448)
+        for position in range(origin, origin + 48)
+    )
+    assert comparison["targets_sha256"] == hashlib.sha256(expected_csv.encode()).hexdigest()
     assert comparison["primary_baseline_on_validation"] == "seasonal_lag48"
     target_tables = []
     for name, result in comparison["results"].items():

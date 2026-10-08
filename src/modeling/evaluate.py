@@ -149,7 +149,7 @@ def evaluate(
     target_hash = hashlib.sha256(
         data.predictions_frame(data.targets)
         .drop(columns="prediction")
-        .to_csv(index=False)
+        .to_csv(index=False, lineterminator="\n")
         .encode()
     ).hexdigest()
     common = {

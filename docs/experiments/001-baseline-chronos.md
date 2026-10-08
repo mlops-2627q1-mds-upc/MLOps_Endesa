@@ -88,9 +88,19 @@ uv run python -m src.modeling.evaluate --method seasonal_lag336
 
 Expect 87,600 predictions, mean MASE `1.201974712215821`, the data reference and
 target hash above, and a new shared run ID. Record that ID and the interpretation
-review in PR #28 or #12. This reproduction has not yet been performed by a peer.
+review in PR #28 or #12.
 Full Chronos reruns use the guide's optional `forecast` environment; identical
 random seeds do not guarantee bitwise equality across hardware.
+
+On 2026-10-06, [Sindri reproduced lag-336 on Windows](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28#pullrequestreview-5426279134)
+at `eff29e2` in shared run
+[`a5102636b26e47f1be7110e4a5adbd7a`](https://dagshub.com/pauadal03/MLOps_Endesa.mlflow/#/experiments/1/runs/a5102636b26e47f1be7110e4a5adbd7a).
+He reported identical mean MASE, per-state errors, worst-origin shares and row
+count. Matching the DVC data version required forcing LF checkout; the target hash
+still differed because CSV serialization used Windows CRLF. The 2026-10-08
+follow-up enforces LF checkout and target serialization, preserving the original
+LF target hash above. Sindri did not rerun Chronos; native Windows verification
+of the corrections remains pending.
 
 ## Limits and retained attempts
 

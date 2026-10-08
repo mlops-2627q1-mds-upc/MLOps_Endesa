@@ -4,7 +4,7 @@
 - **Milestone:** M2 - Reproducibility.
 - **Activity / Topic:** Real experiment records for #12.
 - **Decision Participants:** Dídac Cayuela.
-- **Status:** Implementation authorized by Dídac; implementation review and result assessment pending.
+- **Status:** Sindri's assessment recorded; Windows corrections implemented; current-head peer review pending.
 
 ## Decision
 
@@ -30,17 +30,33 @@ Information seeking; Alternative assessment; Recommendation; Solution generation
 OpenAI Codex checked the merged split and upstream Chronos disclosure, selected
 the initial inference settings, implemented the evaluator and tests, executed
 the comparison, and verified the shared predictions, scores and version records.
+On 2026-10-08, Codex implemented Sindri's Windows line-ending and target-hash
+corrections, added regression checks and updated the reproduction documentation.
 
 ## Response to AI
 
 Accepted to proceed with #12 after Dídac reported his approval of #17. This is
 authorization for the task. The CPU/batch/budget choices are the agent's initial
 implementation choices, not a separately recorded team agreement.
+Dídac authorized addressing Sindri's Windows findings on 2026-10-08.
 
 ## Assessment of the AI Contribution
 
-Human assessment of the code, result interpretation and reproduction is pending.
-No peer reproduction or forecast improvement is inferred from authorization.
+In his [2026-10-06 review](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28#pullrequestreview-5426279134)
+of `eff29e2`, Sindri found the generated code consistent with the agreed protocol,
+with no leakage or indexing errors. He identified missing Windows line-ending
+handling in Git checkout and target hashing.
+
+Sindri reproduced lag-336 on Windows in shared run
+[`a5102636b26e47f1be7110e4a5adbd7a`](https://dagshub.com/pauadal03/MLOps_Endesa.mlflow/#/experiments/1/runs/a5102636b26e47f1be7110e4a5adbd7a),
+matching the recorded errors and 87,600 predictions after forcing LF checkout.
+He agreed with the scoped validation interpretation: untuned Chronos scored below
+both seasonal baselines. He did not rerun Chronos and retained the single-seed,
+validation-only and upstream pretraining-disclosure limitations.
+
+The 2026-10-08 corrections enforce LF checkout and CSV hashing. Regression checks
+simulate Windows settings; a native Windows recheck of this revision and
+current-head peer approval remain pending.
 
 ## Other Evidence
 

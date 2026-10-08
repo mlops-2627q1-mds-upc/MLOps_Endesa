@@ -10,6 +10,11 @@ completed runs, scores, execution conditions and expected baseline reproduction.
 
 ## Reproduction
 
+Use a fresh checkout on Windows so the repository's LF rule applies to every
+tracked text file. Pulling `.gitattributes` alone does not rewrite
+files already checked out as CRLF; existing copies need refreshing after saving
+any local edits. LF keeps DVC source checksums and the lockfile hash consistent.
+
 1. Install `uv sync --locked --dev --extra forecast`. The optional `forecast`
    dependencies are needed for Chronos; baseline execution and CI use the base environment.
    Linux resolves PyTorch from its CPU index to avoid installing CUDA packages.
@@ -39,6 +44,25 @@ with Repo(str(PROJ_ROOT), config={"remote": {"origin": remote}}) as repo:
 PY
 ```
 
+In PowerShell, pass the same script with a here-string:
+
+```powershell
+@'
+import os
+from dvc.repo import Repo
+from src.config import PROJ_ROOT
+
+remote = {
+    "url": "https://dagshub.com/pauadal03/MLOps_Endesa.dvc",
+    "auth": "basic",
+    "user": os.environ["MLFLOW_TRACKING_USERNAME"],
+    "password": os.environ["MLFLOW_TRACKING_PASSWORD"],
+}
+with Repo(str(PROJ_ROOT), config={"remote": {"origin": remote}}) as repo:
+    repo.pull(remote="origin")
+'@ | uv run python -
+```
+
 This uses the constructor's configuration override; changing `repo.config`
 after initialization can leave the remote filesystem using its earlier settings.
 The command does not save credentials to DVC configuration or shell history.
@@ -64,16 +88,20 @@ their median as the point forecast. No project training or fitted preprocessing 
 
 Each state's MAE is reported in the source scale. Its MASE denominator is the
 mean lag-336 absolute difference over training observations only, regardless of
-which baseline wins. Mean MASE gives each state equal weight. The worst-origin
-error share uses the largest `ceil(0.05 * origins)` origin errors: 19 of 365 here.
+which baseline wins. Mean MASE gives each state equal weight.
+`mean.mae` is an unweighted source-scale average; it does not normalize differences
+in state demand and is not used to select the baseline.
+The worst-origin error share uses the largest `ceil(0.05 * origins)` origin errors:
+19 of 365 here.
 The primary baseline is selected by validation mean MASE, with lag 48 winning a tie.
 This selection does not inspect the test block or select a Chronos configuration.
 
 MLflow records the full protocol, model/data/code versions, seed, sample count,
 device, float32 dtype, batch size, CPU thread count and dependency environment.
 All runs in a comparison share a group ID and a hash of their state/origin/target
-table. Output artifacts include `predictions.parquet`, `metrics.json`, training
-MASE scales, parameters, DVC references, and the tracking helper's environment
+table, serialized with LF line endings on every platform. Output artifacts include
+`predictions.parquet`, `metrics.json`, training MASE scales, parameters, DVC
+references, and the tracking helper's environment
 and version files. Local `comparison.json` links the run IDs and selected baseline.
 
 `model_load_seconds` includes checkpoint retrieval/loading. `inference_seconds`
@@ -104,8 +132,10 @@ Our validation period and metrics also differ from the paper's benchmark.
 
 A fixed seed makes reruns comparable under the recorded software, device, batch
 size and origin order. It does not establish bitwise equality across hardware.
-A teammate must reproduce at least one real result and review the interpretation
-before #12 is complete. Fine-tuning is tracked in #13 and final model-card evidence in #7.
+Sindri's [Windows lag-336 reproduction and interpretation review](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28#pullrequestreview-5426279134)
+are recorded in the experiment record. Native Windows verification of the follow-up
+fixes and current-head peer approval remain pending before merging PR #28.
+Fine-tuning is tracked in #13 and final model-card evidence in #7.
 
 The Chronos adapter follows the [upstream usage example](https://huggingface.co/amazon/chronos-t5-small/tree/a971ba21945c4f1796b17a91fe69214b5f4ad472),
 with an explicit model revision and shared forecast targets.
