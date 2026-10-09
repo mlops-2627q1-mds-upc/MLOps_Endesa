@@ -1,0 +1,169 @@
+# Welcome to Great Expectations! Always know what to expect from your data.
+#
+# Here you can define datasources, batch kwargs generators, integrations and
+# more. This file is intended to be committed to your repo. For help with
+# configuration please:
+#   - Read our docs: https://docs.greatexpectations.io/docs/guides/connecting_to_your_data/connect_to_data_overview/#2-configure-your-datasource
+#   - Join our slack channel: http://greatexpectations.io/slack
+
+# config_version refers to the syntactic version of this config file, and is used in maintaining backwards compatibility
+# It is auto-generated and usually does not need to be changed.
+config_version: 4.0
+
+# This config file supports variable substitution which enables: 1) keeping
+# secrets out of source control & 2) environment-based configuration changes
+# such as staging vs prod.
+#
+# When GX encounters substitution syntax (like `my_key: ${my_value}` or
+# `my_key: $my_value`) in the great_expectations.yml file, it will attempt
+# to replace the value of `my_key` with the value from an environment
+# variable `my_value` or a corresponding key read from this config file,
+# which is defined through the `config_variables_file_path`.
+# Environment variables take precedence over variables defined here.
+#
+# Substitution values defined here can be a simple (non-nested) value,
+# nested value such as a dictionary, or an environment variable (i.e. ${ENV_VAR})
+#
+#
+# https://docs.greatexpectations.io/docs/guides/setup/configuring_data_contexts/how_to_configure_credentials
+
+
+config_variables_file_path: uncommitted/config_variables.yml
+
+# The plugins_directory will be added to your python path for custom modules
+# used to override and extend Great Expectations.
+plugins_directory: plugins/
+
+stores:
+# Stores are configurable places to store things like Expectations, Validations
+# Data Docs, and more. These are for advanced users only - most users can simply
+# leave this section alone.
+  expectations_store:
+    class_name: ExpectationsStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: expectations/
+
+  validation_results_store:
+    class_name: ValidationResultsStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/validations/
+
+  checkpoint_store:
+    class_name: CheckpointStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      suppress_store_backend_id: true
+      base_directory: checkpoints/
+
+  validation_definition_store:
+    class_name: ValidationDefinitionStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: validation_definitions/
+
+expectations_store_name: expectations_store
+validation_results_store_name: validation_results_store
+checkpoint_store_name: checkpoint_store
+
+data_docs_sites:
+  # Data Docs make it simple to visualize data quality in your project. These
+  # include Expectations, Validations & Profiles. The are built for all
+  # Datasources from JSON artifacts in the local repo including validations &
+  # profiles from the uncommitted directory. Read more at https://docs.greatexpectations.io/docs/terms/data_docs
+  local_site:
+    class_name: SiteBuilder
+    site_index_builder:
+      class_name: DefaultSiteIndexBuilder
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: data_docs
+fluent_datasources:
+  pandas:
+    type: pandas
+    id: 5548f145-f443-4466-9faf-30eadb687fdb
+    assets:
+      raw_NSW:
+        type: parquet
+        id: a1006d4e-8b8b-47b4-939e-1c04f112ec8e
+        batch_definitions:
+          raw_NSW_batch:
+            id: 0eff085d-48da-4764-92df-7bf0b1c53d47
+            partitioner:
+        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
+          year\MLOps\MLOps_Endesa\data\raw\NSW.parquet
+      raw_VIC:
+        type: parquet
+        id: 13ddc3c9-8a76-4d0d-bf68-cb5606169b5e
+        batch_definitions:
+          raw_VIC_batch:
+            id: 47b90c7b-8c64-4df0-97eb-09fe2498fd24
+            partitioner:
+        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
+          year\MLOps\MLOps_Endesa\data\raw\VIC.parquet
+      raw_QLD:
+        type: parquet
+        id: d22ccfe7-ac05-45aa-9dda-bc6e5a1db011
+        batch_definitions:
+          raw_QLD_batch:
+            id: f849bf8d-e74d-484d-9334-f16ab401196b
+            partitioner:
+        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
+          year\MLOps\MLOps_Endesa\data\raw\QLD.parquet
+      raw_SA:
+        type: parquet
+        id: 5df22b45-7a87-411f-b3be-7de4eb272c61
+        batch_definitions:
+          raw_SA_batch:
+            id: e31d71d1-68fb-4b69-9fd0-3da06402293d
+            partitioner:
+        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
+          year\MLOps\MLOps_Endesa\data\raw\SA.parquet
+      raw_TAS:
+        type: parquet
+        id: 5a83f950-47c9-448d-af0f-118ba3401d29
+        batch_definitions:
+          raw_TAS_batch:
+            id: fc7226b6-fb12-47e3-b924-1afb2767267b
+            partitioner:
+        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
+          year\MLOps\MLOps_Endesa\data\raw\TAS.parquet
+      train:
+        type: parquet
+        id: 76d09e2d-0e80-47b9-8ba2-b4e839a78391
+        batch_definitions:
+          train_batch:
+            id: 26cfa13b-9b07-46c7-a759-35773d0f5a23
+            partitioner:
+        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
+          year\MLOps\MLOps_Endesa\data\processed\train.parquet
+      validation:
+        type: parquet
+        id: a4917b28-9e3c-4782-83f7-6ce76cb4ca53
+        batch_definitions:
+          validation_batch:
+            id: 7d6cd2c3-23de-4ba7-8712-c6ffe9b58d53
+            partitioner:
+        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
+          year\MLOps\MLOps_Endesa\data\processed\validation.parquet
+      test:
+        type: parquet
+        id: c347ac05-5992-4abd-975a-d397b172e3c7
+        batch_definitions:
+          test_batch:
+            id: 531963a1-efd8-4f95-bd98-2a2c2aa71646
+            partitioner:
+        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
+          year\MLOps\MLOps_Endesa\data\processed\test.parquet
+      origins:
+        type: parquet
+        id: c7aafebd-36d5-46a9-a377-6f00b8ff6136
+        batch_definitions:
+          origins_batch:
+            id: 520d7d03-eef3-4b7f-81e3-3445fb42fa8c
+            partitioner:
+        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
+          year\MLOps\MLOps_Endesa\data\processed\origins.parquet
+analytics_enabled:
+data_context_id: 4f245654-1bd8-4732-b3a7-ce420cc5d05f

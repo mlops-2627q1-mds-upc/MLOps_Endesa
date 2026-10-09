@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "d22ccfe7-ac05-45aa-9dda-bc6e5a1db011",
+      "name": "raw_QLD"
+    },
+    "batch_definition": {
+      "id": "f849bf8d-e74d-484d-9334-f16ab401196b",
+      "name": "raw_QLD_batch"
+    },
+    "datasource": {
+      "id": "5548f145-f443-4466-9faf-30eadb687fdb",
+      "name": "pandas"
+    }
+  },
+  "id": "33ab4b44-1675-4d2e-a568-fc0f67700fe1",
+  "name": "raw_QLD",
+  "suite": {
+    "id": "504914b8-bb58-4e7b-bfac-815eaae8cd7b",
+    "name": "raw_QLD"
+  }
+}

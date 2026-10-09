@@ -1,0 +1,74 @@
+{
+  "expectations": [
+    {
+      "id": "378e6073-1a86-4ece-a7e9-276e16de54c5",
+      "kwargs": {
+        "value": 230736
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_equal"
+    },
+    {
+      "id": "b9103a4e-6e5e-41a6-b7c1-555129b1472c",
+      "kwargs": {
+        "column": "NSW"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_to_exist"
+    },
+    {
+      "id": "4121e545-6244-4e43-ab28-db973d9e29e1",
+      "kwargs": {
+        "column": "NSW",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "27fbf629-616d-46be-94ae-e93f43a30ad7",
+      "kwargs": {
+        "column": "NSW"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "588e2c00-5736-4542-8d7f-bf2e665936fe",
+      "kwargs": {
+        "column": "NSW",
+        "max_value": Infinity,
+        "min_value": -Infinity
+      },
+      "meta": {
+        "note": "rejects NaN and Inf; finite check"
+      },
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "288cc513-a1bb-42f9-854c-d0d412a4923c",
+      "kwargs": {
+        "column": "NSW",
+        "min_value": 0.0
+      },
+      "meta": {
+        "note": "no negatives outside TAS",
+        "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a72"
+      },
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    }
+  ],
+  "id": "6220931b-b024-4ca2-abbf-e1883476b47b",
+  "meta": {
+    "great_expectations_version": "1.24.0",
+    "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a71"
+  },
+  "name": "raw_NSW",
+  "notes": null
+}

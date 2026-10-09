@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "id": "c6551be5-15d3-4f6f-b15d-ae77e1ec0d1a",
+      "kwargs": {
+        "value": 230736
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_equal"
+    },
+    {
+      "id": "0e1a7b6e-c4e7-444d-8242-34501948e0b8",
+      "kwargs": {
+        "column": "TAS"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_to_exist"
+    },
+    {
+      "id": "ee7ce3b0-6273-44dd-b19d-4ba298f5d40c",
+      "kwargs": {
+        "column": "TAS",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "dea2fd2a-483f-4ac6-9065-38220a280294",
+      "kwargs": {
+        "column": "TAS"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "d70ceed7-956c-40df-bd5a-0967daa9de41",
+      "kwargs": {
+        "column": "TAS",
+        "max_value": Infinity,
+        "min_value": -Infinity
+      },
+      "meta": {
+        "note": "rejects NaN and Inf; finite check"
+      },
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    }
+  ],
+  "id": "a93e7c23-342c-489f-b582-2e489b26309e",
+  "meta": {
+    "great_expectations_version": "1.24.0",
+    "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a71"
+  },
+  "name": "raw_TAS",
+  "notes": null
+}

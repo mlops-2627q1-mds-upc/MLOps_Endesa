@@ -1,0 +1,130 @@
+{
+  "expectations": [
+    {
+      "id": "f44a9d73-8bf0-47f0-aae3-4aaa5f3078e5",
+      "kwargs": {
+        "value": 17520
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_equal"
+    },
+    {
+      "id": "c49e0264-99f1-4774-a1af-2d3571b61a08",
+      "kwargs": {
+        "column_list": [
+          "NSW",
+          "VIC",
+          "QLD",
+          "SA",
+          "TAS"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_columns_to_match_ordered_list"
+    },
+    {
+      "id": "d12edfbe-116b-48c9-bdbd-a576bea94093",
+      "kwargs": {
+        "column": "NSW"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "ebaa150d-a21d-4a99-8543-2da708ab6700",
+      "kwargs": {
+        "column": "NSW",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "0a4e8048-a6d5-4c5b-a336-a90927e65595",
+      "kwargs": {
+        "column": "VIC"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "7f4440b1-5544-4cef-adeb-9c2741f574b7",
+      "kwargs": {
+        "column": "VIC",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "e3401d31-10ef-4ece-b99c-44dd2a8da16f",
+      "kwargs": {
+        "column": "QLD"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "51c7082b-e453-435d-8a2b-72a805725d28",
+      "kwargs": {
+        "column": "QLD",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "711e1ced-b635-4747-8ef4-0e91734ff038",
+      "kwargs": {
+        "column": "SA"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "9b90c93d-067a-46d1-a636-2b76b19f5885",
+      "kwargs": {
+        "column": "SA",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "d68ffb22-30c3-48d3-a93a-86a6f81ca555",
+      "kwargs": {
+        "column": "TAS"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "327fd175-b4b3-4b13-9a31-eabfea0684e6",
+      "kwargs": {
+        "column": "TAS",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    }
+  ],
+  "id": "4727b5dd-d7df-4bf3-a92a-52591b0c3b3a",
+  "meta": {
+    "great_expectations_version": "1.24.0",
+    "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a79"
+  },
+  "name": "test",
+  "notes": null
+}

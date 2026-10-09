@@ -1,0 +1,109 @@
+{
+  "expectations": [
+    {
+      "id": "caa5d48a-1ea6-427c-8837-0b3423b06170",
+      "kwargs": {
+        "value": 3650
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_equal"
+    },
+    {
+      "id": "0f42685e-dcf8-4aa1-8625-5b9bd8fbf381",
+      "kwargs": {
+        "column_list": [
+          "state",
+          "block",
+          "origin",
+          "context_start",
+          "target_end"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_columns_to_match_ordered_list"
+    },
+    {
+      "id": "ec0cf41e-3721-4847-bea3-55cad51034ba",
+      "kwargs": {
+        "column": "state"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "0c156134-e25c-4ab0-a747-47e33b5dad4f",
+      "kwargs": {
+        "column": "block"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "4f8a5fe4-93f9-4509-be6c-0e7ad4b3c648",
+      "kwargs": {
+        "column": "origin"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "c33b3192-1cbf-4b09-9b12-4b1066628c35",
+      "kwargs": {
+        "column": "context_start"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "b9bfe1ff-b6a6-4473-b7f4-2205b5a41be3",
+      "kwargs": {
+        "column": "target_end"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "5fb144d6-45f7-446f-93f6-e5f5f3758858",
+      "kwargs": {
+        "column": "state",
+        "value_set": [
+          "NSW",
+          "VIC",
+          "QLD",
+          "SA",
+          "TAS"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_in_set"
+    },
+    {
+      "id": "2ee15f40-0366-4a3b-95cb-f723ae5cdc3a",
+      "kwargs": {
+        "column": "block",
+        "value_set": [
+          "validation",
+          "test"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_in_set"
+    }
+  ],
+  "id": "c02e302e-4542-483d-9ef2-b0a0d48e2719",
+  "meta": {
+    "great_expectations_version": "1.24.0",
+    "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a79"
+  },
+  "name": "origins",
+  "notes": null
+}

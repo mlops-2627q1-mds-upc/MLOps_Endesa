@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "5a83f950-47c9-448d-af0f-118ba3401d29",
+      "name": "raw_TAS"
+    },
+    "batch_definition": {
+      "id": "fc7226b6-fb12-47e3-b924-1afb2767267b",
+      "name": "raw_TAS_batch"
+    },
+    "datasource": {
+      "id": "5548f145-f443-4466-9faf-30eadb687fdb",
+      "name": "pandas"
+    }
+  },
+  "id": "80da310a-d0f4-473b-9670-723ead3dee57",
+  "name": "raw_TAS",
+  "suite": {
+    "id": "a93e7c23-342c-489f-b582-2e489b26309e",
+    "name": "raw_TAS"
+  }
+}
