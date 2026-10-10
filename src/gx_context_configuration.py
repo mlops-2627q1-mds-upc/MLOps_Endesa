@@ -12,7 +12,6 @@ One suite per table:
 
 import great_expectations as gx
 from loguru import logger
-import numpy as np
 
 from src.config import PROCESSED_DATA_DIR, PROJ_ROOT, RAW_DATA_DIR, REPORTS_DIR
 from src.splits import SplitConfig

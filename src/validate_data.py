@@ -13,9 +13,9 @@ import json
 import sys
 
 import great_expectations as gx
+from loguru import logger
 import numpy as np
 import pandas as pd
-from loguru import logger
 
 from src.config import PROCESSED_DATA_DIR, PROJ_ROOT, RAW_DATA_DIR, REPORTS_DIR
 from src.gx_context_configuration import CHECKPOINT, TAS_NEGATIVE_POSITIONS
@@ -46,7 +46,7 @@ def _check_tas_negative_positions(train_df: pd.DataFrame) -> list[dict]:
     # The 22 TAS negatives must fall exactly at the documented positions (EDA §5).
     # Any negative outside those positions, or any missing position, is a failure.
     tas = train_df["TAS"]
-    actual = set(int(i) for i in tas.index[tas < 0])
+    actual = {int(i) for i in tas.index[tas < 0]}
     expected = set(TAS_NEGATIVE_POSITIONS)
     if actual != expected:
         return [
