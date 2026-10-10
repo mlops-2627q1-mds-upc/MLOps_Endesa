@@ -14,7 +14,7 @@ The project-specific question is the trade-off among forecast error, uncertainty
 
 | Requirement | Agreed protocol |
 | --- | --- |
-| Forecast | Use the previous 512 half-hourly target values to predict the next 48 values (one nominal day) for each state. Use no external features in the first comparison. Report the target in its source scale; its physical unit is still unverified. |
+| Forecast | Use the previous 512 half-hourly target values to predict the next 48 values (one nominal day) for each state. Use no external features in the first comparison. Report the target in its stored source scale; the [dataset card](DATASET_CARD.md#source-meaning-units-and-clock-limits) records the source-package MW evidence and remaining unit/clock limits. |
 | Comparable history | Use the first 230,736 observations of each state. Set aside Queensland's remaining 1,536 and South Australia's remaining 48 observations so all states share the same index range. These are positional boundaries, not verified civil timestamps. |
 | Chronological split | For each state, training indices `[0, 195696)`, validation `[195696, 213216)`, and held-out test `[213216, 230736)`. Validation and test each contain 365 × 48 observations. |
 | Forecast origins | Evaluate every 48 steps within validation and test. At each origin, the 512-value context may include earlier observed validation or test targets, as a real rolling forecast would; it must never include a target at or after that origin. Training, preprocessing fits, and model selection cannot use test targets. |
