@@ -1,6 +1,6 @@
-# Normalize line endings in the repository so Windows, macOS and Linux
-# contributors produce the same diffs.
-* text=auto
+# Keep text bytes identical across Windows, macOS and Linux
+# so DVC input checksums and version hashes remain stable.
+* text=auto eol=lf
 
 # Files that must keep LF line endings on every platform
 Makefile  text eol=lf
