@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "fcb27635-966b-40cb-89c8-1225e501c3e2",
+      "name": "raw_VIC"
+    },
+    "batch_definition": {
+      "id": "cbaf6cc8-7aa6-45b8-9720-5944e6efe7bc",
+      "name": "raw_VIC_batch"
+    },
+    "datasource": {
+      "id": "5548f145-f443-4466-9faf-30eadb687fdb",
+      "name": "pandas"
+    }
+  },
+  "id": "33888392-4507-44b3-91d4-d2fc6f2796f4",
+  "name": "raw_VIC",
+  "suite": {
+    "id": "dc20ca2a-f32d-4036-8467-f7dc1ea06e8c",
+    "name": "raw_VIC"
+  }
+}

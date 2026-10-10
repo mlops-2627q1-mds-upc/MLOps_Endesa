@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "300fffdd-bd38-4173-8ef7-d50d2642bcf4",
+      "name": "raw_NSW"
+    },
+    "batch_definition": {
+      "id": "49784b32-0ace-4853-9911-b723a94e883a",
+      "name": "raw_NSW_batch"
+    },
+    "datasource": {
+      "id": "5548f145-f443-4466-9faf-30eadb687fdb",
+      "name": "pandas"
+    }
+  },
+  "id": "ed7a6e55-9d3c-4c05-a096-1914d9c351c4",
+  "name": "raw_NSW",
+  "suite": {
+    "id": "6220931b-b024-4ca2-abbf-e1883476b47b",
+    "name": "raw_NSW"
+  }
+}

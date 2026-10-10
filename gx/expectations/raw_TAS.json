@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "id": "53fa3dd6-5987-48a2-8780-84c886000bee",
+      "kwargs": {
+        "value": 230736
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_equal"
+    },
+    {
+      "id": "046c87af-832e-41da-ba45-c08133c16ee4",
+      "kwargs": {
+        "column": "TAS"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_to_exist"
+    },
+    {
+      "id": "74980b1b-6206-4f68-80ab-f40e7649b109",
+      "kwargs": {
+        "column": "TAS",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "1d98bff0-9a63-4547-807b-62c4a71796fa",
+      "kwargs": {
+        "column": "TAS"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    }
+  ],
+  "id": "a93e7c23-342c-489f-b582-2e489b26309e",
+  "meta": {
+    "great_expectations_version": "1.24.0",
+    "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a71"
+  },
+  "name": "raw_TAS",
+  "notes": null
+}

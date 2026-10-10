@@ -1,0 +1,22 @@
+{
+  "data": {
+    "asset": {
+      "id": "e894537c-5345-4565-822a-a3fbd46ac739",
+      "name": "test"
+    },
+    "batch_definition": {
+      "id": "53307fb1-ff2a-4b1a-95a5-e8913bfed5d0",
+      "name": "test_batch"
+    },
+    "datasource": {
+      "id": "5548f145-f443-4466-9faf-30eadb687fdb",
+      "name": "pandas"
+    }
+  },
+  "id": "56f1cc21-f469-4785-a774-739f261d9817",
+  "name": "test",
+  "suite": {
+    "id": "4727b5dd-d7df-4bf3-a92a-52591b0c3b3a",
+    "name": "test"
+  }
+}

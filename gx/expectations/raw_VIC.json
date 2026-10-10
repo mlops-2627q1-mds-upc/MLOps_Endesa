@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "id": "5c1eefd3-fae1-42af-a3a4-7096a011e758",
+      "kwargs": {
+        "value": 230736
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_equal"
+    },
+    {
+      "id": "c2900baa-9411-4bf9-a05b-c639b0f93ade",
+      "kwargs": {
+        "column": "VIC"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_to_exist"
+    },
+    {
+      "id": "54ac0c51-caf9-4481-95ec-81e0bfdbb4e7",
+      "kwargs": {
+        "column": "VIC",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "743b0b6f-d2f1-4dee-b6f6-8c617d0563a3",
+      "kwargs": {
+        "column": "VIC"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "c4559309-b93b-45d6-ba1f-c55163882456",
+      "kwargs": {
+        "column": "VIC",
+        "min_value": 0.0
+      },
+      "meta": {
+        "note": "no negatives outside TAS",
+        "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a72"
+      },
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    }
+  ],
+  "id": "dc20ca2a-f32d-4036-8467-f7dc1ea06e8c",
+  "meta": {
+    "great_expectations_version": "1.24.0",
+    "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a71"
+  },
+  "name": "raw_VIC",
+  "notes": null
+}

@@ -1,0 +1,200 @@
+{
+  "expectations": [
+    {
+      "id": "04dd3752-02ab-4f85-9f6e-820ba319e8e4",
+      "kwargs": {
+        "value": 195696
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_equal"
+    },
+    {
+      "id": "d2974951-471b-46f5-83f5-5eb1d0e19c6b",
+      "kwargs": {
+        "column_list": [
+          "NSW",
+          "VIC",
+          "QLD",
+          "SA",
+          "TAS"
+        ]
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_columns_to_match_ordered_list"
+    },
+    {
+      "id": "76b0b1f8-0178-4706-9993-c28d6df25299",
+      "kwargs": {
+        "column": "NSW"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "f1c46af9-f322-4bc7-a955-17812dd87221",
+      "kwargs": {
+        "column": "NSW",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "9a8ea9e5-8e65-4985-9e1a-c6df76e74fde",
+      "kwargs": {
+        "column": "NSW",
+        "max_value": 12866.0,
+        "min_value": 3498.0
+      },
+      "meta": {
+        "note": "range derived from training block only",
+        "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a72"
+      },
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "bcb483ec-37e9-4592-ab80-6e88454e19ce",
+      "kwargs": {
+        "column": "VIC"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "5814c5ea-621c-4cef-9056-b9bb00e1f1b5",
+      "kwargs": {
+        "column": "VIC",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "ef50877c-b53f-42c3-aa7b-85f1c7213125",
+      "kwargs": {
+        "column": "VIC",
+        "max_value": 9495.0,
+        "min_value": 2688.0
+      },
+      "meta": {
+        "note": "range derived from training block only",
+        "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a72"
+      },
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "23ccffdd-090c-4594-b79d-a7dc04ab257a",
+      "kwargs": {
+        "column": "QLD"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "40c65c1c-aa68-4df5-917e-9c636e346b3c",
+      "kwargs": {
+        "column": "QLD",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "d9766ab7-d70f-4f51-8f8b-e75cea13db5b",
+      "kwargs": {
+        "column": "QLD",
+        "max_value": 7515.0,
+        "min_value": 2008.0
+      },
+      "meta": {
+        "note": "range derived from training block only",
+        "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a72"
+      },
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "39ff9f0b-767d-426c-b34c-15a9327023da",
+      "kwargs": {
+        "column": "SA"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "8f75cb0c-a149-47c2-a67d-4eebf313871d",
+      "kwargs": {
+        "column": "SA",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "a8247935-63e9-4b29-b9eb-8225347ca054",
+      "kwargs": {
+        "column": "SA",
+        "max_value": 3183.0,
+        "min_value": 696.0
+      },
+      "meta": {
+        "note": "range derived from training block only",
+        "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a72"
+      },
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    },
+    {
+      "id": "f82737fb-575a-492f-be3e-097b6beb7658",
+      "kwargs": {
+        "column": "TAS"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "8fd7bdcb-4c4c-41aa-b4a8-dcc2d7d6b843",
+      "kwargs": {
+        "column": "TAS",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "5d47e10d-bd8d-4fe0-a547-aeb3e907d1a6",
+      "kwargs": {
+        "column": "TAS",
+        "max_value": 1094.0,
+        "min_value": -234.0
+      },
+      "meta": {
+        "note": "range derived from training block only",
+        "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a72"
+      },
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    }
+  ],
+  "id": "02ea4a13-c5b0-4b7f-8ded-aecc452417f3",
+  "meta": {
+    "great_expectations_version": "1.24.0",
+    "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a79"
+  },
+  "name": "train",
+  "notes": null
+}

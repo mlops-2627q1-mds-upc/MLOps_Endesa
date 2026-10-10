@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "id": "cbb63c6b-2201-40a2-bf0f-f7f8f162318d",
+      "kwargs": {
+        "value": 232272
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_equal"
+    },
+    {
+      "id": "b870cfcf-8984-4293-b766-71c6f31a5a0c",
+      "kwargs": {
+        "column": "QLD"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_to_exist"
+    },
+    {
+      "id": "2ae1f65b-edeb-48e6-b8b2-394e1ea38bf5",
+      "kwargs": {
+        "column": "QLD",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "fe9c89b7-11bc-4ca3-b780-91bd5c3fa01c",
+      "kwargs": {
+        "column": "QLD"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "dec53241-176d-4c33-90b9-8f1dab904a7c",
+      "kwargs": {
+        "column": "QLD",
+        "min_value": 0.0
+      },
+      "meta": {
+        "note": "no negatives outside TAS",
+        "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a72"
+      },
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    }
+  ],
+  "id": "504914b8-bb58-4e7b-bfac-815eaae8cd7b",
+  "meta": {
+    "great_expectations_version": "1.24.0",
+    "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a71"
+  },
+  "name": "raw_QLD",
+  "notes": null
+}
