@@ -11,7 +11,7 @@ sampling future trajectories for probabilistic forecasts. Its usage example
 shows how to load the checkpoint and call `predict`; we will adapt that pattern
 to the selected demand data after its input contract is verified. Our planned
 component will take a historical demand sequence for one Australian state and
-forecast a fixed future horizon in the dataset's verified unit.
+forecast a fixed future horizon in the dataset's stored source scale.
 
 The immediate use is a reproducible course comparison of the base checkpoint without project-specific training and a later version fine-tuned on the [selected dataset](DATASET_CARD.md). It is not validated for operational electricity scheduling, emergency decisions, or current demand forecasting.
 
@@ -34,7 +34,7 @@ The [2026-10-05 comparison](experiments/001-baseline-chronos.md) used the median
 ## Limitations, risks, and future evidence
 
 - The upstream paper lists Australian Electricity as a zero-shot evaluation dataset, separate from training datasets. This [disclosure](evaluation.md#interpretation-and-limitations) is not an independent audit of pretraining exposure.
-- The selected demand data is historical, covers only five Australian states, and has unresolved unit and time-zone semantics in our card.
+- The selected demand data is historical and covers five Australian states. The [dataset card](DATASET_CARD.md#source-meaning-units-and-clock-limits) records MW evidence from the extraction package and limits on the archive's unit and civil-clock interpretation.
 - Evidence covers untuned validation point errors and one CPU forecast-loop timing. Held-out accuracy, interval quality, energy use, fine-tuning gains and deployment remain unverified.
 - A later card update must identify the exact fine-tuned artifact, training dataset version, evaluation runs, failure cases, and serving requirements. See [issue #7](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/7).
 
