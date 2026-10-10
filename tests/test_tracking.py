@@ -55,7 +55,9 @@ def open_run(uri, **overrides):
 
 
 def read_json(client, run_id, name, directory):
-    return json.loads(Path(client.download_artifacts(run_id, name, str(directory))).read_text())
+    return json.loads(
+        Path(client.download_artifacts(run_id, name, str(directory))).read_text(encoding="utf-8")
+    )
 
 
 def test_run_round_trip_records_versions_config_environment_and_artifacts(

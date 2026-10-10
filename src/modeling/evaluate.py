@@ -72,8 +72,8 @@ def chronos_forecast(
 ) -> tuple[np.ndarray, dict[str, float]]:
     # Optional imports keep baseline reproduction and CI free of model dependencies.
     try:
-        from chronos import ChronosPipeline
-        import torch
+        from chronos import ChronosPipeline  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
     except ImportError as error:
         raise RuntimeError(
             "Install forecasting dependencies with uv sync --extra forecast"

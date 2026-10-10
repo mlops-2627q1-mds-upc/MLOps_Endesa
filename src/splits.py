@@ -47,7 +47,7 @@ class SplitConfig:
 
     @classmethod
     def from_params(cls, path: Path = PARAMS_PATH) -> "SplitConfig":
-        params = yaml.safe_load(Path(path).read_text())
+        params = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
         return cls(
             states=tuple(params["data"]["states"]),
             common_length=params["data"]["common_length"],
