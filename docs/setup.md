@@ -28,10 +28,36 @@ Other useful commands:
 | `uv add <package>` | Add a project dependency (updates `pyproject.toml` and `uv.lock`) |
 | `uv add --group dev <package>` | Add a development-only dependency |
 | `uv run ruff check` / `uv run ruff format` | Lint and format the code |
+| `uv run pylint src tests` | Static analysis and quality score (see below) |
 | `uv run python -m src.dataset` | Run a module inside the environment |
 
 Commit `pyproject.toml` and `uv.lock` together whenever dependencies change.
 `make` targets (`make test`, `make lint`) are available on systems with GNU Make.
+
+## Static analysis with Pylint
+
+`make lint` runs Ruff first and then Pylint. Both tools are complementary:
+Ruff is a fast linter and formatter (style, import order, common errors),
+while Pylint does deeper static analysis (docstrings, unused arguments, design
+smells such as too many locals or arguments, duplicated code) and gives a global
+score out of 10. Tracked in [issue #34](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/34).
+
+The configuration lives in `pyproject.toml` under `[tool.pylint.*]`:
+
+| Setting | Reason |
+| --- | --- |
+| `max-line-length = 99` | Same limit as Ruff |
+| `line-too-long`, `wrong-import-order` disabled | Already enforced by Ruff, avoids duplicated warnings |
+| `redefined-outer-name` disabled | pytest injects fixtures by parameter name |
+| `no-docstring-rgx = "^(_\|test_)"` | Test names already describe the behaviour; private helpers are exempt |
+| `fail-under = 9.0` | Quality gate: the lint job fails if the score drops below 9.0 |
+
+Score history: 8.89/10 with the default configuration, 9.43/10 after the
+configuration above and three small fixes (explicit UTF-8 encoding when reading
+files, which matters on Windows, and an explicit exception for the optional
+Chronos/torch imports). The remaining messages (missing docstrings in `src`,
+unused arguments in template stubs, long evaluation functions) are kept visible
+on purpose as technical debt to reduce in later milestones.
 
 ## Pull request checks
 

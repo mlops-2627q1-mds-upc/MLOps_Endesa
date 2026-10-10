@@ -31,6 +31,7 @@ clean:
 lint:
 	uv run ruff format --check
 	uv run ruff check
+	uv run pylint src tests
 
 ## Format source code with ruff
 .PHONY: format

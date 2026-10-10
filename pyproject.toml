@@ -52,6 +52,7 @@ explicit = true
 
 [dependency-groups]
 dev = [
+    "pylint>=4.1.2",
     "pytest",
     "ruff",
 ]
@@ -71,3 +72,21 @@ force-sort-within-sections = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.pylint.main]
+# Quality gate: CI fails if the global score drops below this value.
+fail-under = 9.0
+
+[tool.pylint.basic]
+# Private helpers and pytest test functions do not need docstrings.
+no-docstring-rgx = "^(_|test_)"
+
+[tool.pylint.format]
+max-line-length = 99  # same as Ruff
+
+[tool.pylint."messages control"]
+disable = [
+    "line-too-long",         # enforced by Ruff format
+    "wrong-import-order",    # enforced by Ruff isort (I rules)
+    "redefined-outer-name",  # pytest fixtures are injected by name
+]
