@@ -6,11 +6,14 @@ from dataclasses import dataclass
 import hashlib
 from importlib.metadata import distributions
 import json
+import logging
 import math
 import os
 from pathlib import Path
 import platform
+import re
 import subprocess
+import tempfile
 import time
 from typing import Any, Literal
 from urllib.parse import urlparse
@@ -20,6 +23,13 @@ from mlflow.entities import Metric, Param
 from mlflow.exceptions import MlflowException
 
 from src.config import PROJ_ROOT
+
+# Runs execute locally in Barcelona; the country sets CodeCarbon's grid carbon intensity.
+ENERGY_COUNTRY_ISO_CODE = "ESP"
+# Attribute power to this process by its CPU share, rather than to the whole machine.
+ENERGY_TRACKING_MODE = "process"
+# CodeCarbon reports how it obtained each power reading only in its log output.
+_TRACKING_METHOD = re.compile(r"(CPU|GPU|RAM) Tracking Method: (.+)")
 
 
 def tracking_client(tracking_uri: str | None = None) -> MlflowClient:
@@ -68,6 +78,19 @@ def _provenance(data_version: str, model_revision: str) -> dict[str, Any]:
     }
 
 
+def _emissions_tracker(output_dir: Path, country_iso_code: str):
+    """Create an offline CodeCarbon tracker; tests replace this with a fake."""
+    # Imported here so that importing this module does not load CodeCarbon.
+    from codecarbon import OfflineEmissionsTracker
+
+    return OfflineEmissionsTracker(
+        country_iso_code=country_iso_code,
+        output_dir=str(output_dir),
+        tracking_mode=ENERGY_TRACKING_MODE,
+        log_level="info",
+    )
+
+
 def _environment() -> dict[str, Any]:
     return {
         "python": platform.python_version(),
@@ -98,6 +121,64 @@ class TrackedRun:
 
     def log_artifact(self, path: Path, *, artifact_path: str | None = None) -> None:
         self.client.log_artifact(self.run_id, str(path), artifact_path=artifact_path)
+
+    @contextmanager
+    def measure_energy(self, *, country_iso_code: str = ENERGY_COUNTRY_ISO_CODE) -> Iterator[None]:
+        """Measure the enclosed computation with CodeCarbon and log it to this run.
+
+        Wrap only the work being compared, such as a forecast or training loop, and use it
+        at most once per run. If the block fails, the error propagates and no energy is
+        logged. CodeCarbon suppresses its own errors, so a missing result is raised here.
+        """
+        codecarbon_logger = logging.getLogger("codecarbon")
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            log_path = output / "codecarbon.log"
+            handler = logging.FileHandler(log_path, encoding="utf-8")
+            codecarbon_logger.addHandler(handler)
+            try:
+                tracker = _emissions_tracker(output, country_iso_code)
+                tracker.start()
+                try:
+                    yield
+                finally:
+                    tracker.stop()
+            finally:
+                codecarbon_logger.removeHandler(handler)
+                handler.close()
+            data = getattr(tracker, "final_emissions_data", None)
+            if data is None:
+                raise RuntimeError("CodeCarbon reported no measurement; see its log output.")
+            methods = dict(_TRACKING_METHOD.findall(log_path.read_text(encoding="utf-8")))
+            self.log_metrics(
+                {
+                    "energy.kwh": data.energy_consumed,
+                    "energy.cpu_kwh": data.cpu_energy,
+                    "energy.gpu_kwh": data.gpu_energy,
+                    "energy.ram_kwh": data.ram_energy,
+                    "energy.emissions_kg": data.emissions,
+                    "energy.duration_seconds": data.duration,
+                }
+            )
+            params = {
+                "energy.country_iso_code": data.country_iso_code,
+                "energy.tracking_mode": data.tracking_mode,
+                "energy.codecarbon_version": data.codecarbon_version,
+                "energy.cpu_model": data.cpu_model,
+                "energy.gpu_model": data.gpu_model or "none",
+                **{
+                    f"energy.{kind.lower()}_method": method.strip()
+                    for kind, method in methods.items()
+                },
+            }
+            self.client.log_batch(
+                self.run_id,
+                params=[Param(key, str(value)) for key, value in params.items()],
+                synchronous=True,
+            )
+            for path in (output / "emissions.csv", log_path):
+                if path.exists():
+                    self.log_artifact(path, artifact_path="energy")
 
 
 @contextmanager

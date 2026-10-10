@@ -177,6 +177,69 @@ def test_smoke_command_round_trips_in_a_local_store(store):
     assert run.data.metrics["smoke.mae"] == 0.75
 
 
+def test_energy_of_the_measured_block_is_logged_with_its_method(store, tmp_path, fake_codecarbon):
+    uri, client, _ = store
+    with open_run(uri) as run, run.measure_energy():
+        pass
+
+    (tracker,) = fake_codecarbon
+    assert tracker.started and tracker.stopped
+    recorded = client.get_run(run.run_id)
+    assert recorded.info.status == "FINISHED"
+    assert recorded.data.metrics["energy.kwh"] == 0.002
+    assert recorded.data.metrics["energy.cpu_kwh"] == 0.0015
+    assert recorded.data.metrics["energy.emissions_kg"] == 0.0003
+    assert recorded.data.metrics["energy.duration_seconds"] == 1.5
+    assert recorded.data.params["energy.country_iso_code"] == "ESP"
+    assert recorded.data.params["energy.tracking_mode"] == "process"
+    assert recorded.data.params["energy.cpu_method"] == "TDP constant"
+    assert recorded.data.params["energy.gpu_model"] == "none"
+    artifacts = {item.path for item in client.list_artifacts(run.run_id, "energy")}
+    assert artifacts == {"energy/emissions.csv", "energy/codecarbon.log"}
+    log = Path(client.download_artifacts(run.run_id, "energy/codecarbon.log", str(tmp_path)))
+    assert "CPU Tracking Method: TDP constant" in log.read_text()
+
+
+def test_failure_inside_measured_block_stops_tracker_and_logs_no_energy(store, fake_codecarbon):
+    uri, client, _ = store
+    with (
+        pytest.raises(RuntimeError, match="forecast failed"),
+        open_run(uri) as run,
+        run.measure_energy(),
+    ):
+        raise RuntimeError("forecast failed")
+
+    (tracker,) = fake_codecarbon
+    assert tracker.stopped
+    recorded = client.get_run(run.run_id)
+    assert recorded.info.status == "FAILED"
+    assert "energy.kwh" not in recorded.data.metrics
+
+
+def test_missing_codecarbon_result_fails_the_run(store, monkeypatch):
+    class SilentlyFailingTracker:
+        """CodeCarbon suppresses its errors and then reports no data."""
+
+        def __init__(self, output_dir, country_iso_code):
+            pass
+
+        def start(self):
+            pass
+
+        def stop(self):
+            return None
+
+    monkeypatch.setattr(tracking, "_emissions_tracker", SilentlyFailingTracker)
+    uri, client, _ = store
+    with (
+        pytest.raises(RuntimeError, match="no measurement"),
+        open_run(uri) as run,
+        run.measure_energy(),
+    ):
+        pass
+    assert client.get_run(run.run_id).info.status == "FAILED"
+
+
 def test_new_experiment_is_created_and_reused(store):
     uri, client, _ = store
     with open_run(uri, experiment_name="new-experiment") as first:
