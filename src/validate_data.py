@@ -49,11 +49,15 @@ if __name__ == "__main__":
             # exactly what went wrong.
             for er in result["results"]:
                 if not er["success"]:
-                    failures.append({
-                        "suite": result["meta"]["expectation_suite_name"],
-                        "expectation": er["expectation_config"]["type"],
-                        "column": er["expectation_config"]["kwargs"].get("column", "table-level"),
-                    })
+                    failures.append(
+                        {
+                            "suite": result["meta"]["expectation_suite_name"],
+                            "expectation": er["expectation_config"]["type"],
+                            "column": er["expectation_config"]["kwargs"].get(
+                                "column", "table-level"
+                            ),
+                        }
+                    )
 
     success = total_failed == 0
 

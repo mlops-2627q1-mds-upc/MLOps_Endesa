@@ -15,10 +15,12 @@ from src.splits import SplitConfig
 # Build the list of validation names from params.yaml so they stay in sync
 # with the configuration without hardcoding state names here.
 CFG = SplitConfig.from_params()
-VALIDATION_NAMES = (
-    [f"raw_{state}" for state in CFG.states]
-    + ["train", "validation", "test", "origins"]
-)
+VALIDATION_NAMES = [f"raw_{state}" for state in CFG.states] + [
+    "train",
+    "validation",
+    "test",
+    "origins",
+]
 
 # Skip the whole module when data files are not on disk (e.g. in CI).
 data_available = (

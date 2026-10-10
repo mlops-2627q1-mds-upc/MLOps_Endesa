@@ -27,7 +27,7 @@ CARD_LENGTHS = {
     "NSW": 230_736,
     "VIC": 230_736,
     "QLD": 232_272,
-    "SA":  230_784,
+    "SA": 230_784,
     "TAS": 230_736,
 }
 
@@ -35,9 +35,28 @@ CARD_LENGTHS = {
 # They correspond to three nominal days in March 2005 where total operational demand
 # dropped while industrial load stayed near its usual level. We keep them as-is.
 TAS_NEGATIVE_POSITIONS = [
-    55440, 55441, 55442, 55443, 55444, 55445, 55446, 55447,
-    55448, 55449, 55450, 55451, 55452, 55457, 55458, 55460,
-    55461, 56139, 56226, 56227, 56228, 56229,
+    55440,
+    55441,
+    55442,
+    55443,
+    55444,
+    55445,
+    55446,
+    55447,
+    55448,
+    55449,
+    55450,
+    55451,
+    55452,
+    55457,
+    55458,
+    55460,
+    55461,
+    56139,
+    56226,
+    56227,
+    56228,
+    56229,
 ]
 
 # Min and max values observed in the training block for each state (EDA section 2).
@@ -45,10 +64,10 @@ TAS_NEGATIVE_POSITIONS = [
 # TAS lower bound covers the 22 known negatives; all other states are strictly positive.
 TRAIN_RANGES = {
     "NSW": (3_498.0, 12_866.0),
-    "VIC": (2_688.0,  9_495.0),
-    "QLD": (2_008.0,  7_515.0),
-    "SA":  (  696.0,  3_183.0),
-    "TAS": ( -234.0,  1_094.0),
+    "VIC": (2_688.0, 9_495.0),
+    "QLD": (2_008.0, 7_515.0),
+    "SA": (696.0, 3_183.0),
+    "TAS": (-234.0, 1_094.0),
 }
 
 
@@ -67,9 +86,7 @@ def _build_raw_suite(state: str, n_rows: int) -> gx.ExpectationSuite:
     suite.add_expectation(
         gx.expectations.ExpectColumnValuesToBeOfType(column=state, type_="float32")
     )
-    suite.add_expectation(
-        gx.expectations.ExpectColumnValuesToNotBeNull(column=state)
-    )
+    suite.add_expectation(gx.expectations.ExpectColumnValuesToNotBeNull(column=state))
     suite.add_expectation(
         gx.expectations.ExpectColumnValuesToBeBetween(
             column=state,
@@ -109,15 +126,11 @@ def _build_block_suite(name: str, cfg: SplitConfig) -> gx.ExpectationSuite:
     )
     suite.add_expectation(gx.expectations.ExpectTableRowCountToEqual(value=n_rows))
     suite.add_expectation(
-        gx.expectations.ExpectTableColumnsToMatchOrderedList(
-            column_list=list(cfg.states)
-        )
+        gx.expectations.ExpectTableColumnsToMatchOrderedList(column_list=list(cfg.states))
     )
 
     for state in cfg.states:
-        suite.add_expectation(
-            gx.expectations.ExpectColumnValuesToNotBeNull(column=state)
-        )
+        suite.add_expectation(gx.expectations.ExpectColumnValuesToNotBeNull(column=state))
         suite.add_expectation(
             gx.expectations.ExpectColumnValuesToBeOfType(column=state, type_="float32")
         )
@@ -162,9 +175,7 @@ def _build_origins_suite(cfg: SplitConfig) -> gx.ExpectationSuite:
     for col in ["state", "block", "origin", "context_start", "target_end"]:
         suite.add_expectation(gx.expectations.ExpectColumnValuesToNotBeNull(column=col))
     suite.add_expectation(
-        gx.expectations.ExpectColumnValuesToBeInSet(
-            column="state", value_set=list(cfg.states)
-        )
+        gx.expectations.ExpectColumnValuesToBeInSet(column="state", value_set=list(cfg.states))
     )
     suite.add_expectation(
         gx.expectations.ExpectColumnValuesToBeInSet(
