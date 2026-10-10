@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "139861ee-2fc7-4aa1-84e9-df80c10e1d9e",
+      "id": "8aaad9f5-e4c6-4b48-ae10-d9309bc73558",
       "kwargs": {
         "value": 230784
       },
@@ -10,7 +10,7 @@
       "type": "expect_table_row_count_to_equal"
     },
     {
-      "id": "4eee1032-4553-448b-8cd0-04dd4f82e0c4",
+      "id": "01a34017-2d19-47fb-98c3-996d110f36e7",
       "kwargs": {
         "column": "SA"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_to_exist"
     },
     {
-      "id": "35f4e207-afbe-4eed-b2e5-9714ccff5d31",
+      "id": "46f67749-5a2e-45f3-9909-f1bb885aa0f6",
       "kwargs": {
         "column": "SA",
         "type_": "float32"
@@ -29,7 +29,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "72ae455f-3d02-44e7-a6b8-bcf52914a05c",
+      "id": "c33c17b5-176c-4823-b87b-b9687ca2c457",
       "kwargs": {
         "column": "SA"
       },
@@ -38,20 +38,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "07ec2733-3b2e-484f-a151-88e23ba86173",
-      "kwargs": {
-        "column": "SA",
-        "max_value": Infinity,
-        "min_value": -Infinity
-      },
-      "meta": {
-        "note": "rejects NaN and Inf; finite check"
-      },
-      "severity": "critical",
-      "type": "expect_column_values_to_be_between"
-    },
-    {
-      "id": "6b2999f9-61e2-454e-882a-cbdbc01556a3",
+      "id": "34f86b1a-7812-4ffa-af2c-eff2986389c8",
       "kwargs": {
         "column": "SA",
         "min_value": 0.0

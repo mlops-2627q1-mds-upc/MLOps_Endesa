@@ -8,12 +8,16 @@ stages:
       - data
       - split
       - forecast
+    outs:
+      - reports/gx_configured.json:
+          cache: false
 
   validate-data:
     cmd: python -m src.validate_data
     deps:
       - src/validate_data.py
       - src/gx_context_configuration.py
+      - reports/gx_configured.json
       - gx/expectations
       - gx/validation_definitions
       - gx/checkpoints

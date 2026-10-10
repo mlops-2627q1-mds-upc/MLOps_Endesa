@@ -86,84 +86,75 @@ fluent_datasources:
     assets:
       raw_NSW:
         type: parquet
-        id: a1006d4e-8b8b-47b4-939e-1c04f112ec8e
+        id: 300fffdd-bd38-4173-8ef7-d50d2642bcf4
         batch_definitions:
           raw_NSW_batch:
-            id: 0eff085d-48da-4764-92df-7bf0b1c53d47
+            id: 49784b32-0ace-4853-9911-b723a94e883a
             partitioner:
-        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
-          year\MLOps\MLOps_Endesa\data\raw\NSW.parquet
+        path: data\raw\NSW.parquet
       raw_VIC:
         type: parquet
-        id: 13ddc3c9-8a76-4d0d-bf68-cb5606169b5e
+        id: fcb27635-966b-40cb-89c8-1225e501c3e2
         batch_definitions:
           raw_VIC_batch:
-            id: 47b90c7b-8c64-4df0-97eb-09fe2498fd24
+            id: cbaf6cc8-7aa6-45b8-9720-5944e6efe7bc
             partitioner:
-        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
-          year\MLOps\MLOps_Endesa\data\raw\VIC.parquet
+        path: data\raw\VIC.parquet
       raw_QLD:
         type: parquet
-        id: d22ccfe7-ac05-45aa-9dda-bc6e5a1db011
+        id: 84e4c124-676e-4552-a49a-eae90d61f296
         batch_definitions:
           raw_QLD_batch:
-            id: f849bf8d-e74d-484d-9334-f16ab401196b
+            id: b39bf868-46f0-4ea6-91ec-8e0160fac8fb
             partitioner:
-        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
-          year\MLOps\MLOps_Endesa\data\raw\QLD.parquet
+        path: data\raw\QLD.parquet
       raw_SA:
         type: parquet
-        id: 5df22b45-7a87-411f-b3be-7de4eb272c61
+        id: 45d01b23-185b-4dff-bc28-afce7ba57e17
         batch_definitions:
           raw_SA_batch:
-            id: e31d71d1-68fb-4b69-9fd0-3da06402293d
+            id: 395a3814-d822-4c82-bed3-d2782e8ae340
             partitioner:
-        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
-          year\MLOps\MLOps_Endesa\data\raw\SA.parquet
+        path: data\raw\SA.parquet
       raw_TAS:
         type: parquet
-        id: 5a83f950-47c9-448d-af0f-118ba3401d29
+        id: be92a9c5-0930-42f8-88bd-e6c2b448426f
         batch_definitions:
           raw_TAS_batch:
-            id: fc7226b6-fb12-47e3-b924-1afb2767267b
+            id: 4520d939-2ddc-4e70-9db8-002e913c0d51
             partitioner:
-        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
-          year\MLOps\MLOps_Endesa\data\raw\TAS.parquet
+        path: data\raw\TAS.parquet
       train:
         type: parquet
-        id: 76d09e2d-0e80-47b9-8ba2-b4e839a78391
+        id: 127c893c-0883-4eee-8c9b-4f474e2ec62f
         batch_definitions:
           train_batch:
-            id: 26cfa13b-9b07-46c7-a759-35773d0f5a23
+            id: 1aa5e0ad-1e3e-444e-9073-59a236e3d887
             partitioner:
-        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
-          year\MLOps\MLOps_Endesa\data\processed\train.parquet
+        path: data\processed\train.parquet
       validation:
         type: parquet
-        id: a4917b28-9e3c-4782-83f7-6ce76cb4ca53
+        id: 6db8cb61-b8a9-4997-8500-414e3884ef5d
         batch_definitions:
           validation_batch:
-            id: 7d6cd2c3-23de-4ba7-8712-c6ffe9b58d53
+            id: 8962af9d-b70a-41b6-a9dd-c6db85a9e412
             partitioner:
-        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
-          year\MLOps\MLOps_Endesa\data\processed\validation.parquet
+        path: data\processed\validation.parquet
       test:
         type: parquet
-        id: c347ac05-5992-4abd-975a-d397b172e3c7
+        id: e894537c-5345-4565-822a-a3fbd46ac739
         batch_definitions:
           test_batch:
-            id: 531963a1-efd8-4f95-bd98-2a2c2aa71646
+            id: 53307fb1-ff2a-4b1a-95a5-e8913bfed5d0
             partitioner:
-        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
-          year\MLOps\MLOps_Endesa\data\processed\test.parquet
+        path: data\processed\test.parquet
       origins:
         type: parquet
-        id: c7aafebd-36d5-46a9-a377-6f00b8ff6136
+        id: 40e8c3c6-9230-4423-a73c-49dc9c70f41c
         batch_definitions:
           origins_batch:
-            id: 520d7d03-eef3-4b7f-81e3-3445fb42fa8c
+            id: 2dcbcb2b-cdb3-4c4f-b920-5a40eb8aaf40
             partitioner:
-        path: C:\Users\adals\OneDrive\Escritorio\Máster\2nd 
-          year\MLOps\MLOps_Endesa\data\processed\origins.parquet
+        path: data\processed\origins.parquet
 analytics_enabled:
 data_context_id: 4f245654-1bd8-4732-b3a7-ce420cc5d05f

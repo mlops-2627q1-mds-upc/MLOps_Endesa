@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "4c155127-36c1-41a9-8660-af0e9ba00c3a",
+      "id": "5c1eefd3-fae1-42af-a3a4-7096a011e758",
       "kwargs": {
         "value": 230736
       },
@@ -10,7 +10,7 @@
       "type": "expect_table_row_count_to_equal"
     },
     {
-      "id": "c38110bc-d323-4203-bd43-1f442aff6585",
+      "id": "c2900baa-9411-4bf9-a05b-c639b0f93ade",
       "kwargs": {
         "column": "VIC"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_to_exist"
     },
     {
-      "id": "317c1919-0745-441e-a7a9-2d0a09a425f7",
+      "id": "54ac0c51-caf9-4481-95ec-81e0bfdbb4e7",
       "kwargs": {
         "column": "VIC",
         "type_": "float32"
@@ -29,7 +29,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "d4d69bd4-f725-4efe-ab33-5dbacac5dd1d",
+      "id": "743b0b6f-d2f1-4dee-b6f6-8c617d0563a3",
       "kwargs": {
         "column": "VIC"
       },
@@ -38,20 +38,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "7f83006e-f2f8-4101-be67-0a8d1035556d",
-      "kwargs": {
-        "column": "VIC",
-        "max_value": Infinity,
-        "min_value": -Infinity
-      },
-      "meta": {
-        "note": "rejects NaN and Inf; finite check"
-      },
-      "severity": "critical",
-      "type": "expect_column_values_to_be_between"
-    },
-    {
-      "id": "15a392ca-c0d7-41b4-ac72-2fa3dbf172f1",
+      "id": "c4559309-b93b-45d6-ba1f-c55163882456",
       "kwargs": {
         "column": "VIC",
         "min_value": 0.0

@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "708f6997-8503-4139-8624-285795d9316b",
+      "id": "04dd3752-02ab-4f85-9f6e-820ba319e8e4",
       "kwargs": {
         "value": 195696
       },
@@ -10,7 +10,7 @@
       "type": "expect_table_row_count_to_equal"
     },
     {
-      "id": "1a0cc874-1dea-4ec1-a035-8c553f9012bd",
+      "id": "d2974951-471b-46f5-83f5-5eb1d0e19c6b",
       "kwargs": {
         "column_list": [
           "NSW",
@@ -25,7 +25,7 @@
       "type": "expect_table_columns_to_match_ordered_list"
     },
     {
-      "id": "5958dd8e-f712-45f0-9179-f5533fffce82",
+      "id": "76b0b1f8-0178-4706-9993-c28d6df25299",
       "kwargs": {
         "column": "NSW"
       },
@@ -34,7 +34,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "9d177549-5cee-4fc2-8b92-5b9b515c9011",
+      "id": "f1c46af9-f322-4bc7-a955-17812dd87221",
       "kwargs": {
         "column": "NSW",
         "type_": "float32"
@@ -44,7 +44,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "613446d8-f7d8-4abc-86b3-3f85afd0494b",
+      "id": "9a8ea9e5-8e65-4985-9e1a-c6df76e74fde",
       "kwargs": {
         "column": "NSW",
         "max_value": 12866.0,
@@ -58,7 +58,7 @@
       "type": "expect_column_values_to_be_between"
     },
     {
-      "id": "1d5ae388-819c-41dc-94f9-0df878e8ee25",
+      "id": "bcb483ec-37e9-4592-ab80-6e88454e19ce",
       "kwargs": {
         "column": "VIC"
       },
@@ -67,7 +67,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "042dfe29-fa97-44ec-a498-de005f349560",
+      "id": "5814c5ea-621c-4cef-9056-b9bb00e1f1b5",
       "kwargs": {
         "column": "VIC",
         "type_": "float32"
@@ -77,7 +77,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "076404c1-41b9-44d5-a97d-0729cc912d9e",
+      "id": "ef50877c-b53f-42c3-aa7b-85f1c7213125",
       "kwargs": {
         "column": "VIC",
         "max_value": 9495.0,
@@ -91,7 +91,7 @@
       "type": "expect_column_values_to_be_between"
     },
     {
-      "id": "aae52597-eb22-4b7f-8e02-054c02e4300e",
+      "id": "23ccffdd-090c-4594-b79d-a7dc04ab257a",
       "kwargs": {
         "column": "QLD"
       },
@@ -100,7 +100,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "874ef9d9-840e-4604-a54c-daff26080fea",
+      "id": "40c65c1c-aa68-4df5-917e-9c636e346b3c",
       "kwargs": {
         "column": "QLD",
         "type_": "float32"
@@ -110,7 +110,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "f8b7f689-72aa-472a-a91d-68f60fdd469c",
+      "id": "d9766ab7-d70f-4f51-8f8b-e75cea13db5b",
       "kwargs": {
         "column": "QLD",
         "max_value": 7515.0,
@@ -124,7 +124,7 @@
       "type": "expect_column_values_to_be_between"
     },
     {
-      "id": "8b7537e6-70d4-4a3e-8427-ba92ca7f648a",
+      "id": "39ff9f0b-767d-426c-b34c-15a9327023da",
       "kwargs": {
         "column": "SA"
       },
@@ -133,7 +133,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "8f875337-0716-46c1-9dc8-457fe01d014c",
+      "id": "8f75cb0c-a149-47c2-a67d-4eebf313871d",
       "kwargs": {
         "column": "SA",
         "type_": "float32"
@@ -143,7 +143,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "4daac396-cc7a-4147-a352-9c5e447533b1",
+      "id": "a8247935-63e9-4b29-b9eb-8225347ca054",
       "kwargs": {
         "column": "SA",
         "max_value": 3183.0,
@@ -157,7 +157,7 @@
       "type": "expect_column_values_to_be_between"
     },
     {
-      "id": "5231ace5-11a0-49de-ac72-750448ea08ee",
+      "id": "f82737fb-575a-492f-be3e-097b6beb7658",
       "kwargs": {
         "column": "TAS"
       },
@@ -166,7 +166,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "d2ccc3f6-6d8d-4413-aa88-2dc123151ec4",
+      "id": "8fd7bdcb-4c4c-41aa-b4a8-dcc2d7d6b843",
       "kwargs": {
         "column": "TAS",
         "type_": "float32"
@@ -176,7 +176,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "1dab06c1-a0f0-4237-b728-de723962261a",
+      "id": "5d47e10d-bd8d-4fe0-a547-aeb3e907d1a6",
       "kwargs": {
         "column": "TAS",
         "max_value": 1094.0,

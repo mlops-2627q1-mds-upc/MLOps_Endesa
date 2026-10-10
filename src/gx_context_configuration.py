@@ -14,7 +14,7 @@ import great_expectations as gx
 from loguru import logger
 import numpy as np
 
-from src.config import PROCESSED_DATA_DIR, PROJ_ROOT, RAW_DATA_DIR
+from src.config import PROCESSED_DATA_DIR, PROJ_ROOT, RAW_DATA_DIR, REPORTS_DIR
 from src.splits import SplitConfig
 
 # Names imported by validate_data.py and tests/test_data.py
@@ -87,14 +87,8 @@ def _build_raw_suite(state: str, n_rows: int) -> gx.ExpectationSuite:
         gx.expectations.ExpectColumnValuesToBeOfType(column=state, type_="float32")
     )
     suite.add_expectation(gx.expectations.ExpectColumnValuesToNotBeNull(column=state))
-    suite.add_expectation(
-        gx.expectations.ExpectColumnValuesToBeBetween(
-            column=state,
-            min_value=float(-np.inf),
-            max_value=float(np.inf),
-            meta={"note": "rejects NaN and Inf; finite check"},
-        )
-    )
+    # Infinity check is handled by a Python function in validate_data.py because
+    # ExpectColumnValuesToBeBetween(-inf, inf) always passes and does not catch inf.
     if state != "TAS":
         suite.add_expectation(
             gx.expectations.ExpectColumnValuesToBeBetween(
@@ -214,7 +208,7 @@ if __name__ == "__main__":
     for state in cfg.states:
         asset = datasource.add_parquet_asset(
             name=f"raw_{state}",
-            path=RAW_DATA_DIR / f"{state}.parquet",
+            path=(RAW_DATA_DIR / f"{state}.parquet").relative_to(PROJ_ROOT),
         )
         batch_def = asset.add_batch_definition(name=f"raw_{state}_batch")
         suite = _build_raw_suite(state, CARD_LENGTHS[state])
@@ -233,7 +227,7 @@ if __name__ == "__main__":
     for block_name in ("train", "validation", "test"):
         asset = datasource.add_parquet_asset(
             name=block_name,
-            path=PROCESSED_DATA_DIR / f"{block_name}.parquet",
+            path=(PROCESSED_DATA_DIR / f"{block_name}.parquet").relative_to(PROJ_ROOT),
         )
         batch_def = asset.add_batch_definition(name=f"{block_name}_batch")
         suite = _build_block_suite(block_name, cfg)
@@ -251,7 +245,7 @@ if __name__ == "__main__":
     # Register the origins table.
     asset = datasource.add_parquet_asset(
         name="origins",
-        path=PROCESSED_DATA_DIR / "origins.parquet",
+        path=(PROCESSED_DATA_DIR / "origins.parquet").relative_to(PROJ_ROOT),
     )
     batch_def = asset.add_batch_definition(name="origins_batch")
     suite = _build_origins_suite(cfg)
@@ -275,4 +269,12 @@ if __name__ == "__main__":
         result_format="SUMMARY",
     )
     context.checkpoints.add_or_update(checkpoint)
+
+    # Write a stamp file so DVC can track that configure_gx ran and validate-data
+    # can declare it as a dep, guaranteeing the correct execution order.
+    import json as _json
+
+    (REPORTS_DIR / "gx_configured.json").write_text(
+        _json.dumps({"configured": True, "suites": len(validation_definitions)})
+    )
     logger.success("GX context configured successfully.")

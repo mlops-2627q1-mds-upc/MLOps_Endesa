@@ -1,11 +1,11 @@
 {
   "data": {
     "asset": {
-      "id": "d22ccfe7-ac05-45aa-9dda-bc6e5a1db011",
+      "id": "84e4c124-676e-4552-a49a-eae90d61f296",
       "name": "raw_QLD"
     },
     "batch_definition": {
-      "id": "f849bf8d-e74d-484d-9334-f16ab401196b",
+      "id": "b39bf868-46f0-4ea6-91ec-8e0160fac8fb",
       "name": "raw_QLD_batch"
     },
     "datasource": {

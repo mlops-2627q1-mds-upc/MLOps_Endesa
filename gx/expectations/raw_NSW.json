@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "378e6073-1a86-4ece-a7e9-276e16de54c5",
+      "id": "1b20c036-6c86-4e2d-a8c3-3671a21405ac",
       "kwargs": {
         "value": 230736
       },
@@ -10,7 +10,7 @@
       "type": "expect_table_row_count_to_equal"
     },
     {
-      "id": "b9103a4e-6e5e-41a6-b7c1-555129b1472c",
+      "id": "a65d2aa1-0d07-4f8a-adec-7211ef276d63",
       "kwargs": {
         "column": "NSW"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_to_exist"
     },
     {
-      "id": "4121e545-6244-4e43-ab28-db973d9e29e1",
+      "id": "d25f6d50-b2d3-4c59-9e1a-e399c7f53698",
       "kwargs": {
         "column": "NSW",
         "type_": "float32"
@@ -29,7 +29,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "27fbf629-616d-46be-94ae-e93f43a30ad7",
+      "id": "657e8035-05fe-4db9-8139-ff0f982a4dd9",
       "kwargs": {
         "column": "NSW"
       },
@@ -38,20 +38,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "588e2c00-5736-4542-8d7f-bf2e665936fe",
-      "kwargs": {
-        "column": "NSW",
-        "max_value": Infinity,
-        "min_value": -Infinity
-      },
-      "meta": {
-        "note": "rejects NaN and Inf; finite check"
-      },
-      "severity": "critical",
-      "type": "expect_column_values_to_be_between"
-    },
-    {
-      "id": "288cc513-a1bb-42f9-854c-d0d412a4923c",
+      "id": "93806a06-0cca-4568-a5b7-29c9bffcdb9f",
       "kwargs": {
         "column": "NSW",
         "min_value": 0.0

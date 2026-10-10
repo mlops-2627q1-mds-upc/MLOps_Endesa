@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "28ac803b-7757-4a75-8f20-3dbe924421db",
+      "id": "cbb63c6b-2201-40a2-bf0f-f7f8f162318d",
       "kwargs": {
         "value": 232272
       },
@@ -10,7 +10,7 @@
       "type": "expect_table_row_count_to_equal"
     },
     {
-      "id": "607e1ddf-e25e-4ca2-acee-8ff0eb3e45b5",
+      "id": "b870cfcf-8984-4293-b766-71c6f31a5a0c",
       "kwargs": {
         "column": "QLD"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_to_exist"
     },
     {
-      "id": "49f0b974-d683-421c-bbd1-e5e4118b1672",
+      "id": "2ae1f65b-edeb-48e6-b8b2-394e1ea38bf5",
       "kwargs": {
         "column": "QLD",
         "type_": "float32"
@@ -29,7 +29,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "9dee22ff-2105-4101-b34f-22a9b27fdcee",
+      "id": "fe9c89b7-11bc-4ca3-b780-91bd5c3fa01c",
       "kwargs": {
         "column": "QLD"
       },
@@ -38,20 +38,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "30a9f0c4-875f-48b0-bcfe-1c9f979eb1ea",
-      "kwargs": {
-        "column": "QLD",
-        "max_value": Infinity,
-        "min_value": -Infinity
-      },
-      "meta": {
-        "note": "rejects NaN and Inf; finite check"
-      },
-      "severity": "critical",
-      "type": "expect_column_values_to_be_between"
-    },
-    {
-      "id": "6151f5db-3ade-4ba4-8d27-2b7228ac44f8",
+      "id": "dec53241-176d-4c33-90b9-8f1dab904a7c",
       "kwargs": {
         "column": "QLD",
         "min_value": 0.0
