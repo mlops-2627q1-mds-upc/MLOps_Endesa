@@ -47,9 +47,9 @@ make test
 ```
 
 If a job fails, open its GitHub Actions log and run the failing command locally.
-The pytest suite checks package imports, checked-in directories, the presence of
-raw-data DVC metadata, and the split and forecast-origin rules on synthetic series;
-model and API tests belong with their future implementations.
+The pytest suite checks package imports, checked-in directories, raw-data DVC
+metadata, archive ingestion with offline ZIP/TSF fixtures, and the split and
+forecast-origin rules on synthetic series.
 CI does not download datasets or model weights or run training. Requiring these
 checks before merge is tracked separately in [issue #20](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/20).
 
@@ -64,6 +64,34 @@ Install Python 3.11 from [python.org](https://www.python.org/downloads/) and run
 If `uv` is not recognised after `pip install uv`, the Python `Scripts` folder is not on
 `PATH`; use `py -m uv sync` and `py -m uv run pytest`, or install uv with the
 [official installer](https://docs.astral.sh/uv/getting-started/installation/).
+
+## Source archive verification
+
+The [downloader](../src/dataset.py) verifies the ZIP's SHA-256 before opening it,
+then requires T1-T5 exactly once before writing any Parquet files. A checksum
+mismatch or missing, duplicate, or unknown ID raises an error before the output
+directory is created or existing outputs are changed. Values remain `float32`,
+with the existing state mapping and positional `timestep` index.
+
+The expected ZIP SHA-256 is
+`b1439c28a631766bd05ee327f1f430a887b9f53b38a8cd5c0769ded1fd4aaf5a`,
+matching the [dataset card](DATASET_CARD.md#dataset-structure-and-provenance).
+To download, verify, and inspect the source using an ignored scratch directory:
+
+```sh
+uv run python -m src.dataset --output-dir temporary/archive-check/raw
+```
+
+This command accesses Zenodo and writes to the specified scratch directory.
+The offline ingestion tests use synthetic ZIP/TSF fixtures, require no network or
+credentials, and check both new and existing output directories:
+
+```sh
+uv run pytest tests/test_dataset.py -q
+```
+
+The decision is recorded in [EDN-007 / PR #47](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/47);
+implementation and peer review are tracked in [#46](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/46).
 
 ## Directory layout
 
