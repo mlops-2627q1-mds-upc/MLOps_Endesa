@@ -131,8 +131,12 @@ and MLflow uploads are outside the measured block. Each run records:
 | `energy.cpu_model`, `energy.gpu_model`, `energy.codecarbon_version` | Hardware and version |
 
 The artifacts `energy/emissions.csv` and `energy/codecarbon.log` contain
-CodeCarbon's own output. The method parameters distinguish measured values from
-estimates; compare energy only between runs with the same methods and hardware.
+CodeCarbon's own output. When the GPU is measured from power samples (below),
+those artifacts report 0 kWh for the GPU; the MLflow metrics add the sampled GPU
+energy to CodeCarbon's values. The method parameters distinguish measured values
+from estimates; compare energy only between runs with the same methods and hardware.
+[Experiment 002](experiments/002-energy-measurement.md) records the measured
+validation comparison.
 
 CodeCarbon obtains GPU energy only from NVML's energy counter and records 0 kWh
 when the counter is not supported. The tracking helper therefore checks the

@@ -50,7 +50,8 @@ recommended the separate sampler, which Sindri accepted.
 
 Sindri committed the sampler after a 10 s check under full load, which read 497
 samples without loss and gave 3.03 × 10⁻⁴ kWh at a mean of 109 W.
-The full evidence run and teammates' review of the GPU measurement are pending.
+The measured comparison is recorded in [Experiment 002](../experiments/002-energy-measurement.md);
+teammates' review of the GPU measurement is pending.
 
 ## Other Evidence
 
