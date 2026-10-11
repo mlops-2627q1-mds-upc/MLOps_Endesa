@@ -79,6 +79,32 @@ def _check_block_index_ranges(cfg: SplitConfig) -> list[dict]:
     return failures
 
 
+def _collect_gx_failures(checkpoint_result) -> tuple[int, int, list[dict]]:
+    # Extracts evaluated count, failure count, and failure details from a GX checkpoint
+    # result. Uses result.suite_name (GX 1.24.0 API) instead of result["meta"][...],
+    # which raises KeyError when an expectation fails.
+    total_evaluated = 0
+    total_failed = 0
+    failures = []
+    for result in checkpoint_result.run_results.values():
+        stats = result["statistics"]
+        total_evaluated += stats["evaluated_expectations"]
+        total_failed += stats["unsuccessful_expectations"]
+        if stats["unsuccessful_expectations"] > 0:
+            for er in result["results"]:
+                if not er["success"]:
+                    failures.append(
+                        {
+                            "suite": result.suite_name,
+                            "expectation": er["expectation_config"]["type"],
+                            "column": er["expectation_config"]["kwargs"].get(
+                                "column", "table-level"
+                            ),
+                        }
+                    )
+    return total_evaluated, total_failed, failures
+
+
 def _check_origins_windows(cfg: SplitConfig) -> list[dict]:
     # Validates integer positions, lower/upper bounds, and the complete unique
     # origin grid for each (state, block) pair. Catches out-of-range origins,
@@ -168,26 +194,7 @@ if __name__ == "__main__":
     # Run all 9 GX validation definitions at once.
     checkpoint_result = checkpoint.run()
 
-    total_evaluated = 0
-    total_failed = 0
-    failures = []
-
-    for result in checkpoint_result.run_results.values():
-        stats = result["statistics"]
-        total_evaluated += stats["evaluated_expectations"]
-        total_failed += stats["unsuccessful_expectations"]
-        if stats["unsuccessful_expectations"] > 0:
-            for er in result["results"]:
-                if not er["success"]:
-                    failures.append(
-                        {
-                            "suite": result["meta"]["expectation_suite_name"],
-                            "expectation": er["expectation_config"]["type"],
-                            "column": er["expectation_config"]["kwargs"].get(
-                                "column", "table-level"
-                            ),
-                        }
-                    )
+    total_evaluated, total_failed, failures = _collect_gx_failures(checkpoint_result)
 
     # Python checks for things GX cannot express directly.
     for state in cfg.states:

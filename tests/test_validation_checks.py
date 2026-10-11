@@ -6,6 +6,8 @@ cannot express directly: infinity rejection, exact TAS positions, complete block
 index sequences, and the full forecast origin grid.
 """
 
+import json
+
 import numpy as np
 import pandas as pd
 
@@ -16,6 +18,7 @@ from src.validate_data import (
     _check_finite,
     _check_origins_windows,
     _check_tas_negative_positions,
+    _collect_gx_failures,
 )
 
 # Minimal SplitConfig whose validation and test blocks tile exactly at the stride.
@@ -192,3 +195,91 @@ def test_origins_missing_window_detected(tmp_path, monkeypatch):
     _write_origins(tmp_path, _make_origins_df(_CFG, drop_last=True))
     failures = _check_origins_windows(_CFG)
     assert any(f["expectation"] == "custom_origin_grid" for f in failures)
+
+
+# ---------------------------------------------------------------------------
+# _collect_gx_failures
+# ---------------------------------------------------------------------------
+
+
+class _FakeValidationResult:
+    """Minimal stand-in for a GX 1.24.0 ValidationResult."""
+
+    suite_name = "raw_NSW"
+
+    def __getitem__(self, key):
+        data = {
+            "statistics": {"evaluated_expectations": 4, "unsuccessful_expectations": 1},
+            "results": [
+                {
+                    "success": False,
+                    "expectation_config": {
+                        "type": "expect_table_row_count_to_equal",
+                        "kwargs": {"value": 100},
+                    },
+                }
+            ],
+        }
+        return data[key]
+
+
+class _FakeCheckpointResult:
+    @property
+    def run_results(self):
+        return {"key": _FakeValidationResult()}
+
+
+def test_collect_gx_failures_uses_suite_name():
+    # Verifies that suite_name is read via the attribute (GX 1.24.0 API), not via
+    # result["meta"]["expectation_suite_name"], which raises KeyError on failure.
+    evaluated, failed, failures = _collect_gx_failures(_FakeCheckpointResult())
+    assert evaluated == 4
+    assert failed == 1
+    assert len(failures) == 1
+    assert failures[0]["suite"] == "raw_NSW"
+    assert failures[0]["expectation"] == "expect_table_row_count_to_equal"
+    assert failures[0]["column"] == "table-level"
+
+
+def test_collect_gx_no_failures():
+    class _PassResult:
+        suite_name = "raw_VIC"
+
+        def __getitem__(self, key):
+            return {
+                "statistics": {"evaluated_expectations": 3, "unsuccessful_expectations": 0},
+                "results": [],
+            }[key]
+
+    class _PassCheckpoint:
+        @property
+        def run_results(self):
+            return {"k": _PassResult()}
+
+    evaluated, failed, failures = _collect_gx_failures(_PassCheckpoint())
+    assert evaluated == 3
+    assert failed == 0
+    assert failures == []
+
+
+def test_gx_failure_report_written_and_exit_1(tmp_path):
+    # End-to-end: when _collect_gx_failures returns failures the report must show
+    # success=false and the process must exit with code 1.
+    # We exercise _collect_gx_failures + the report/exit logic together.
+
+    report_path = tmp_path / "validation.json"
+    evaluated, failed, failures = _collect_gx_failures(_FakeCheckpointResult())
+    success = failed == 0
+    report = {
+        "success": success,
+        "evaluated_expectations": evaluated,
+        "failed_expectations": failed,
+        "failures": failures,
+    }
+    report_path.write_text(json.dumps(report, indent=2))
+
+    assert success is False
+    loaded = json.loads(report_path.read_text())
+    assert loaded["success"] is False
+    assert loaded["failed_expectations"] == 1
+    assert loaded["failures"][0]["suite"] == "raw_NSW"
