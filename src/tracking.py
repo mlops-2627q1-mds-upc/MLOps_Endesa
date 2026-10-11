@@ -89,7 +89,11 @@ def _emissions_tracker(output_dir: Path, country_iso_code: str):
     """Create an offline CodeCarbon tracker; tests replace this with a fake."""
     # Imported here so that importing this module does not load CodeCarbon.
     from codecarbon import OfflineEmissionsTracker
+    from codecarbon.core.hardware_cache import clear_cache
 
+    # CodeCarbon sets up hardware once per process and logs the tracking methods only
+    # then; a fresh setup gives every run its own methods in its own log.
+    clear_cache()
     return OfflineEmissionsTracker(
         country_iso_code=country_iso_code,
         output_dir=str(output_dir),

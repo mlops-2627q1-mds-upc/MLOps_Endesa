@@ -13,6 +13,9 @@ from src import tracking
 from src.modeling.tracking_smoke import smoke_run
 from tests.conftest import FakeEmissionsTracker
 
+# Saved before the autouse fixture replaces it with a fake.
+real_emissions_tracker = tracking._emissions_tracker
+
 
 @pytest.fixture
 def store(tmp_path, monkeypatch):
@@ -201,6 +204,20 @@ def test_energy_of_the_measured_block_is_logged_with_its_method(store, tmp_path,
     assert artifacts == {"energy/emissions.csv", "energy/codecarbon.log"}
     log = Path(client.download_artifacts(run.run_id, "energy/codecarbon.log", str(tmp_path)))
     assert "CPU Tracking Method: TDP constant" in log.read_text()
+
+
+def test_each_tracker_sets_up_hardware_and_logs_its_own_methods(monkeypatch, tmp_path):
+    import codecarbon
+    from codecarbon.core import hardware_cache
+
+    events = []
+    monkeypatch.setattr(hardware_cache, "clear_cache", lambda: events.append("clear"))
+    monkeypatch.setattr(
+        codecarbon, "OfflineEmissionsTracker", lambda **kwargs: events.append("tracker")
+    )
+    for _ in range(2):
+        real_emissions_tracker(tmp_path, "ESP")
+    assert events == ["clear", "tracker", "clear", "tracker"]
 
 
 def test_failure_inside_measured_block_stops_tracker_and_logs_no_energy(store, fake_codecarbon):
