@@ -273,9 +273,7 @@ if __name__ == "__main__":
     # when paths are passed as posix strings. Replace them so the stored config
     # is portable across operating systems.
     gx_yml = PROJ_ROOT / "gx" / "great_expectations.yml"
-    gx_yml.write_text(
-        gx_yml.read_text(encoding="utf-8").replace("\\", "/"), encoding="utf-8"
-    )
+    gx_yml.write_text(gx_yml.read_text(encoding="utf-8").replace("\\", "/"), encoding="utf-8")
     logger.info("Normalised path separators in great_expectations.yml")
 
     # Write a stamp file so DVC can track that configure_gx ran and validate-data
