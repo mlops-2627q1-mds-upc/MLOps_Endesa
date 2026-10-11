@@ -1,0 +1,184 @@
+{
+  "repository": "mlops-2627q1-mds-upc/MLOps_Endesa",
+  "issue": 20,
+  "verification_pr": 42,
+  "method": "GitHub REST branch-protection API, GraphQL pullRequest/statusCheckRollup (including CheckRun.isRequired), and gh pr checks --required; no merge attempted.",
+  "baseline": {
+    "main_sha": "1ef5bc9ce00a5f61907f2b2127a52ba42950532c",
+    "successful_run_url": "https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/actions/runs/38158426444"
+  },
+  "branch_protection_before": {
+    "required_status_checks": null,
+    "required_pull_request_reviews": {
+      "dismiss_stale_reviews": true,
+      "require_code_owner_reviews": false,
+      "require_last_push_approval": false,
+      "required_approving_review_count": 1
+    },
+    "required_signatures": false,
+    "enforce_admins": true,
+    "required_linear_history": false,
+    "allow_force_pushes": false,
+    "allow_deletions": false,
+    "block_creations": false,
+    "required_conversation_resolution": true,
+    "lock_branch": false,
+    "allow_fork_syncing": false
+  },
+  "branch_protection_after": {
+    "required_status_checks": {
+      "strict": true,
+      "checks": [
+        {
+          "context": "CI / lint",
+          "app_id": 15368
+        },
+        {
+          "context": "CI / test",
+          "app_id": 15368
+        }
+      ]
+    },
+    "required_pull_request_reviews": {
+      "dismiss_stale_reviews": true,
+      "require_code_owner_reviews": false,
+      "require_last_push_approval": false,
+      "required_approving_review_count": 1
+    },
+    "required_signatures": false,
+    "enforce_admins": true,
+    "required_linear_history": false,
+    "allow_force_pushes": false,
+    "allow_deletions": false,
+    "block_creations": false,
+    "required_conversation_resolution": true,
+    "lock_branch": false,
+    "allow_fork_syncing": false
+  },
+  "other_protection_fields_unchanged": true,
+  "repository_merge_settings": {
+    "allow_merge_commit": true,
+    "allow_rebase_merge": false,
+    "allow_squash_merge": false,
+    "delete_branch_on_merge": true
+  },
+  "observations": [
+    {
+      "url": "https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/42",
+      "headRefOid": "fbe12c6946d7182cdfab69cf6f5ea636a08a7692",
+      "baseRefOid": "1ef5bc9ce00a5f61907f2b2127a52ba42950532c",
+      "mergeStateStatus": "BLOCKED",
+      "mergeable": "MERGEABLE",
+      "reviewDecision": "REVIEW_REQUIRED",
+      "checks": [
+        {
+          "name": "CI / lint",
+          "conclusion": "FAILURE",
+          "status": "COMPLETED",
+          "detailsUrl": "https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/actions/runs/38159658820/job/114529727246",
+          "isRequired": true,
+          "checkSuite": {
+            "app": {
+              "databaseId": 15368,
+              "slug": "github-actions"
+            }
+          }
+        },
+        {
+          "name": "CI / test",
+          "conclusion": "SUCCESS",
+          "status": "COMPLETED",
+          "detailsUrl": "https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/actions/runs/38159658820/job/114529727378",
+          "isRequired": true,
+          "checkSuite": {
+            "app": {
+              "databaseId": 15368,
+              "slug": "github-actions"
+            }
+          }
+        }
+      ],
+      "observed_at_utc": "2026-10-11T17:27:15.856704+00:00",
+      "phase": "lint-failure",
+      "required_checks_cli_exit_code": 1
+    },
+    {
+      "url": "https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/42",
+      "headRefOid": "21acfa228fc3458c7b06fdf36ef582ca1cd998cb",
+      "baseRefOid": "1ef5bc9ce00a5f61907f2b2127a52ba42950532c",
+      "mergeStateStatus": "BLOCKED",
+      "mergeable": "MERGEABLE",
+      "reviewDecision": "REVIEW_REQUIRED",
+      "checks": [
+        {
+          "name": "CI / lint",
+          "conclusion": "SUCCESS",
+          "status": "COMPLETED",
+          "detailsUrl": "https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/actions/runs/38159712941/job/114529889575",
+          "isRequired": true,
+          "checkSuite": {
+            "app": {
+              "databaseId": 15368,
+              "slug": "github-actions"
+            }
+          }
+        },
+        {
+          "name": "CI / test",
+          "conclusion": "FAILURE",
+          "status": "COMPLETED",
+          "detailsUrl": "https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/actions/runs/38159712941/job/114529889420",
+          "isRequired": true,
+          "checkSuite": {
+            "app": {
+              "databaseId": 15368,
+              "slug": "github-actions"
+            }
+          }
+        }
+      ],
+      "observed_at_utc": "2026-10-11T17:28:23.446421+00:00",
+      "phase": "test-failure",
+      "required_checks_cli_exit_code": 1
+    },
+    {
+      "url": "https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/42",
+      "headRefOid": "2d368a5e3ddb86e0cd40454cf5c21ec792e232d0",
+      "baseRefOid": "1ef5bc9ce00a5f61907f2b2127a52ba42950532c",
+      "mergeStateStatus": "BLOCKED",
+      "mergeable": "MERGEABLE",
+      "reviewDecision": "REVIEW_REQUIRED",
+      "checks": [
+        {
+          "name": "CI / lint",
+          "conclusion": "SUCCESS",
+          "status": "COMPLETED",
+          "detailsUrl": "https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/actions/runs/38159790049/job/114530117570",
+          "isRequired": true,
+          "checkSuite": {
+            "app": {
+              "databaseId": 15368,
+              "slug": "github-actions"
+            }
+          }
+        },
+        {
+          "name": "CI / test",
+          "conclusion": "SUCCESS",
+          "status": "COMPLETED",
+          "detailsUrl": "https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/actions/runs/38159790049/job/114530117900",
+          "isRequired": true,
+          "checkSuite": {
+            "app": {
+              "databaseId": 15368,
+              "slug": "github-actions"
+            }
+          }
+        }
+      ],
+      "observed_at_utc": "2026-10-11T17:30:48.158914+00:00",
+      "phase": "recovery",
+      "required_checks_cli_exit_code": 0
+    }
+  ]
+}
