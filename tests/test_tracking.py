@@ -1,7 +1,9 @@
 import hashlib
 import json
+import logging
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import mlflow
 from mlflow import MlflowClient
@@ -9,6 +11,7 @@ import pytest
 
 from src import tracking
 from src.modeling.tracking_smoke import smoke_run
+from tests.conftest import FakeEmissionsTracker
 
 
 @pytest.fixture
@@ -238,6 +241,104 @@ def test_missing_codecarbon_result_fails_the_run(store, monkeypatch):
     ):
         pass
     assert client.get_run(run.run_id).info.status == "FAILED"
+
+
+def test_power_samples_are_integrated_over_the_measured_interval():
+    # 100 W held from before the start, then 50 W; the interval is 2 s of each.
+    samples = [(0, 100.0), (3_000_000, 50.0)]
+    kwh = tracking._integrate_power_kwh(samples, start_us=1_000_000, stop_us=5_000_000)
+    assert kwh == pytest.approx((100 * 2 + 50 * 2) / 3.6e6)
+
+
+class FakeNvml:
+    """Stands in for pynvml's power-sample buffer of a single GPU."""
+
+    NVML_TOTAL_POWER_SAMPLES = "total-power"
+
+    class NVMLError_NotFound(Exception):
+        pass
+
+    def __init__(self, buffer):
+        self.buffer = buffer
+
+    def nvmlDeviceGetSamples(self, handle, kind, since_us):
+        newer = [
+            SimpleNamespace(timeStamp=t, sampleValue=SimpleNamespace(uiVal=watts * 1000))
+            for t, watts in self.buffer
+            if t > since_us
+        ]
+        if not newer:
+            raise self.NVMLError_NotFound()
+        return kind, newer
+
+
+def test_gpu_sampler_measures_the_board_power_samples():
+    now = 1_000_000_000_000_000
+    clock = iter([now / 1e6, (now + 2_000_000) / 1e6]).__next__
+    nvml = FakeNvml([(now - 500_000, 50.0), (now - 100_000, 50.0)])
+    sampler = tracking._GpuPowerSampler(nvml, ["gpu0"], poll_seconds=3600, clock=clock)
+    sampler.start()
+    nvml.buffer += [(now + 1_000_000, 110.0)]
+    sampler.stop()
+    assert sampler.kwh == pytest.approx((50 * 1 + 110 * 1) / 3.6e6)
+
+
+def test_gpu_sampler_rejects_samples_lost_from_the_buffer():
+    now = 1_000_000_000_000_000
+    clock = iter([now / 1e6, (now + 5_000_000) / 1e6]).__next__
+    nvml = FakeNvml([(now - 200_000, 50.0), (now - 100_000, 50.0)])
+    sampler = tracking._GpuPowerSampler(nvml, ["gpu0"], poll_seconds=3600, clock=clock)
+    sampler.start()
+    # The two-sample buffer was fully replaced before the next read.
+    nvml.buffer = [(now + 4_000_000, 110.0), (now + 4_500_000, 110.0)]
+    with pytest.raises(RuntimeError, match="overwritten"):
+        sampler.stop()
+
+
+class FakeGpuSampler:
+    def __init__(self, kwh):
+        self.kwh = kwh
+        self.started = self.stopped = False
+
+    def start(self):
+        self.started = True
+
+    def stop(self):
+        self.stopped = True
+
+
+def test_gpu_samples_replace_codecarbons_zero_and_add_their_emissions(store, monkeypatch):
+    sampler = FakeGpuSampler(kwh=0.004)
+    monkeypatch.setattr(tracking, "_gpu_power_sampler", lambda: sampler)
+    monkeypatch.setattr(tracking, "_grid_emissions_kg", lambda kwh, country: kwh * 0.2)
+    uri, client, _ = store
+    with open_run(uri) as run, run.measure_energy():
+        pass
+
+    assert sampler.started and sampler.stopped
+    recorded = client.get_run(run.run_id)
+    assert recorded.data.metrics["energy.gpu_kwh"] == 0.004
+    assert recorded.data.metrics["energy.kwh"] == pytest.approx(0.006)
+    assert recorded.data.metrics["energy.emissions_kg"] == pytest.approx(0.0003 + 0.0008)
+    assert recorded.data.params["energy.gpu_method"] == tracking.GPU_SAMPLES_METHOD
+
+
+def test_unmeasurable_gpu_is_recorded_instead_of_a_zero(store, fake_codecarbon, monkeypatch):
+    start = FakeEmissionsTracker.start
+
+    def start_with_failing_counter(self):
+        start(self)
+        logging.getLogger("codecarbon").warning(tracking._GPU_COUNTER_UNSUPPORTED)
+
+    monkeypatch.setattr(FakeEmissionsTracker, "start", start_with_failing_counter)
+    uri, client, _ = store
+    with open_run(uri) as run, run.measure_energy():
+        pass
+
+    recorded = client.get_run(run.run_id)
+    assert "energy.gpu_kwh" not in recorded.data.metrics
+    assert recorded.data.metrics["energy.kwh"] == 0.002
+    assert recorded.data.params["energy.gpu_method"] == tracking.GPU_UNMEASURED_METHOD
 
 
 def test_new_experiment_is_created_and_reused(store):

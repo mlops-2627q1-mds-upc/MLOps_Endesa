@@ -16,7 +16,6 @@ class FakeEmissionsTracker:
         self.started = self.stopped = False
 
     def start(self):
-        # CodeCarbon sets its logger to INFO and reports its methods there.
         logger = logging.getLogger("codecarbon")
         logger.setLevel(logging.INFO)
         logger.info("CPU Tracking Method: TDP constant")
@@ -53,4 +52,5 @@ def fake_codecarbon(monkeypatch):
         return tracker
 
     monkeypatch.setattr(tracking, "_emissions_tracker", factory)
+    monkeypatch.setattr(tracking, "_gpu_power_sampler", lambda: None)
     return created

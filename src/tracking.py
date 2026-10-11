@@ -1,6 +1,6 @@
 """Explicit MLflow runs for forecasting scripts and notebooks."""
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 import hashlib
@@ -14,6 +14,7 @@ import platform
 import re
 import subprocess
 import tempfile
+import threading
 import time
 from typing import Any, Literal
 from urllib.parse import urlparse
@@ -30,6 +31,13 @@ ENERGY_COUNTRY_ISO_CODE = "ESP"
 ENERGY_TRACKING_MODE = "process"
 # CodeCarbon reports how it obtained each power reading only in its log output.
 _TRACKING_METHOD = re.compile(r"(CPU|GPU|RAM) Tracking Method: (.+)")
+# CodeCarbon reads GPU energy only from NVML's energy counter; without it, it logs this
+# warning and reports 0 kWh for the GPU.
+_GPU_COUNTER_UNSUPPORTED = "Failed to retrieve gpu total energy consumption"
+GPU_SAMPLES_METHOD = "nvml power samples (board power)"
+GPU_UNMEASURED_METHOD = "not measured (NVML energy counter not supported)"
+# NVML keeps about 120 power samples; under load they span only a few seconds.
+_GPU_POLL_SECONDS = 0.5
 
 
 def tracking_client(tracking_uri: str | None = None) -> MlflowClient:
@@ -54,7 +62,6 @@ def _experiment_id(client: MlflowClient, name: str) -> str:
         try:
             return client.create_experiment(name)
         except MlflowException:
-            # Another contributor may have created the experiment in the meantime.
             experiment = client.get_experiment_by_name(name)
             if experiment is None:
                 raise
@@ -88,6 +95,137 @@ def _emissions_tracker(output_dir: Path, country_iso_code: str):
         output_dir=str(output_dir),
         tracking_mode=ENERGY_TRACKING_MODE,
         log_level="info",
+    )
+
+
+def _integrate_power_kwh(samples: list[tuple[int, float]], start_us: int, stop_us: int) -> float:
+    """Energy of (timestamp in microseconds, watts) samples over [start_us, stop_us].
+
+    Each sample's power holds until the next sample, as NVML reports averaged readings.
+    """
+    points = sorted(samples)
+    joules = 0.0
+    for (begin, watts), (end, _) in zip(points, [*points[1:], (stop_us, 0.0)]):
+        overlap = min(end, stop_us) - max(begin, start_us)
+        if overlap > 0:
+            joules += watts * overlap / 1e6
+    return joules / 3.6e6
+
+
+class _GpuPowerSampler:
+    """Integrate NVML's power samples for GPUs whose energy counter is not supported.
+
+    The samples are the board power the driver reports, for the whole device.
+    """
+
+    def __init__(
+        self,
+        nvml: Any,
+        handles: list[Any],
+        poll_seconds: float = _GPU_POLL_SECONDS,
+        clock: Callable[[], float] = time.time,
+    ):
+        self._nvml = nvml
+        self._handles = handles
+        self._poll_seconds = poll_seconds
+        self._clock = clock
+        self._samples: list[list[tuple[int, float]]] = [[] for _ in handles]
+        self._capacity = [0] * len(handles)
+        self._lost = False
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+        self.kwh = 0.0
+
+    def _read(self, index: int, since_us: int) -> list[tuple[int, float]]:
+        try:
+            _, samples = self._nvml.nvmlDeviceGetSamples(
+                self._handles[index], self._nvml.NVML_TOTAL_POWER_SAMPLES, since_us
+            )
+        except self._nvml.NVMLError_NotFound:
+            return []
+        return [(sample.timeStamp, sample.sampleValue.uiVal / 1000) for sample in samples]
+
+    def _poll(self) -> None:
+        for index, samples in enumerate(self._samples):
+            new = self._read(index, samples[-1][0])
+            # A read as large as the whole buffer may have skipped overwritten samples.
+            if len(new) >= self._capacity[index]:
+                self._lost = True
+            samples.extend(new)
+
+    def _run(self) -> None:
+        while not self._stop.wait(self._poll_seconds):
+            self._poll()
+
+    def start(self) -> None:
+        self._start_us = int(self._clock() * 1e6)
+        for index in range(len(self._handles)):
+            # The full buffer gives its capacity and the reading in force at the start.
+            buffer = self._read(index, 0)
+            if not buffer:
+                raise RuntimeError("NVML returned no GPU power samples.")
+            self._capacity[index] = len(buffer)
+            self._samples[index] = [buffer[-1]]
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        stop_us = int(self._clock() * 1e6)
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join()
+        self._poll()
+        if self._lost:
+            raise RuntimeError(
+                "GPU power samples were overwritten before they were read; "
+                "the GPU energy is incomplete."
+            )
+        self.kwh = sum(
+            _integrate_power_kwh(samples, self._start_us, stop_us) for samples in self._samples
+        )
+
+
+def _gpu_power_sampler() -> _GpuPowerSampler | None:
+    """Return a sampler only for NVIDIA GPUs that CodeCarbon cannot measure; tests fake this."""
+    try:
+        import pynvml
+    except ImportError:
+        return None
+    try:
+        pynvml.nvmlInit()
+        handles = [
+            pynvml.nvmlDeviceGetHandleByIndex(index)
+            for index in range(pynvml.nvmlDeviceGetCount())
+        ]
+    except pynvml.NVMLError:
+        # No NVIDIA driver or GPU: CodeCarbon reports the GPU itself.
+        return None
+    if not handles:
+        return None
+    for handle in handles:
+        try:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption(handle)
+        except pynvml.NVMLError:
+            continue
+        # A working energy counter on any GPU means CodeCarbon measures it as usual.
+        return None
+    try:
+        for handle in handles:
+            pynvml.nvmlDeviceGetSamples(handle, pynvml.NVML_TOTAL_POWER_SAMPLES, 0)
+    except pynvml.NVMLError:
+        return None
+    return _GpuPowerSampler(pynvml, handles)
+
+
+def _grid_emissions_kg(kwh: float, country_iso_code: str) -> float:
+    """Emissions of kwh with CodeCarbon's own carbon intensity for the country."""
+    from codecarbon.core.emissions import Emissions
+    from codecarbon.core.units import Energy
+    from codecarbon.external.geography import GeoMetadata
+    from codecarbon.input import DataSource
+
+    return Emissions(DataSource()).get_private_infra_emissions(
+        Energy.from_energy(kWh=kwh), GeoMetadata(country_iso_code=country_iso_code)
     )
 
 
@@ -129,6 +267,7 @@ class TrackedRun:
         Wrap only the work being compared, such as a forecast or training loop, and use it
         at most once per run. If the block fails, the error propagates and no energy is
         logged. CodeCarbon suppresses its own errors, so a missing result is raised here.
+        GPUs without NVML's energy counter are measured from NVML's power samples instead.
         """
         codecarbon_logger = logging.getLogger("codecarbon")
         with tempfile.TemporaryDirectory() as directory:
@@ -138,9 +277,16 @@ class TrackedRun:
             codecarbon_logger.addHandler(handler)
             try:
                 tracker = _emissions_tracker(output, country_iso_code)
+                sampler = _gpu_power_sampler()
                 tracker.start()
                 try:
-                    yield
+                    if sampler is not None:
+                        sampler.start()
+                    try:
+                        yield
+                    finally:
+                        if sampler is not None:
+                            sampler.stop()
                 finally:
                     tracker.stop()
             finally:
@@ -149,17 +295,29 @@ class TrackedRun:
             data = getattr(tracker, "final_emissions_data", None)
             if data is None:
                 raise RuntimeError("CodeCarbon reported no measurement; see its log output.")
-            methods = dict(_TRACKING_METHOD.findall(log_path.read_text(encoding="utf-8")))
-            self.log_metrics(
-                {
-                    "energy.kwh": data.energy_consumed,
-                    "energy.cpu_kwh": data.cpu_energy,
-                    "energy.gpu_kwh": data.gpu_energy,
-                    "energy.ram_kwh": data.ram_energy,
-                    "energy.emissions_kg": data.emissions,
-                    "energy.duration_seconds": data.duration,
-                }
-            )
+            log = log_path.read_text(encoding="utf-8")
+            methods = dict(_TRACKING_METHOD.findall(log))
+            metrics = {
+                "energy.kwh": data.energy_consumed,
+                "energy.cpu_kwh": data.cpu_energy,
+                "energy.gpu_kwh": data.gpu_energy,
+                "energy.ram_kwh": data.ram_energy,
+                "energy.emissions_kg": data.emissions,
+                "energy.duration_seconds": data.duration,
+            }
+            if sampler is not None:
+                # CodeCarbon counted 0 kWh for these GPUs; replace it with the samples.
+                metrics["energy.gpu_kwh"] = sampler.kwh
+                metrics["energy.kwh"] = data.energy_consumed - data.gpu_energy + sampler.kwh
+                metrics["energy.emissions_kg"] = data.emissions + _grid_emissions_kg(
+                    sampler.kwh, data.country_iso_code
+                )
+                methods["GPU"] = GPU_SAMPLES_METHOD
+            elif _GPU_COUNTER_UNSUPPORTED in log:
+                # Record the gap instead of a zero that reads as measured.
+                del metrics["energy.gpu_kwh"]
+                methods["GPU"] = GPU_UNMEASURED_METHOD
+            self.log_metrics(metrics)
             params = {
                 "energy.country_iso_code": data.country_iso_code,
                 "energy.tracking_mode": data.tracking_mode,
