@@ -3,6 +3,7 @@ import json
 import logging
 from pathlib import Path
 import subprocess
+import threading
 from types import SimpleNamespace
 
 import mlflow
@@ -272,13 +273,22 @@ class FakeNvml:
 
     NVML_TOTAL_POWER_SAMPLES = "total-power"
 
-    class NVMLError_NotFound(Exception):
+    class NVMLError(Exception):
+        pass
+
+    class NVMLError_NotFound(NVMLError):
         pass
 
     def __init__(self, buffer):
         self.buffer = buffer
+        self.fail_next = False
+        self.failed = threading.Event()
 
     def nvmlDeviceGetSamples(self, handle, kind, since_us):
+        if self.fail_next:
+            self.fail_next = False
+            self.failed.set()
+            raise self.NVMLError("driver error")
         newer = [
             SimpleNamespace(timeStamp=t, sampleValue=SimpleNamespace(uiVal=watts * 1000))
             for t, watts in self.buffer
@@ -312,9 +322,25 @@ def test_gpu_sampler_rejects_samples_lost_from_the_buffer():
         sampler.stop()
 
 
+def test_gpu_sampler_fails_after_a_polling_error_even_if_nvml_recovers():
+    now = 1_000_000_000_000_000
+    clock = iter([now / 1e6, (now + 5_000_000) / 1e6]).__next__
+    nvml = FakeNvml([(now - 200_000, 50.0), (now - 100_000, 50.0), (now - 50_000, 50.0)])
+    sampler = tracking._GpuPowerSampler(nvml, ["gpu0"], poll_seconds=0.01, clock=clock)
+    sampler.start()
+    nvml.fail_next = True
+    assert nvml.failed.wait(5), "the polling thread never read the buffer"
+    # The driver recovers with a partly refilled buffer; earlier samples are missing.
+    nvml.buffer = [(now + 4_000_000, 110.0)]
+    with pytest.raises(RuntimeError, match="Reading GPU power samples failed") as raised:
+        sampler.stop()
+    assert isinstance(raised.value.__cause__, FakeNvml.NVMLError)
+
+
 class FakeGpuSampler:
-    def __init__(self, kwh):
+    def __init__(self, kwh, error=None):
         self.kwh = kwh
+        self.error = error
         self.started = self.stopped = False
 
     def start(self):
@@ -322,6 +348,27 @@ class FakeGpuSampler:
 
     def stop(self):
         self.stopped = True
+        if self.error is not None:
+            raise self.error
+
+
+def test_gpu_sampling_failure_fails_the_run_without_energy(store, fake_codecarbon, monkeypatch):
+    error = RuntimeError("Reading GPU power samples failed; the GPU energy is incomplete.")
+    sampler = FakeGpuSampler(kwh=0.004, error=error)
+    monkeypatch.setattr(tracking, "_gpu_power_sampler", lambda: sampler)
+    uri, client, _ = store
+    with (
+        pytest.raises(RuntimeError, match="Reading GPU power samples failed"),
+        open_run(uri) as run,
+        run.measure_energy(),
+    ):
+        pass
+
+    (tracker,) = fake_codecarbon
+    assert tracker.stopped
+    recorded = client.get_run(run.run_id)
+    assert recorded.info.status == "FAILED"
+    assert not any(name.startswith("energy.") for name in recorded.data.metrics)
 
 
 def test_gpu_samples_replace_codecarbons_zero_and_add_their_emissions(store, monkeypatch):

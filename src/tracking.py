@@ -136,6 +136,7 @@ class _GpuPowerSampler:
         self._samples: list[list[tuple[int, float]]] = [[] for _ in handles]
         self._capacity = [0] * len(handles)
         self._lost = False
+        self._error: BaseException | None = None
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self.kwh = 0.0
@@ -158,8 +159,12 @@ class _GpuPowerSampler:
             samples.extend(new)
 
     def _run(self) -> None:
-        while not self._stop.wait(self._poll_seconds):
-            self._poll()
+        try:
+            while not self._stop.wait(self._poll_seconds):
+                self._poll()
+        except BaseException as error:  # noqa: BLE001 - re-raised by stop()
+            # A failed poll ends the thread; samples after it may be missing.
+            self._error = error
 
     def start(self) -> None:
         self._start_us = int(self._clock() * 1e6)
@@ -178,6 +183,10 @@ class _GpuPowerSampler:
         self._stop.set()
         if self._thread is not None:
             self._thread.join()
+        if self._error is not None:
+            raise RuntimeError(
+                "Reading GPU power samples failed; the GPU energy is incomplete."
+            ) from self._error
         self._poll()
         if self._lost:
             raise RuntimeError(
