@@ -32,10 +32,10 @@ forecaster = ChronosForecaster(ForecastConfig.from_params())
 result = forecaster.predict(history)  # history: 512 observations
 ```
 
-For the command line, put that numeric array in `history.json`:
+For the command line, put that numeric array in `reports/inference/history.json`:
 
 ```sh
-uv run --extra forecast python -m src.modeling.predict history.json \
+uv run --extra forecast python -m src.modeling.predict reports/inference/history.json \
   --output-path reports/inference/forecast.json
 ```
 
@@ -56,3 +56,6 @@ The module performs no training or evaluation and does not access DVC or MLflow.
 Fine-tuned artifact loading and final model selection will be checked when
 [#13](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/13) produces a
 reviewed checkpoint. API endpoints and hosted deployment remain separate work.
+
+The [2026-10-11 smoke record](experiments/003-inference-smoke.md) includes the
+source version, synthetic input, checkpoint identity and reproduction steps.
