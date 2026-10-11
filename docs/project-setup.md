@@ -47,7 +47,7 @@ The API reports `strict: true` and these required checks:
 Comparing the branch-protection responses before and after configuration showed
 that every other protection field was unchanged. The repository still allows
 merge commits only and automatically deletes merged branches. The choice of a
-strict gate and its trade-off are recorded in [EDN-005](edn/0005-required-ci-checks.md).
+strict gate and its trade-off are recorded in [EDN-006](edn/0006-required-ci-checks.md).
 
 ### Failure and recovery verification
 

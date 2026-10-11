@@ -1,4 +1,4 @@
-# EDN-005: Require CI against the current main branch
+# EDN-006: Require CI against the current main branch
 
 - **Date:** 2026-10-11
 - **Milestone:** M5 - Model packaging

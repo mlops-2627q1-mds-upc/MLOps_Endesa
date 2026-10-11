@@ -1,5 +1,7 @@
 """Record comparable seasonal-naive and pinned Chronos validation runs."""
 
+from collections.abc import Callable
+from contextlib import AbstractContextManager, nullcontext
 from dataclasses import asdict, dataclass
 import hashlib
 import json
@@ -68,8 +70,13 @@ def data_version() -> str:
 
 
 def chronos_forecast(
-    contexts: np.ndarray, horizon: int, cfg: EvaluationConfig, deadline: float
+    contexts: np.ndarray,
+    horizon: int,
+    cfg: EvaluationConfig,
+    deadline: float,
+    measure: Callable[[], AbstractContextManager[None]] = nullcontext,
 ) -> tuple[np.ndarray, dict[str, float]]:
+    """Forecast every context; `measure` wraps the forecast loop but not model loading."""
     # Optional imports keep baseline reproduction and CI free of model dependencies.
     try:
         from chronos import ChronosPipeline
@@ -92,8 +99,8 @@ def chronos_forecast(
     pipeline.model.model.eval()
     load_seconds = time.perf_counter() - start
     predictions = []
-    start = time.perf_counter()
-    with torch.inference_mode():
+    with measure(), torch.inference_mode():
+        start = time.perf_counter()
         for offset in range(0, len(contexts), cfg.batch_size):
             if time.monotonic() >= deadline:
                 raise TimeoutError("Evaluation exceeded max_seconds; no complete result recorded")
@@ -117,9 +124,10 @@ def chronos_forecast(
                 f"Chronos: {min(offset + cfg.batch_size, len(contexts))}/{len(contexts)} origins",
                 err=True,
             )
+        inference_seconds = time.perf_counter() - start
     return np.concatenate(predictions), {
         "model_load_seconds": load_seconds,
-        "inference_seconds": time.perf_counter() - start,
+        "inference_seconds": inference_seconds,
     }
 
 
@@ -190,17 +198,16 @@ def evaluate(
             model_revision=revision,
             tracking_uri=tracking_uri,
         ) as run:
-            start = time.perf_counter()
             if lag is None:
                 predictions, timing = chronos_forecast(
-                    data.contexts, cfg.horizon, settings, deadline
+                    data.contexts, cfg.horizon, settings, deadline, measure=run.measure_energy
                 )
             else:
-                predictions = seasonal_forecast(data.contexts, cfg.horizon, lag)
-                timing = {
-                    "inference_seconds": time.perf_counter() - start,
-                    "model_load_seconds": 0.0,
-                }
+                with run.measure_energy():
+                    start = time.perf_counter()
+                    predictions = seasonal_forecast(data.contexts, cfg.horizon, lag)
+                    inference_seconds = time.perf_counter() - start
+                timing = {"inference_seconds": inference_seconds, "model_load_seconds": 0.0}
             if time.monotonic() >= deadline:
                 raise TimeoutError("Evaluation exceeded max_seconds; no complete result recorded")
             metrics = {
