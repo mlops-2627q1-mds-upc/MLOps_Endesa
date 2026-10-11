@@ -1,6 +1,6 @@
 # Chronos-T5-small: project extension of the upstream model card
 
-**Status:** Project extension of the [existing Chronos-T5-small model card](https://huggingface.co/amazon/chronos-t5-small/tree/a971ba21945c4f1796b17a91fe69214b5f4ad472), with intended use and a first [untuned validation result](experiments/001-baseline-chronos.md) awaiting peer reproduction and review. No project fine-tuned checkpoint exists. [Issue #7](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/7) tracks the remaining project-specific evidence.
+**Status:** Project extension of the [existing Chronos-T5-small model card](https://huggingface.co/amazon/chronos-t5-small/tree/a971ba21945c4f1796b17a91fe69214b5f4ad472), with intended use and a first [untuned validation result](experiments/001-baseline-chronos.md) reviewed and merged in [PR #28](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28) on 2026-10-10. Sindri reproduced lag-336 on Windows; Chronos was not independently rerun. No project fine-tuned checkpoint exists. [Issue #7](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/7) tracks the remaining project-specific evidence.
 
 ## Model details and intended use
 

@@ -115,8 +115,9 @@ an over-budget execution fails rather than reporting a partial comparison.
 
 ## Interpretation and limitations
 
-The source's physical unit, time zone and individual civil timestamps remain
-unverified in [#6](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/6).
+The [dataset card](DATASET_CARD.md#source-meaning-units-and-clock-limits)
+records the physical-unit, time-zone and civil-timestamp limits accepted in
+[PR #40](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/40).
 Predictions therefore use positional time and the source scale. Holiday and
 day-after-holiday error breakdowns from the protocol remain unavailable until a
 verified calendar mapping exists; no holiday labels are inferred from positions.
@@ -133,8 +134,9 @@ Our validation period and metrics also differ from the paper's benchmark.
 A fixed seed makes reruns comparable under the recorded software, device, batch
 size and origin order. It does not establish bitwise equality across hardware.
 Sindri's [Windows lag-336 reproduction and interpretation review](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28#pullrequestreview-5426279134)
-are recorded in the experiment record. Native Windows verification of the follow-up
-fixes and current-head peer approval remain pending before merging PR #28.
+and [verification of the fixes at `89da830`](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28#pullrequestreview-5455692753)
+are recorded in the experiment record. Pablo and Sindri approved that revision;
+PR #28 merged on 2026-10-10. Chronos was not independently rerun on Windows.
 Fine-tuning is tracked in #13 and final model-card evidence in #7.
 
 The Chronos adapter follows the [upstream usage example](https://huggingface.co/amazon/chronos-t5-small/tree/a971ba21945c4f1796b17a91fe69214b5f4ad472),
