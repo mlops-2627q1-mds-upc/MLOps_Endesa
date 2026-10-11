@@ -18,6 +18,7 @@ any local edits. LF keeps DVC source checksums and the lockfile hash consistent.
 1. Install `uv sync --locked --dev --extra forecast`. The optional `forecast`
    dependencies are needed for Chronos; baseline execution and CI use the base environment.
    Linux resolves PyTorch from its CPU index to avoid installing CUDA packages.
+   Windows resolves the CUDA 13.0 build for GPU training; it also runs on CPU.
 2. Restore the data with `uv run dvc pull -r origin` using your own DagsHub credentials.
    Check `uv run dvc status`; the evaluator rejects missing or modified DVC inputs.
 3. Configure your own MLflow credentials as described in [the setup guide](mlflow.md).
