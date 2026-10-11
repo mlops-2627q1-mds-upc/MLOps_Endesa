@@ -1,5 +1,2 @@
-import math
-
-
 def test_ci_gate_probe():
-    assert True
+    assert False, "Intentional failure to verify the required test check for issue #20"
