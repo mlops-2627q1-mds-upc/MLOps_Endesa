@@ -1,5 +1,6 @@
 """Bounded Chronos fine-tuning on the training block for #13."""
 
+from contextlib import nullcontext
 from dataclasses import asdict, dataclass
 import hashlib
 import json
@@ -139,8 +140,13 @@ def fine_tune(
     output_dir: Path = MODELS_DIR / "fine-tuning",
     tracking_uri: str | None = None,
     max_steps: int | None = None,
+    control: bool = False,
 ) -> dict:
-    """Fine-tune the pinned checkpoint; `max_steps` stops early to measure step cost."""
+    """Fine-tune the pinned checkpoint; `max_steps` stops early to measure step cost.
+
+    `control` saves the pinned checkpoint untrained, so it is scored through the same
+    local-checkpoint path as the fine-tuned models.
+    """
     try:
         from chronos import ChronosPipeline
         import torch
@@ -151,8 +157,8 @@ def fine_tune(
 
     if processed_dir.resolve() != (PROJ_ROOT / "data/processed").resolve():
         raise ValueError("Use this checkout's DVC-tracked data/processed directory")
-    if max_steps is not None and max_steps <= 0:
-        raise ValueError("max_steps must be positive")
+    if max_steps is not None and (max_steps <= 0 or control):
+        raise ValueError("max_steps must be positive and cannot be combined with control")
     cfg = SplitConfig.from_params(params_path)
     base = EvaluationConfig.from_params(params_path)
     settings = FineTuneConfig.from_params(params_path)
@@ -174,6 +180,8 @@ def fine_tune(
     prediction_length = pipeline.model.config.prediction_length
     bounds = window_start_bounds(cfg, settings.window_start, prediction_length)
     steps = settings.steps if max_steps is None else min(max_steps, settings.steps)
+    if control:
+        steps = 0
     optimizer = torch.optim.AdamW(model.parameters(), lr=settings.learning_rate, weight_decay=0.0)
     # The schedule always spans the configured steps, so a shortened run trains identically.
     scheduler = torch.optim.lr_scheduler.LambdaLR(
@@ -192,7 +200,7 @@ def fine_tune(
         "hardware": _hardware(settings.device),
     }
     with tracked_run(
-        name=f"fine-tune-seed{settings.seed}",
+        name="control-untuned" if control else f"fine-tune-seed{settings.seed}",
         config=config,
         data_version=version,
         model_revision=base.model_revision,
@@ -204,7 +212,8 @@ def fine_tune(
         losses = []
         deadline = time.monotonic() + settings.max_seconds
         model.train()
-        with run.measure_energy():
+        # The control trains nothing, so it has no training energy to measure.
+        with run.measure_energy() if steps else nullcontext():
             start = time.perf_counter()
             for step in range(1, steps + 1):
                 if time.monotonic() >= deadline:
@@ -254,12 +263,13 @@ def fine_tune(
             run.client.log_batch(
                 run.run_id, metrics=history[offset : offset + _METRIC_BATCH], synchronous=True
             )
-        summary = {
-            "train.seconds": train_seconds,
-            "train.seconds_per_step": train_seconds / steps,
-            "train.steps": float(steps),
-            "train.final_loss": float(np.mean(losses[-min(50, len(losses)) :])),
-        }
+        summary = {"train.steps": float(steps)}
+        if steps:
+            summary |= {
+                "train.seconds": train_seconds,
+                "train.seconds_per_step": train_seconds / steps,
+                "train.final_loss": float(np.mean(losses[-min(50, len(losses)) :])),
+            }
         run.log_metrics(summary)
         checkpoint = {
             "path": str(directory / "final"),
@@ -267,7 +277,7 @@ def fine_tune(
         }
         run.client.log_dict(run.run_id, checkpoint, "checkpoint.json")
         run.client.log_dict(run.run_id, yaml.safe_load(params_path.read_text()), "params.json")
-    logger.info(f"fine-tuned {steps} steps in {train_seconds:.1f} s; run={run.run_id}")
+    logger.info(f"saved after {steps} training steps; run={run.run_id}")
     return {"run_id": run.run_id, **summary, "checkpoint": checkpoint}
 
 
@@ -278,14 +288,19 @@ def main(
     output_dir: Path = MODELS_DIR / "fine-tuning",
     tracking_uri: str | None = None,
     max_steps: int | None = None,
+    control: bool = False,
 ) -> None:
-    """Fine-tune the pinned Chronos checkpoint on training windows only."""
+    """Fine-tune the pinned Chronos checkpoint on training windows only.
+
+    Use --control to save the untrained checkpoint for the control evaluation.
+    """
     result = fine_tune(
         params_path=params_path,
         processed_dir=processed_dir,
         output_dir=output_dir,
         tracking_uri=tracking_uri,
         max_steps=max_steps,
+        control=control,
     )
     typer.echo(json.dumps(result, indent=2, allow_nan=False))
 

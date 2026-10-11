@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 import hashlib
 import json
 import os
@@ -69,14 +69,40 @@ def data_version() -> str:
     return f"raw:{raw};split-lock-sha256:{split}"
 
 
+def _cuda_hardware() -> dict:
+    """Record the GPU and the CUDA build that produced GPU forecasts."""
+    import torch
+
+    if not torch.cuda.is_available():
+        raise RuntimeError("CUDA is not available; install the CUDA build of PyTorch")
+    return {
+        "gpu": torch.cuda.get_device_name(0),
+        "cuda": torch.version.cuda,
+        "torch": torch.__version__,
+    }
+
+
+def checkpoint_sha256(checkpoint: Path) -> str:
+    """Identify a local checkpoint by the hash of its weights."""
+    digest = hashlib.sha256()
+    with (checkpoint / "model.safetensors").open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def chronos_forecast(
     contexts: np.ndarray,
     horizon: int,
     cfg: EvaluationConfig,
     deadline: float,
     measure: Callable[[], AbstractContextManager[None]] = nullcontext,
+    checkpoint: Path | None = None,
 ) -> tuple[np.ndarray, dict[str, float]]:
-    """Forecast every context; `measure` wraps the forecast loop but not model loading."""
+    """Forecast every context; `measure` wraps the forecast loop but not model loading.
+
+    A local `checkpoint` replaces the pinned Hub model, for example a fine-tuned one.
+    """
     # Optional imports keep baseline reproduction and CI free of model dependencies.
     try:
         from chronos import ChronosPipeline
@@ -89,12 +115,11 @@ def chronos_forecast(
     torch.set_num_threads(cfg.cpu_threads)
     torch.manual_seed(cfg.seed)
     start = time.perf_counter()
+    source = {"pretrained_model_name_or_path": str(checkpoint)}
+    if checkpoint is None:
+        source = {"pretrained_model_name_or_path": cfg.model_id, "revision": cfg.model_revision}
     pipeline = ChronosPipeline.from_pretrained(
-        cfg.model_id,
-        revision=cfg.model_revision,
-        device_map=cfg.device,
-        torch_dtype=torch.float32,
-        token=False,
+        **source, device_map=cfg.device, torch_dtype=torch.float32, token=False
     )
     pipeline.model.model.eval()
     load_seconds = time.perf_counter() - start
@@ -138,14 +163,35 @@ def evaluate(
     output_dir: Path = REPORTS_DIR / "evaluation",
     method: str = "all",
     tracking_uri: str | None = None,
+    checkpoint: Path | None = None,
+    device: str | None = None,
 ) -> dict:
-    """Evaluate the full validation block and give each invocation its own output directory."""
+    """Evaluate the full validation block and give each invocation its own output directory.
+
+    `checkpoint` scores a local Chronos checkpoint instead of the pinned Hub model, and
+    `device` overrides the configured device for this invocation only.
+    """
     if method not in (*METHODS, "all"):
         raise ValueError(f"Unknown method {method!r}; choose all or one of {METHODS}")
+    if checkpoint is not None and method != "chronos":
+        raise ValueError("A checkpoint is scored with method chronos only")
     if processed_dir.resolve() != (PROJ_ROOT / "data/processed").resolve():
         raise ValueError("Use this checkout's DVC-tracked data/processed directory")
     cfg = SplitConfig.from_params(params_path)
     settings = EvaluationConfig.from_params(params_path)
+    if device is not None:
+        settings = replace(settings, device=device)
+    checkpoint_record = None
+    if checkpoint is not None:
+        checkpoint = checkpoint.resolve()
+        if not (checkpoint / "model.safetensors").is_file():
+            raise ValueError(f"No model.safetensors in checkpoint {checkpoint}")
+        checkpoint_record = {
+            "path": str(checkpoint),
+            "sha256": checkpoint_sha256(checkpoint),
+            # Training saves checkpoints under <output_dir>/<training run ID>/.
+            "training_run_id": checkpoint.parent.name,
+        }
     if cfg.context_length < max(BASELINE_LAGS):
         raise ValueError("The agreed seasonal baselines need at least 336 context observations")
     version = data_version()
@@ -174,7 +220,9 @@ def evaluate(
             "platform": platform.platform(),
             "machine": platform.machine(),
             "logical_cpus": os.cpu_count(),
+            **(_cuda_hardware() if settings.device == "cuda" else {}),
         },
+        "checkpoint": checkpoint_record,
         "holiday_stratification": "unavailable: civil timestamps remain unverified in #6",
     }
     results = {}
@@ -183,6 +231,8 @@ def evaluate(
     for name in methods:
         lag = None if name == "chronos" else int(name.removeprefix("seasonal_lag"))
         revision = settings.model_revision if lag is None else f"seasonal-naive-v1:lag-{lag}"
+        if checkpoint_record is not None:
+            revision = f"local-sha256:{checkpoint_record['sha256']}"
         config = {
             **common,
             "method": name,
@@ -192,7 +242,7 @@ def evaluate(
         output = directory / name
         output.mkdir()
         with tracked_run(
-            name=f"validation-{name}",
+            name=f"validation-{name}" + ("-checkpoint" if checkpoint_record else ""),
             config=config,
             data_version=version,
             model_revision=revision,
@@ -200,7 +250,12 @@ def evaluate(
         ) as run:
             if lag is None:
                 predictions, timing = chronos_forecast(
-                    data.contexts, cfg.horizon, settings, deadline, measure=run.measure_energy
+                    data.contexts,
+                    cfg.horizon,
+                    settings,
+                    deadline,
+                    measure=run.measure_energy,
+                    checkpoint=checkpoint,
                 )
             else:
                 with run.measure_energy():
@@ -241,6 +296,7 @@ def evaluate(
         "data_version": version,
         "targets_sha256": target_hash,
         "settings": asdict(settings),
+        "checkpoint": checkpoint_record,
         "primary_baseline_on_validation": primary,
         "results": results,
         "holiday_stratification": common["holiday_stratification"],
@@ -259,14 +315,22 @@ def main(
     processed_dir: Path = PROCESSED_DATA_DIR,
     output_dir: Path = REPORTS_DIR / "evaluation",
     tracking_uri: str | None = None,
+    checkpoint: Path | None = None,
+    device: str | None = None,
 ) -> None:
-    """Evaluate all validation origins; all creates two baseline runs and one Chronos run."""
+    """Evaluate all validation origins; all creates two baseline runs and one Chronos run.
+
+    Use --method chronos --checkpoint <directory> to score a local checkpoint, and
+    --device cuda to forecast on the GPU.
+    """
     result = evaluate(
         method=method,
         params_path=params_path,
         processed_dir=processed_dir,
         output_dir=output_dir,
         tracking_uri=tracking_uri,
+        checkpoint=checkpoint,
+        device=device,
     )
     typer.echo(json.dumps(result, indent=2, allow_nan=False))
 
