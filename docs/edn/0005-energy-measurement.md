@@ -1,4 +1,4 @@
-# EDN-004: Energy measurement of the forecast step
+# EDN-005: Energy measurement of the forecast step
 
 - **Date:** 2026-10-11.
 - **Milestone:** M3 - Energy efficiency awareness.
