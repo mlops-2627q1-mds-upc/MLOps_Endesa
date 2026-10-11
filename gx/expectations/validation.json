@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "0943f9e9-3984-4b22-a020-6d5c04266131",
+      "id": "6b70984b-d942-440c-a33b-b394dd66f811",
       "kwargs": {
         "value": 17520
       },
@@ -10,7 +10,7 @@
       "type": "expect_table_row_count_to_equal"
     },
     {
-      "id": "ff404348-f7ea-41cf-81d6-9d27d0c947e8",
+      "id": "e6930473-2c84-49c3-be5d-9f0ea8076225",
       "kwargs": {
         "column_list": [
           "NSW",
@@ -25,7 +25,7 @@
       "type": "expect_table_columns_to_match_ordered_list"
     },
     {
-      "id": "0a2cf89c-fdbd-4a46-a23e-93a419bf8d25",
+      "id": "b37508c0-f6b7-4c46-baf3-4edb14ac55ea",
       "kwargs": {
         "column": "NSW"
       },
@@ -34,7 +34,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "5133d278-f0e9-4f5c-b24b-039aa2dd072c",
+      "id": "1fa4cfc3-a7ce-480a-a20d-a9b0ee4f37e1",
       "kwargs": {
         "column": "NSW",
         "type_": "float32"
@@ -44,7 +44,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "f9a5202c-05ff-4d9d-9297-cadc51f8d049",
+      "id": "42315e7a-10ac-4a4a-a684-11b15d55596c",
       "kwargs": {
         "column": "VIC"
       },
@@ -53,7 +53,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "06ceb951-6102-4fc8-9303-314734b139e2",
+      "id": "e49b24e1-c728-4aaa-9520-cdeb2fcd4609",
       "kwargs": {
         "column": "VIC",
         "type_": "float32"
@@ -63,7 +63,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "42fbdc29-ae3b-428d-96ce-3d0cbd5f6fc1",
+      "id": "d18667a1-c7ac-4ee8-8a5b-4693f26faf23",
       "kwargs": {
         "column": "QLD"
       },
@@ -72,7 +72,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "f4ae0b3b-9f6e-4916-92eb-9ff63ef33eb5",
+      "id": "305d48d9-b2a9-4770-9c1c-34d497399112",
       "kwargs": {
         "column": "QLD",
         "type_": "float32"
@@ -82,7 +82,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "285ebb58-e9b2-41e4-8e40-01c89bc8881f",
+      "id": "7ec5acde-bec9-4fb0-99a7-e1518c607be7",
       "kwargs": {
         "column": "SA"
       },
@@ -91,7 +91,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "c8b7d192-f468-4732-a9fc-3853750c8047",
+      "id": "1f68a0a0-fa68-42ee-965d-0762f92d1db3",
       "kwargs": {
         "column": "SA",
         "type_": "float32"
@@ -101,7 +101,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "b391d0ac-9559-4344-a402-92e922d91db3",
+      "id": "a2861c5d-f927-4ca3-b68b-a9be6e3d30e4",
       "kwargs": {
         "column": "TAS"
       },
@@ -110,7 +110,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "99dca121-2e73-4c68-a363-8188e810f1ff",
+      "id": "62389aaf-99ce-4cd1-b4a9-2f62bb3ee3bd",
       "kwargs": {
         "column": "TAS",
         "type_": "float32"

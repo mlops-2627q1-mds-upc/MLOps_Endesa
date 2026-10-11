@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "1b20c036-6c86-4e2d-a8c3-3671a21405ac",
+      "id": "5f5d08d0-1367-4f04-9684-c54366a9b40d",
       "kwargs": {
         "value": 230736
       },
@@ -10,7 +10,7 @@
       "type": "expect_table_row_count_to_equal"
     },
     {
-      "id": "a65d2aa1-0d07-4f8a-adec-7211ef276d63",
+      "id": "b942b11d-06e4-49d8-9813-f79389a25d5f",
       "kwargs": {
         "column": "NSW"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_to_exist"
     },
     {
-      "id": "d25f6d50-b2d3-4c59-9e1a-e399c7f53698",
+      "id": "9f44d359-dd78-4a2e-a6ee-9fc20ba5d749",
       "kwargs": {
         "column": "NSW",
         "type_": "float32"
@@ -29,7 +29,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "657e8035-05fe-4db9-8139-ff0f982a4dd9",
+      "id": "6c72db2c-9063-494f-9270-65273a31b4db",
       "kwargs": {
         "column": "NSW"
       },
@@ -38,7 +38,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "93806a06-0cca-4568-a5b7-29c9bffcdb9f",
+      "id": "8a13fc27-cee4-4b7d-95e6-23849ad6e1c3",
       "kwargs": {
         "column": "NSW",
         "min_value": 0.0

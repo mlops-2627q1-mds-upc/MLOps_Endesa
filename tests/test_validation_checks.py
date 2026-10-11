@@ -1,0 +1,194 @@
+"""Regression tests for the custom validation checks in src/validate_data.py.
+
+These tests use synthetic in-memory fixtures and do not require DVC data or
+credentials, so they always run in CI. They cover the failure cases that GX
+cannot express directly: infinity rejection, exact TAS positions, complete block
+index sequences, and the full forecast origin grid.
+"""
+
+import numpy as np
+import pandas as pd
+
+from src.splits import SplitConfig, forecast_origins
+import src.validate_data as vd
+from src.validate_data import (
+    _check_block_index_ranges,
+    _check_finite,
+    _check_origins_windows,
+    _check_tas_negative_positions,
+)
+
+# Minimal SplitConfig whose validation and test blocks tile exactly at the stride.
+# validation: [60, 80), origins [60, 70]; test: [80, 100), origins [80, 90].
+_CFG = SplitConfig(
+    states=("NSW",),
+    common_length=100,
+    train_end=60,
+    validation_end=80,
+    context_length=10,
+    horizon=10,
+    origin_stride=10,
+)
+
+_FAKE_TAS_POSITIONS = [10, 11, 12]
+
+
+# ---------------------------------------------------------------------------
+# _check_finite
+# ---------------------------------------------------------------------------
+
+
+def test_finite_passes_clean_data():
+    df = pd.DataFrame({"a": np.array([1.0, 2.0, 3.0], dtype="float32")})
+    assert _check_finite(df, "suite") == []
+
+
+def test_finite_detects_positive_inf():
+    df = pd.DataFrame({"a": np.array([1.0, np.inf, 3.0], dtype="float64")})
+    failures = _check_finite(df, "suite")
+    assert len(failures) == 1
+    assert failures[0]["expectation"] == "custom_no_infinite_values"
+    assert failures[0]["column"] == "a"
+
+
+def test_finite_detects_negative_inf():
+    df = pd.DataFrame({"a": np.array([-np.inf, 2.0], dtype="float64")})
+    assert len(_check_finite(df, "suite")) == 1
+
+
+def test_finite_ignores_nan():
+    df = pd.DataFrame({"a": np.array([1.0, np.nan, 3.0], dtype="float64")})
+    assert _check_finite(df, "suite") == []
+
+
+# ---------------------------------------------------------------------------
+# _check_tas_negative_positions
+# ---------------------------------------------------------------------------
+
+
+def _make_tas_df(negative_positions, length=20):
+    vals = np.ones(length, dtype="float32")
+    for p in negative_positions:
+        vals[p] = -1.0
+    return pd.DataFrame({"TAS": vals})
+
+
+def test_tas_positions_passes(monkeypatch):
+    monkeypatch.setattr(vd, "TAS_NEGATIVE_POSITIONS", _FAKE_TAS_POSITIONS)
+    assert _check_tas_negative_positions(_make_tas_df(_FAKE_TAS_POSITIONS)) == []
+
+
+def test_tas_positions_extra_negative(monkeypatch):
+    monkeypatch.setattr(vd, "TAS_NEGATIVE_POSITIONS", _FAKE_TAS_POSITIONS)
+    df = _make_tas_df(_FAKE_TAS_POSITIONS + [15])
+    failures = _check_tas_negative_positions(df)
+    assert len(failures) == 1
+    assert failures[0]["expectation"] == "custom_tas_negative_positions"
+
+
+def test_tas_positions_missing_negative(monkeypatch):
+    monkeypatch.setattr(vd, "TAS_NEGATIVE_POSITIONS", _FAKE_TAS_POSITIONS)
+    df = _make_tas_df([10, 11])  # position 12 missing
+    assert len(_check_tas_negative_positions(df)) == 1
+
+
+# ---------------------------------------------------------------------------
+# _check_block_index_ranges
+# ---------------------------------------------------------------------------
+
+
+def _write_blocks(tmp_path, cfg, bad_block=None, bad_index=None):
+    for name in ("train", "validation", "test"):
+        start, end = cfg.bounds(name)
+        if name == bad_block and bad_index is not None:
+            idx = pd.Index(bad_index, name="timestep")
+        else:
+            idx = pd.RangeIndex(start, end, name="timestep")
+        df = pd.DataFrame(
+            {"NSW": np.ones(len(idx), dtype="float32")},
+            index=idx,
+        )
+        df.to_parquet(tmp_path / f"{name}.parquet")
+
+
+def test_block_index_passes(tmp_path, monkeypatch):
+    monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
+    _write_blocks(tmp_path, _CFG)
+    assert _check_block_index_ranges(_CFG) == []
+
+
+def test_block_index_detects_gap(tmp_path, monkeypatch):
+    monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
+    start, end = _CFG.bounds("train")
+    # Replace one interior position with a later one to create a gap.
+    bad = list(range(start, end - 1)) + [end + 10]
+    _write_blocks(tmp_path, _CFG, bad_block="train", bad_index=bad)
+    failures = _check_block_index_ranges(_CFG)
+    assert any(f["suite"] == "train" for f in failures)
+
+
+def test_block_index_detects_wrong_start(tmp_path, monkeypatch):
+    monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
+    start, end = _CFG.bounds("validation")
+    bad = list(range(start + 1, end + 1))  # shifted by one
+    _write_blocks(tmp_path, _CFG, bad_block="validation", bad_index=bad)
+    failures = _check_block_index_ranges(_CFG)
+    assert any(f["suite"] == "validation" for f in failures)
+
+
+# ---------------------------------------------------------------------------
+# _check_origins_windows
+# ---------------------------------------------------------------------------
+
+
+def _make_origins_df(cfg, extra_rows=None, drop_last=False):
+    rows = []
+    for block_name in ("validation", "test"):
+        for state in cfg.states:
+            origins_list = list(forecast_origins(block_name, cfg))
+            if drop_last:
+                origins_list = origins_list[:-1]
+            for origin in origins_list:
+                rows.append(
+                    (state, block_name, origin, origin - cfg.context_length, origin + cfg.horizon)
+                )
+    if extra_rows:
+        rows.extend(extra_rows)
+    return pd.DataFrame(rows, columns=["state", "block", "origin", "context_start", "target_end"])
+
+
+def _write_origins(tmp_path, df):
+    df.to_parquet(tmp_path / "origins.parquet", index=False)
+
+
+def test_origins_passes(tmp_path, monkeypatch):
+    monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
+    _write_origins(tmp_path, _make_origins_df(_CFG))
+    assert _check_origins_windows(_CFG) == []
+
+
+def test_origins_negative_context_start(tmp_path, monkeypatch):
+    monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
+    bad = pd.DataFrame(
+        [("NSW", "validation", 0, -_CFG.context_length, _CFG.horizon)],
+        columns=["state", "block", "origin", "context_start", "target_end"],
+    )
+    _write_origins(tmp_path, bad)
+    failures = _check_origins_windows(_CFG)
+    assert any(f["expectation"] == "custom_nonnegative_positions" for f in failures)
+
+
+def test_origins_duplicate_detected(tmp_path, monkeypatch):
+    monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
+    df = _make_origins_df(_CFG)
+    df_dup = pd.concat([df, df.iloc[[0]]], ignore_index=True)
+    _write_origins(tmp_path, df_dup)
+    failures = _check_origins_windows(_CFG)
+    assert any(f["expectation"] == "custom_origin_grid" for f in failures)
+
+
+def test_origins_missing_window_detected(tmp_path, monkeypatch):
+    monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
+    _write_origins(tmp_path, _make_origins_df(_CFG, drop_last=True))
+    failures = _check_origins_windows(_CFG)
+    assert any(f["expectation"] == "custom_origin_grid" for f in failures)

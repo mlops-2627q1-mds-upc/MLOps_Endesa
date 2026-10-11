@@ -207,7 +207,7 @@ if __name__ == "__main__":
     for state in cfg.states:
         asset = datasource.add_parquet_asset(
             name=f"raw_{state}",
-            path=(RAW_DATA_DIR / f"{state}.parquet").relative_to(PROJ_ROOT),
+            path=(RAW_DATA_DIR / f"{state}.parquet").relative_to(PROJ_ROOT).as_posix(),
         )
         batch_def = asset.add_batch_definition(name=f"raw_{state}_batch")
         suite = _build_raw_suite(state, CARD_LENGTHS[state])
@@ -226,7 +226,7 @@ if __name__ == "__main__":
     for block_name in ("train", "validation", "test"):
         asset = datasource.add_parquet_asset(
             name=block_name,
-            path=(PROCESSED_DATA_DIR / f"{block_name}.parquet").relative_to(PROJ_ROOT),
+            path=(PROCESSED_DATA_DIR / f"{block_name}.parquet").relative_to(PROJ_ROOT).as_posix(),
         )
         batch_def = asset.add_batch_definition(name=f"{block_name}_batch")
         suite = _build_block_suite(block_name, cfg)
@@ -244,7 +244,7 @@ if __name__ == "__main__":
     # Register the origins table.
     asset = datasource.add_parquet_asset(
         name="origins",
-        path=(PROCESSED_DATA_DIR / "origins.parquet").relative_to(PROJ_ROOT),
+        path=(PROCESSED_DATA_DIR / "origins.parquet").relative_to(PROJ_ROOT).as_posix(),
     )
     batch_def = asset.add_batch_definition(name="origins_batch")
     suite = _build_origins_suite(cfg)

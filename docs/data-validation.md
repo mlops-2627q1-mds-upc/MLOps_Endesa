@@ -1,0 +1,76 @@
+# Data validation
+
+Automated quality checks for the raw and processed data produced by the DVC pipeline.
+Related issue: [#36](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/36).
+
+## Pipeline stages
+
+Two DVC stages handle validation:
+
+| Stage | Script | Runs when |
+|---|---|---|
+| `configure_gx` | `src/gx_context_configuration.py` | `params.yaml` or the script changes |
+| `validate-data` | `src/validate_data.py` | Data or GX config changes |
+
+`configure_gx` writes the GX suites and checkpoint to `gx/` and stamps
+`reports/gx_configured.json`. `validate-data` depends on that stamp, so DVC
+always runs configure before validate.
+
+## What is checked
+
+### Great Expectations suites (9 tables)
+
+| Suite | File | Key expectations |
+|---|---|---|
+| `raw_NSW/VIC/QLD/SA/TAS` | `data/raw/<STATE>.parquet` | Row count matches dataset card; column exists; float32; no nulls; non-negative (all except TAS) |
+| `train` | `data/processed/train.parquet` | Row count; column order; no nulls; float32; values within training-block range (no leakage) |
+| `validation` | `data/processed/validation.parquet` | Row count; column order; no nulls; float32 |
+| `test` | `data/processed/test.parquet` | Row count; column order; no nulls; float32 |
+| `origins` | `data/processed/origins.parquet` | Row count; column order; no nulls; valid state and block values |
+
+### Python checks (GX cannot express these)
+
+| Check | Function | What it catches |
+|---|---|---|
+| No infinite values | `_check_finite` | `np.inf` in any numeric column; GX `ExpectColumnValuesToBeBetween(-inf, inf)` always passes |
+| TAS negative positions | `_check_tas_negative_positions` | Checks the full raw TAS series; the 22 documented negatives must fall at exactly the positions in `TAS_NEGATIVE_POSITIONS` |
+| Complete block indexes | `_check_block_index_ranges` | Each processed block must have a contiguous `RangeIndex(start, end)`; catches interior gaps and duplicates that row-count checks miss |
+| Origins grid | `_check_origins_windows` | Integer and non-negative positions; exact context length and horizon; target within block; complete unique `(block, state)` grid with no duplicates or missing windows |
+
+## Output
+
+`reports/validation.json` (DVC metric, not cached):
+
+```json
+{
+  "success": true,
+  "evaluated_expectations": 120,
+  "failed_expectations": 0,
+  "failures": []
+}
+```
+
+The pipeline exits with code 1 and logs each failure if any check fails.
+
+## Running locally
+
+```sh
+# Configure GX (only needed once or after params.yaml changes)
+uv run python -m src.gx_context_configuration
+
+# Run all checks
+uv run python -m src.validate_data
+
+# Or run the full pipeline
+uv run dvc repro validate-data
+```
+
+## Tests
+
+`tests/test_data.py` runs the nine GX validation definitions against the real
+DVC data. It is skipped automatically in CI where data is absent.
+
+`tests/test_validation_checks.py` tests the four Python check functions with
+synthetic in-memory fixtures. These always run in CI and cover the failure cases:
+infinity rejection, wrong TAS positions, index gaps, duplicate origins, and
+missing origin windows.

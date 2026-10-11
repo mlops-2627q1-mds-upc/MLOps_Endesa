@@ -19,7 +19,7 @@ import pandas as pd
 
 from src.config import PROCESSED_DATA_DIR, PROJ_ROOT, RAW_DATA_DIR, REPORTS_DIR
 from src.gx_context_configuration import CHECKPOINT, TAS_NEGATIVE_POSITIONS
-from src.splits import SplitConfig
+from src.splits import SplitConfig, forecast_origins
 
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 VALIDATION_REPORT = REPORTS_DIR / "validation.json"
@@ -42,16 +42,16 @@ def _check_finite(df: pd.DataFrame, suite_name: str) -> list[dict]:
     return failures
 
 
-def _check_tas_negative_positions(train_df: pd.DataFrame) -> list[dict]:
-    # The 22 TAS negatives must fall exactly at the documented positions (EDA §5).
-    # Any negative outside those positions, or any missing position, is a failure.
-    tas = train_df["TAS"]
+def _check_tas_negative_positions(raw_tas_df: pd.DataFrame) -> list[dict]:
+    # The 22 TAS negatives must fall exactly at the documented positions (EDA §5),
+    # checked against the full raw series so negatives in any period are caught.
+    tas = raw_tas_df["TAS"]
     actual = {int(i) for i in tas.index[tas < 0]}
     expected = set(TAS_NEGATIVE_POSITIONS)
     if actual != expected:
         return [
             {
-                "suite": "train",
+                "suite": "raw_TAS",
                 "expectation": "custom_tas_negative_positions",
                 "column": "TAS",
             }
@@ -60,14 +60,15 @@ def _check_tas_negative_positions(train_df: pd.DataFrame) -> list[dict]:
 
 
 def _check_block_index_ranges(cfg: SplitConfig) -> list[dict]:
-    # Checks that each processed block starts and ends at the positions defined in
-    # params.yaml. This catches truncated or mis-aligned parquet files that would
-    # still pass the row-count expectation if the wrong rows were kept.
+    # Validates the complete index sequence for each block, not just first and last.
+    # This catches interior gaps, duplicates, or mis-aligned rows that the row-count
+    # expectation would miss.
     failures = []
     for name in ("train", "validation", "test"):
         df = pd.read_parquet(PROCESSED_DATA_DIR / f"{name}.parquet")
         start, end = cfg.bounds(name)
-        if int(df.index[0]) != start or int(df.index[-1]) != end - 1:
+        expected_index = pd.RangeIndex(start, end, name="timestep")
+        if not df.index.equals(expected_index):
             failures.append(
                 {
                     "suite": name,
@@ -79,12 +80,32 @@ def _check_block_index_ranges(cfg: SplitConfig) -> list[dict]:
 
 
 def _check_origins_windows(cfg: SplitConfig) -> list[dict]:
-    # Checks that every forecast origin has a context of exactly context_length steps
-    # ending at the origin, a target of exactly horizon steps, and that the target
-    # does not extend beyond the end of its block.
+    # Validates integer positions, lower/upper bounds, and the complete unique
+    # origin grid for each (state, block) pair. Catches out-of-range origins,
+    # duplicate rows, and missing windows that aggregate checks would miss.
     failures = []
     origins = pd.read_parquet(PROCESSED_DATA_DIR / "origins.parquet")
 
+    # All position columns must contain non-negative integers.
+    for col in ("origin", "context_start", "target_end"):
+        if not pd.api.types.is_integer_dtype(origins[col]):
+            failures.append(
+                {
+                    "suite": "origins",
+                    "expectation": "custom_integer_positions",
+                    "column": col,
+                }
+            )
+        elif (origins[col] < 0).any():
+            failures.append(
+                {
+                    "suite": "origins",
+                    "expectation": "custom_nonnegative_positions",
+                    "column": col,
+                }
+            )
+
+    # Context length and horizon must be exact for every row.
     if not (origins["origin"] - origins["context_start"] == cfg.context_length).all():
         failures.append(
             {
@@ -101,6 +122,8 @@ def _check_origins_windows(cfg: SplitConfig) -> list[dict]:
                 "column": "target_end",
             }
         )
+
+    # Target windows must not extend beyond the end of their block.
     for block_name in ("validation", "test"):
         _, block_end = cfg.bounds(block_name)
         if (origins.loc[origins["block"] == block_name, "target_end"] > block_end).any():
@@ -111,6 +134,27 @@ def _check_origins_windows(cfg: SplitConfig) -> list[dict]:
                     "column": "target_end",
                 }
             )
+
+    # The complete expected origin grid must be present for each (block, state)
+    # pair with no duplicates and no missing windows.
+    for block_name in ("validation", "test"):
+        expected = forecast_origins(block_name, cfg)
+        for state in cfg.states:
+            subset = origins.loc[
+                (origins["block"] == block_name) & (origins["state"] == state), "origin"
+            ]
+            if (
+                subset.duplicated().any()
+                or len(subset) != len(expected)
+                or not (subset.sort_values().values == expected).all()
+            ):
+                failures.append(
+                    {
+                        "suite": "origins",
+                        "expectation": "custom_origin_grid",
+                        "column": f"{block_name}/{state}",
+                    }
+                )
     return failures
 
 
@@ -160,8 +204,9 @@ if __name__ == "__main__":
         total_failed += len(inf_failures)
         failures.extend(inf_failures)
 
-    train_df = pd.read_parquet(PROCESSED_DATA_DIR / "train.parquet")
-    tas_failures = _check_tas_negative_positions(train_df)
+    # TAS negatives checked against the full raw series, not just train.
+    raw_tas_df = pd.read_parquet(RAW_DATA_DIR / "TAS.parquet")
+    tas_failures = _check_tas_negative_positions(raw_tas_df)
     total_evaluated += 1
     total_failed += len(tas_failures)
     failures.extend(tas_failures)
@@ -172,7 +217,9 @@ if __name__ == "__main__":
     failures.extend(block_failures)
 
     origin_failures = _check_origins_windows(cfg)
-    total_evaluated += 4
+    # 3 integer checks + 3 non-negative checks + context + horizon + 2 in-block +
+    # 2 blocks * len(states) grid checks
+    total_evaluated += 8 + 2 * len(cfg.states)
     total_failed += len(origin_failures)
     failures.extend(origin_failures)
 

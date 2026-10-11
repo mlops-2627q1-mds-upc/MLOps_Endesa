@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "5c1eefd3-fae1-42af-a3a4-7096a011e758",
+      "id": "6fb50e93-8247-41e2-8035-225b4f9f66b6",
       "kwargs": {
         "value": 230736
       },
@@ -10,7 +10,7 @@
       "type": "expect_table_row_count_to_equal"
     },
     {
-      "id": "c2900baa-9411-4bf9-a05b-c639b0f93ade",
+      "id": "5d6ebf9e-6162-4b93-844e-f65565b8e450",
       "kwargs": {
         "column": "VIC"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_to_exist"
     },
     {
-      "id": "54ac0c51-caf9-4481-95ec-81e0bfdbb4e7",
+      "id": "500399f0-8315-4c05-a64b-cc2793fbe15c",
       "kwargs": {
         "column": "VIC",
         "type_": "float32"
@@ -29,7 +29,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "743b0b6f-d2f1-4dee-b6f6-8c617d0563a3",
+      "id": "391ba3cb-4000-484c-871f-0cab78827563",
       "kwargs": {
         "column": "VIC"
       },
@@ -38,7 +38,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "c4559309-b93b-45d6-ba1f-c55163882456",
+      "id": "7512627a-eee1-4a2a-9365-2a0aac37fdda",
       "kwargs": {
         "column": "VIC",
         "min_value": 0.0
