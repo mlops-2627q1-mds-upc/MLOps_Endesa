@@ -10,6 +10,8 @@ part, and how AI contributed where applicable.
 | [EDN-003: Bounded validation comparison](0003-validation-comparison.md) | 2026-10-05 | M2 | Windows corrections verified by Sindri; Pablo and Sindri approved; merged in PR #28 |
 | [EDN-004: Dataset source limits](0004-dataset-source-limits.md) | 2026-10-10 | M1; related to M2 | Source-scale, positional-only limits accepted by Pau; merged in PR #40 |
 
+| [EDN-005: Required CI checks](0005-required-ci-checks.md) | 2026-10-11 | M5 | Implemented in GitHub; documentation and teammate review pending |
+
 ## Adding an entry
 
 Use the [template](TEMPLATE.md) for a choice with meaningful consequences that
