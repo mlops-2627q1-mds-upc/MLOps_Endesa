@@ -8,6 +8,7 @@ part, and how AI contributed where applicable.
 | [EDN-001: Task planning and review](0001-team-workflow.md) | 2026-09-22 | M1; related to M2 and M5 | Accepted by all team members; documentation PR review pending |
 | [EDN-002: Explicit MLflow run records](0002-mlflow-tracking.md) | 2026-10-02 | M2 | Tracking implementation approved by Pablo and merged in PR #26 |
 | [EDN-003: Bounded validation comparison](0003-validation-comparison.md) | 2026-10-05 | M2 | Sindri's assessment recorded; Windows corrections implemented; current-head peer review pending |
+| [EDN-004: Dataset source limits](0004-dataset-source-limits.md) | 2026-10-10 | M1; related to M2 | Source-scale, positional-only use proposed for teammate review |
 
 ## Adding an entry
 
