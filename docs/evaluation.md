@@ -108,10 +108,58 @@ and version files. Local `comparison.json` links the run IDs and selected baseli
 measures the forecast loop, including batch preparation, result transfer, median
 calculation and progress logging. It excludes MLflow upload time; the tracking
 helper's `run_body_seconds` includes uploads. These are wall-clock measurements,
-not isolated kernel latency or energy measurements. The initial local budget is
-one hour, batch size 16 and four CPU threads, recorded in `params.yaml`.
+not isolated kernel latency; energy is measured separately, as described below.
+The initial local budget is one hour, batch size 16 and four CPU threads,
+recorded in `params.yaml`.
 The deadline is checked between batches and before recording a complete result;
 an over-budget execution fails rather than reporting a partial comparison.
+
+## Energy measurement
+
+Issue [#39](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/39) adds
+energy measurement with CodeCarbon 3.3.1's offline tracker. Only the forecast step
+is measured: the seasonal forecast, or Chronos's prediction loop. Model loading
+and MLflow uploads are outside the measured block. Each run records:
+
+| Field | Meaning |
+| --- | --- |
+| `energy.kwh` | Total of the CPU, GPU and RAM energy below |
+| `energy.cpu_kwh`, `energy.gpu_kwh`, `energy.ram_kwh` | Energy per component |
+| `energy.emissions_kg` | `energy.kwh` times CodeCarbon's carbon intensity for Spain (`ESP`) |
+| `energy.duration_seconds` | Duration CodeCarbon measured |
+| `energy.<cpu\|gpu\|ram>_method` | How each value was obtained |
+| `energy.cpu_model`, `energy.gpu_model`, `energy.codecarbon_version` | Hardware and version |
+
+The artifacts `energy/emissions.csv` and `energy/codecarbon.log` contain
+CodeCarbon's own output. The method parameters distinguish measured values from
+estimates; compare energy only between runs with the same methods and hardware.
+
+CodeCarbon obtains GPU energy only from NVML's energy counter and records 0 kWh
+when the counter is not supported. The tracking helper therefore checks the
+counter first. If it is unsupported but NVML reports power samples, the helper
+reads those samples every 0.5 s and integrates them; `energy.gpu_method` is then
+`nvml power samples (board power)`, and the GPU energy and emissions are added to
+CodeCarbon's totals. If neither is available, `energy.gpu_method` records
+`not measured` and `energy.gpu_kwh` is omitted rather than logged as zero.
+If samples are overwritten before they are read, the run fails.
+
+Observed on Sindri's machine (HP Victus 15L, AMD Ryzen 7 5700G, HP OEM NVIDIA
+GeForce RTX 4060, 31 GB RAM, Windows 11):
+
+| Component | Method recorded | Observation |
+| --- | --- | --- |
+| CPU | `Windows EMI` | Measured by the processor's energy counters |
+| RAM | `RAM power estimation model` | Estimated by CodeCarbon at 10 W; not measured |
+| GPU | `nvml power samples (board power)` | NVML reports the energy counter and current power as not supported with drivers 610.47 and 617.42, at idle and under load; `nvidia-smi` shows `power.draw` as N/A. The power samples read about 50 W at idle and about 110 W under a synthetic full load (FurMark), against a 115 W power limit. A 10 s measurement under that load gave 3.03 × 10⁻⁴ kWh, a mean of 109 W |
+
+These values have the following scope:
+
+- GPU energy is the board power of the whole device, while CPU energy is
+  attributed to this process in CodeCarbon's `process` mode.
+- GPU energy includes the device's idle draw, as CodeCarbon's RAM estimate does.
+  Chronos inference runs on the CPU, so its GPU energy is mainly idle draw.
+- Emissions use CodeCarbon's annual energy mix for Spain (0.174 kg CO₂eq/kWh in
+  version 3.3.1), not the grid's intensity at the time of the run.
 
 ## Interpretation and limitations
 
