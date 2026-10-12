@@ -1,29 +1,195 @@
+"""Reusable CPU inference with the project's pinned Chronos checkpoint."""
+
+from collections.abc import Sequence
+from dataclasses import dataclass
+import json
 from pathlib import Path
+import re
+from threading import Lock
 
-from loguru import logger
-from tqdm import tqdm
+import numpy as np
 import typer
+import yaml
 
-from src.config import MODELS_DIR, PROCESSED_DATA_DIR
+from src.evaluation import sample_median
+from src.splits import PARAMS_PATH
 
-app = typer.Typer()
+SAMPLING = {"temperature": 1.0, "top_k": 50, "top_p": 1.0}
+app = typer.Typer(pretty_exceptions_show_locals=False)
+
+
+@dataclass(frozen=True)
+class ForecastConfig:
+    model_id: str
+    model_revision: str
+    context_length: int
+    horizon: int
+    num_samples: int
+    seed: int
+    device: str
+    cpu_threads: int
+
+    def __post_init__(self):
+        if not isinstance(self.model_id, str) or not self.model_id.strip():
+            raise ValueError("model_id must name a checkpoint")
+        if not isinstance(self.model_revision, str) or not re.fullmatch(
+            r"[0-9a-f]{40}", self.model_revision
+        ):
+            raise ValueError("Pin model_revision to a full Hub commit")
+        for name in ("context_length", "horizon", "num_samples", "cpu_threads"):
+            value = getattr(self, name)
+            if type(value) is not int or value <= 0:
+                raise ValueError(f"{name} must be a positive integer")
+        if type(self.seed) is not int or not 0 <= self.seed < 2**64:
+            raise ValueError("seed must be an integer between 0 and 2**64 - 1")
+        if self.device != "cpu":
+            raise ValueError("This serving module currently supports device: cpu")
+
+    @classmethod
+    def from_params(cls, path: Path = PARAMS_PATH) -> "ForecastConfig":
+        try:
+            params = yaml.safe_load(Path(path).read_text())
+            forecast, evaluation = params["forecast"], params["evaluation"]
+            return cls(
+                model_id=evaluation["model_id"],
+                model_revision=evaluation["model_revision"],
+                context_length=forecast["context_length"],
+                horizon=forecast["horizon"],
+                num_samples=evaluation["num_samples"],
+                seed=evaluation["seed"],
+                device=evaluation["device"],
+                cpu_threads=evaluation["cpu_threads"],
+            )
+        except (KeyError, TypeError, yaml.YAMLError) as error:
+            raise ValueError(
+                "Expected forecast and evaluation settings in the params file"
+            ) from error
+
+
+def _load_pipeline(config: ForecastConfig, local_files_only: bool):
+    # Importing this module and running its fixture tests needs no model dependencies.
+    try:
+        from chronos import ChronosPipeline
+        import torch
+    except ImportError as error:
+        raise RuntimeError("Install model dependencies with uv sync --extra forecast") from error
+
+    torch.set_num_threads(config.cpu_threads)
+    try:
+        pipeline = ChronosPipeline.from_pretrained(
+            config.model_id,
+            revision=config.model_revision,
+            device_map=config.device,
+            dtype=torch.float32,
+            token=False,
+            local_files_only=local_files_only,
+        )
+        pipeline.model.model.eval()
+    except (OSError, ValueError, RuntimeError) as error:
+        raise RuntimeError(
+            f"Could not load {config.model_id} at revision {config.model_revision}"
+        ) from error
+    return torch, pipeline
+
+
+def _validated_history(history: Sequence[float] | np.ndarray, length: int) -> np.ndarray:
+    try:
+        values = np.asarray(history)
+    except (TypeError, ValueError) as error:
+        raise ValueError("History must be a one-dimensional numeric array") from error
+    if values.shape != (length,):
+        raise ValueError(f"History must contain exactly {length} values in one dimension")
+    if values.dtype.kind not in "iuf" or any(isinstance(v, (bool, np.bool_)) for v in history):
+        raise ValueError("History values must be numbers, not strings or booleans")
+    with np.errstate(over="ignore", invalid="ignore"):
+        values = values.astype(np.float32, copy=True)
+    if not np.isfinite(values).all():
+        raise ValueError("History values must be finite and representable as float32")
+    return values
+
+
+class ChronosForecaster:
+    """Create once at application startup and reuse for each history."""
+
+    def __init__(self, config: ForecastConfig | None = None, *, local_files_only: bool = False):
+        self.config = config if config is not None else ForecastConfig.from_params()
+        self._torch, self._pipeline = _load_pipeline(self.config, local_files_only)
+        self._lock = Lock()
+
+    def predict(self, history: Sequence[float] | np.ndarray) -> dict:
+        """Return source-scale quantiles and the configuration for one forecast."""
+        cfg = self.config
+        values = _validated_history(history, cfg.context_length)
+        # Serialize sampling and restore the caller's CPU RNG state after each request.
+        with self._lock, self._torch.inference_mode(), self._torch.random.fork_rng(devices=[]):
+            self._torch.random.default_generator.manual_seed(cfg.seed)
+            try:
+                output = self._pipeline.predict(
+                    self._torch.as_tensor(values[None, :], dtype=self._torch.float32),
+                    prediction_length=cfg.horizon,
+                    num_samples=cfg.num_samples,
+                    **SAMPLING,
+                )
+            except (OSError, ValueError, RuntimeError) as error:
+                raise RuntimeError("Chronos prediction failed") from error
+            try:
+                samples = output.cpu().numpy()
+                if samples.shape != (1, cfg.num_samples, cfg.horizon):
+                    raise ValueError("Unexpected sample shape")
+                with np.errstate(over="ignore", invalid="ignore"):
+                    median = sample_median(samples, 1, cfg.horizon)[0]
+                    lower, upper = np.quantile(samples[0], [0.1, 0.9], axis=0, method="linear")
+                if not np.isfinite([lower, median, upper]).all():
+                    raise ValueError("Nonfinite quantiles")
+            except (AttributeError, TypeError, ValueError) as error:
+                raise RuntimeError(
+                    "Chronos must return finite samples with shape "
+                    f"(1, {cfg.num_samples}, {cfg.horizon}) and finite quantiles"
+                ) from error
+
+        return {
+            "p10": lower.tolist(),
+            "p50": median.tolist(),
+            "p90": upper.tolist(),
+            "model_id": cfg.model_id,
+            "model_revision": cfg.model_revision,
+            "context_length": cfg.context_length,
+            "horizon": cfg.horizon,
+            "settings": {
+                "num_samples": cfg.num_samples,
+                "seed": cfg.seed,
+                "device": cfg.device,
+                "cpu_threads": cfg.cpu_threads,
+                "dtype": "float32",
+                "sampling": dict(SAMPLING),
+                "quantile_method": "linear",
+                "point_statistic": "median",
+            },
+        }
 
 
 @app.command()
 def main(
-    # ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
-    features_path: Path = PROCESSED_DATA_DIR / "test_features.csv",
-    model_path: Path = MODELS_DIR / "model.pkl",
-    predictions_path: Path = PROCESSED_DATA_DIR / "test_predictions.csv",
-    # -----------------------------------------
+    history_path: Path,
+    params_path: Path = PARAMS_PATH,
+    output_path: Path | None = None,
+    local_files_only: bool = False,
 ):
-    # ---- REPLACE THIS WITH YOUR OWN CODE ----
-    logger.info("Performing inference for model...")
-    for i in tqdm(range(10), total=10):
-        if i == 5:
-            logger.info("Something happened for iteration 5.")
-    logger.success("Inference complete.")
-    # -----------------------------------------
+    """Forecast from a JSON array of history values."""
+    try:
+        history = json.loads(history_path.read_text())
+        config = ForecastConfig.from_params(params_path)
+        _validated_history(history, config.context_length)
+        forecaster = ChronosForecaster(config, local_files_only=local_files_only)
+        result = json.dumps(forecaster.predict(history), indent=2, allow_nan=False) + "\n"
+        if output_path is None:
+            typer.echo(result, nl=False)
+        else:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(result)
+    except (OSError, ValueError, RuntimeError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(1) from error
 
 
 if __name__ == "__main__":
