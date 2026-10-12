@@ -30,6 +30,8 @@ from src.splits import HELD_OUT_BLOCKS, PARAMS_PATH, SplitConfig
 from src.tracking import tracked_run
 
 METHODS = ("seasonal_lag48", "seasonal_lag336", "chronos")
+# The raw data and the split stage that produces the evaluated blocks.
+DATA_DVC_TARGETS = ("data/raw.dvc", "dvc.yaml")
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
@@ -58,9 +60,15 @@ class EvaluationConfig:
 
 
 def data_version() -> str:
-    """Require the on-disk DVC artifacts to match their committed references."""
+    """Require the on-disk DVC data to match its committed references.
+
+    Only the raw data and the split stage are checked, so a DVC-tracked model that has
+    not been pulled does not block an evaluation.
+    """
     status = json.loads(
-        subprocess.check_output(["dvc", "status", "--json"], cwd=PROJ_ROOT, text=True)
+        subprocess.check_output(
+            ["dvc", "status", "--json", *DATA_DVC_TARGETS], cwd=PROJ_ROOT, text=True
+        )
     )
     if status:
         raise ValueError("DVC inputs have changed or are missing; restore them before evaluation")

@@ -1,4 +1,5 @@
 import json
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -93,7 +94,9 @@ def test_round_scores_every_run_and_continues_after_a_failure(params, tmp_path, 
 
 def test_round_starts_no_run_after_its_time_budget(params, tmp_path, monkeypatch):
     clock = iter([0.0, 0.0, 7200.0])
-    monkeypatch.setattr(fine_tune_round.time, "monotonic", lambda: next(clock))
+    # Replace the round's own clock only; patching time.monotonic itself would let any
+    # other caller in the process use up these readings.
+    monkeypatch.setattr(fine_tune_round, "time", SimpleNamespace(monotonic=lambda: next(clock)))
     monkeypatch.setattr(
         train, "fine_tune", lambda **kwargs: {"run_id": "t", "checkpoint": {"path": "ckpt"}}
     )

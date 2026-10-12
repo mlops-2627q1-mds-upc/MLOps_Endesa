@@ -326,6 +326,18 @@ def test_missing_or_changed_dvc_inputs_stop_before_a_run(monkeypatch):
         evaluator.data_version()
 
 
+def test_data_version_checks_only_the_data_not_tracked_models(monkeypatch):
+    commands = []
+
+    def fake_check_output(command, **kwargs):
+        commands.append(command)
+        return "{}"
+
+    monkeypatch.setattr(evaluator.subprocess, "check_output", fake_check_output)
+    evaluator.data_version()
+    assert commands == [["dvc", "status", "--json", "data/raw.dvc", "dvc.yaml"]]
+
+
 def test_untracked_input_directory_is_rejected(tmp_path):
     with pytest.raises(ValueError, match="DVC-tracked"):
         evaluator.evaluate(processed_dir=tmp_path)

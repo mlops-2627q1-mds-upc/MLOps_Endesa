@@ -8,6 +8,8 @@ temporary/
 # Model weights and checkpoints (versioned with DVC / MLflow)
 /models/*
 !/models/.gitkeep
+# DVC references to selected models; their weights stay ignored
+!/models/*.dvc
 
 # Secrets and local configuration
 .env
