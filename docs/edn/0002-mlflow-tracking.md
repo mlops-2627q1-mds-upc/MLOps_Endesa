@@ -4,7 +4,7 @@
 - **Milestone:** M2 - Reproducibility.
 - **Activity / Topic:** Experiment tracking for #12.
 - **Decision Participants:** Dídac Cayuela.
-- **Status:** Implementation proposed for peer review; the tracking work was authorized by Dídac.
+- **Status:** Tracking implementation approved by Pablo Pérez Cano and merged in PR #26; AI contribution assessment remains pending.
 
 ## Decision
 
@@ -35,8 +35,9 @@ plan, and implemented the helper, smoke command, tests, and documentation.
 
 Accepted with modifications. Dídac authorized the implementation, chose to take
 over the existing #12, and clarified that #5 stays open as the cards evolve.
-That clarification is retained in the task scope. Peer review of the resulting
-code and these implementation choices is pending.
+That clarification is retained in the task scope. Pablo approved the resulting
+implementation on 2026-10-03; [PR #26](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/26)
+was merged on 2026-10-05.
 
 ## Assessment of the AI Contribution
 

@@ -86,8 +86,9 @@ Before a real evaluation, retrieve the intended DVC artifact and check
 not validate the contents of locally modified data or pin/load a model for you.
 Use the pinned model revision in [the model card](MODEL_CARD.md).
 
-The baseline/Chronos comparison awaits the reviewed split and forecast-origin
-implementation in [#17](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/17).
+The split and forecast-origin implementation in
+[#17](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/17) is merged.
+Use the [validation evaluator](evaluation.md) to record real baseline/Chronos comparisons.
 Record the selected evaluation settings and compute budget before running it.
 Use identical validation targets for each method and keep final test targets out
 of model selection. Keep source-unit/calendar and upstream pretraining limits
@@ -118,8 +119,10 @@ environment, and lockfile. The fixture produced `smoke.rows = 4` and
 tracking access, not model performance or a second teammate's reproduction.
 
 See [EDN-002](edn/0002-mlflow-tracking.md) for the logging choice and AI involvement.
-Setup alone does not complete #12: comparable real runs and teammate reproduction
-of a recorded result are still required.
+The [first real validation comparison](experiments/001-baseline-chronos.md)
+records completed seasonal-baseline and untuned Chronos runs with verified
+predictions, metrics and versions. Teammate reproduction, interpretation review
+and the reviewed merge remain required before #12 is complete.
 
 References: [MLflow client API](https://mlflow.org/docs/latest/api_reference/python_api/mlflow.client.html)
 and [DagsHub MLflow integration](https://dagshub.com/docs/integration_guide/mlflow_tracking/).

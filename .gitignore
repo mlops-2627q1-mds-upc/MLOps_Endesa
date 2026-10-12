@@ -24,6 +24,7 @@ mlartifacts/
 mlflow.db
 mlflow.db-*
 emissions.csv
+/reports/evaluation/
 
 # Python caches and build outputs
 __pycache__/
