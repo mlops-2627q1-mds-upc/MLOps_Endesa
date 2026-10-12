@@ -36,6 +36,8 @@ fine_tuning:
   checkpoint_every: 250
   device: cuda
   max_seconds: 1800
+  lora_rank: 0  # 0 trains every weight; a positive rank trains LoRA adapters instead
+  lora_alpha: 8  # peft's default; scales the adapters by lora_alpha / lora_rank
 
 # Options proposed in #13; each changes one setting of `fine_tuning`. Seeds are set per run.
 fine_tuning_options:
@@ -43,3 +45,4 @@ fine_tuning_options:
   2-lower-lr: {learning_rate: 0.0001}
   3-fewer-steps: {steps: 300}
   4-recent-data: {window_start: 143136}  # the last three years of the training block
+  5-lora: {lora_rank: 8}  # adapters on the attention projections; base weights frozen

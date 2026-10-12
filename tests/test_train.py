@@ -91,6 +91,61 @@ def test_only_the_training_block_is_read(tmp_path):
         train.load_training_block(tmp_path, CFG)
 
 
+def tiny_t5():
+    transformers = pytest.importorskip("transformers")
+    config = transformers.T5Config(
+        vocab_size=32,
+        d_model=8,
+        d_kv=4,
+        d_ff=16,
+        num_layers=1,
+        num_heads=2,
+        decoder_start_token_id=0,
+    )
+    return transformers.T5ForConditionalGeneration(config)
+
+
+def test_full_fine_tuning_trains_every_weight_and_saves_no_adapter(tmp_path):
+    model = tiny_t5()
+    model, trainable = train.prepare_model(model, settings())
+    assert len(trainable) == len(list(model.parameters()))
+    saved = train.save_final(model, tmp_path, lora=False)
+    assert (tmp_path / "final" / "model.safetensors").is_file()
+    assert "adapter_path" not in saved
+
+
+def test_lora_trains_only_adapters_and_saves_a_loadable_merged_checkpoint(tmp_path):
+    pytest.importorskip("peft")
+    torch = pytest.importorskip("torch")
+    transformers = pytest.importorskip("transformers")
+    model, trainable = train.prepare_model(tiny_t5(), settings(lora_rank=2))
+    names = {name for name, parameter in model.named_parameters() if parameter.requires_grad}
+    assert names and all("lora_" in name for name in names)
+    # Names end in <module>.lora_<A|B>.default.weight.
+    assert {name.split(".")[-4] for name in names} == set(train.LORA_TARGET_MODULES)
+    assert len(trainable) == len(names)
+    # Move the adapters away from their zero start, so merging changes the weights.
+    with torch.no_grad():
+        for parameter in trainable:
+            parameter.add_(0.1)
+    inputs = {"input_ids": torch.tensor([[1, 2, 3]]), "decoder_input_ids": torch.tensor([[0, 4]])}
+    model.eval()
+    expected = model(**inputs).logits
+
+    saved = train.save_final(model, tmp_path, lora=True)
+    assert (tmp_path / "adapter" / "adapter_model.safetensors").is_file()
+    assert len(saved["adapter_safetensors_sha256"]) == 64
+    reloaded = transformers.T5ForConditionalGeneration.from_pretrained(tmp_path / "final").eval()
+    torch.testing.assert_close(reloaded(**inputs).logits, expected)
+
+
+def test_invalid_lora_settings_are_rejected():
+    with pytest.raises(ValueError, match="lora_rank"):
+        settings(lora_rank=-1)
+    with pytest.raises(ValueError, match="lora_alpha"):
+        settings(lora_rank=8, lora_alpha=0)
+
+
 def test_padded_label_tokens_are_ignored_by_the_loss():
     torch = pytest.importorskip("torch")
 

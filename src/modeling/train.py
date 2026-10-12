@@ -1,7 +1,7 @@
 """Bounded Chronos fine-tuning on the training block for #13."""
 
 from contextlib import nullcontext
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 import hashlib
 import json
 import math
@@ -24,6 +24,8 @@ from src.tracking import tracked_run
 _METRIC_BATCH = 1000
 # Every option in params.yaml changes the reference settings in `fine_tuning`.
 REFERENCE_OPTION = "1-reference"
+# T5's attention projections, in the encoder, decoder and cross-attention.
+LORA_TARGET_MODULES = ("q", "k", "v", "o")
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
@@ -38,6 +40,8 @@ class FineTuneConfig:
     checkpoint_every: int
     device: str
     max_seconds: int
+    lora_rank: int = 0  # 0 trains every weight; otherwise LoRA adapters of this rank
+    lora_alpha: int = 8
 
     def __post_init__(self):
         if not (math.isfinite(self.learning_rate) and self.learning_rate > 0):
@@ -52,6 +56,8 @@ class FineTuneConfig:
             raise ValueError("window_start must not be negative")
         if self.device not in ("cpu", "cuda"):
             raise ValueError("Choose an explicit cpu or cuda device")
+        if self.lora_rank < 0 or self.lora_alpha <= 0:
+            raise ValueError("lora_rank must not be negative and lora_alpha must be positive")
 
     @classmethod
     def from_params(
@@ -131,6 +137,45 @@ def tokenize(tokenizer, contexts: np.ndarray, labels: np.ndarray) -> dict:
     return {"input_ids": input_ids, "attention_mask": attention_mask, "labels": label_ids}
 
 
+def prepare_model(model, settings: FineTuneConfig) -> tuple:
+    """Return the model to train and its trainable parameters.
+
+    With a LoRA rank, the base weights are frozen and adapters train in their place.
+    """
+    if settings.lora_rank:
+        from peft import LoraConfig, get_peft_model
+
+        model = get_peft_model(
+            model,
+            LoraConfig(
+                r=settings.lora_rank,
+                lora_alpha=settings.lora_alpha,
+                lora_dropout=0.0,
+                target_modules=list(LORA_TARGET_MODULES),
+                task_type="SEQ_2_SEQ_LM",
+            ),
+        )
+    return model, [parameter for parameter in model.parameters() if parameter.requires_grad]
+
+
+def save_final(model, directory: Path, lora: bool) -> dict:
+    """Save a full checkpoint that `from_pretrained` loads, plus the adapter for LoRA."""
+    saved = {}
+    if lora:
+        model.save_pretrained(directory / "adapter")
+        saved["adapter_path"] = str(directory / "adapter")
+        saved["adapter_safetensors_sha256"] = _sha256(
+            directory / "adapter" / "adapter_model.safetensors"
+        )
+        # Merging adds the adapters to the base weights, so the result loads like any
+        # fine-tuned checkpoint.
+        model = model.merge_and_unload()
+    model.save_pretrained(directory / "final")
+    saved["path"] = str(directory / "final")
+    saved["model_safetensors_sha256"] = _sha256(directory / "final" / "model.safetensors")
+    return saved
+
+
 def _hardware(device: str) -> dict:
     import torch
 
@@ -195,13 +240,16 @@ def fine_tune(
         torch_dtype=torch.float32,
         token=False,
     )
-    model = pipeline.model.model
     prediction_length = pipeline.model.config.prediction_length
     bounds = window_start_bounds(cfg, settings.window_start, prediction_length)
     steps = settings.steps if max_steps is None else min(max_steps, settings.steps)
     if control:
         steps = 0
-    optimizer = torch.optim.AdamW(model.parameters(), lr=settings.learning_rate, weight_decay=0.0)
+    lora = bool(settings.lora_rank) and not control
+    model, trainable = prepare_model(
+        pipeline.model.model, settings if lora else replace(settings, lora_rank=0)
+    )
+    optimizer = torch.optim.AdamW(trainable, lr=settings.learning_rate, weight_decay=0.0)
     # The schedule always spans the configured steps, so a shortened run trains identically.
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lambda step: linear_decay(step, settings.steps)
@@ -217,6 +265,12 @@ def fine_tune(
         "steps_run": steps,
         "dtype": "float32",
         "optimizer": "AdamW, weight decay 0, gradient norm clipped at 1.0",
+        "lora": (
+            {"target_modules": list(LORA_TARGET_MODULES), "dropout": 0.0, "merged": True}
+            if lora
+            else None
+        ),
+        "trainable_parameters": sum(parameter.numel() for parameter in trainable),
         "hardware": _hardware(settings.device),
     }
     with tracked_run(
@@ -263,18 +317,18 @@ def fine_tune(
                         raise FloatingPointError(f"Non-finite training loss at step {step}")
                     part_loss.backward()
                     loss += float(part_loss.detach())
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                torch.nn.utils.clip_grad_norm_(trainable, 1.0)
                 optimizer.step()
                 scheduler.step()
                 optimizer.zero_grad(set_to_none=True)
                 losses.append(loss)
                 if step % settings.checkpoint_every == 0 and step < steps:
+                    # For LoRA, intermediate checkpoints hold the adapter only.
                     model.save_pretrained(directory / f"step-{step}")
             if settings.device == "cuda":
                 torch.cuda.synchronize()
             train_seconds = time.perf_counter() - start
-        model.save_pretrained(directory / "final")
-        weights = directory / "final" / "model.safetensors"
+        checkpoint = save_final(model, directory, lora)
         timestamp = int(time.time() * 1000)
         history = [
             Metric("train.loss", loss, timestamp, step) for step, loss in enumerate(losses, 1)
@@ -291,10 +345,6 @@ def fine_tune(
                 "train.final_loss": float(np.mean(losses[-min(50, len(losses)) :])),
             }
         run.log_metrics(summary)
-        checkpoint = {
-            "path": str(directory / "final"),
-            "model_safetensors_sha256": _sha256(weights),
-        }
         run.client.log_dict(run.run_id, checkpoint, "checkpoint.json")
         run.client.log_dict(run.run_id, yaml.safe_load(params_path.read_text()), "params.json")
     logger.info(f"saved after {steps} training steps; run={run.run_id}")
