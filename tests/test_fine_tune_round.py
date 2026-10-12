@@ -107,6 +107,9 @@ def test_round_starts_no_run_after_its_time_budget(params, tmp_path, monkeypatch
     )
     assert results[0]["evaluation_run_id"] == "e"
     assert results[1] == {"option": "1-reference", "seed": 8, "skipped": "time budget"}
+    # Skipped runs are in the summary file too, not only in the printed result.
+    (summary,) = tmp_path.glob("round-*.json")
+    assert json.loads(summary.read_text()) == results
 
 
 def test_unknown_option_stops_the_round_before_any_training(params, tmp_path, monkeypatch):

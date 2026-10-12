@@ -1,6 +1,7 @@
 """Train and score fine-tuning options and seeds one after another for #13."""
 
 from datetime import UTC, datetime
+import gc
 import json
 from pathlib import Path
 import time
@@ -14,6 +15,22 @@ from src.modeling import evaluate, train
 from src.splits import PARAMS_PATH
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
+
+
+def release_gpu_memory() -> None:
+    """Return PyTorch's cached GPU memory before the next model loads in this process.
+
+    After training, PyTorch keeps about 5.7 GB of the 8 GB GPU reserved for reuse. The
+    evaluation's allocations do not fit those blocks, so Windows moved the excess into
+    shared system memory, and evaluations ran about ten times slower.
+    """
+    gc.collect()
+    try:
+        import torch
+    except ImportError:
+        return
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 def run_round(
@@ -42,16 +59,19 @@ def run_round(
     results = []
     for option in options:
         for seed in seeds:
+            entry = {"option": option, "seed": seed}
             if time.monotonic() >= deadline:
                 logger.warning(f"Time budget used; {option} with seed {seed} was not started")
-                results.append({"option": option, "seed": seed, "skipped": "time budget"})
+                entry["skipped"] = "time budget"
+                results.append(entry)
+                summary_path.write_text(json.dumps(results, indent=2, allow_nan=False) + "\n")
                 continue
-            entry = {"option": option, "seed": seed}
             try:
                 trained = train.fine_tune(
                     params_path=params_path, tracking_uri=tracking_uri, option=option, seed=seed
                 )
                 entry["training_run_id"] = trained["run_id"]
+                release_gpu_memory()
                 comparison = evaluate.evaluate(
                     params_path=params_path,
                     method="chronos",
@@ -65,6 +85,8 @@ def run_round(
             except Exception as error:  # noqa: BLE001 - recorded, and the round continues
                 logger.exception(f"{option} with seed {seed} failed")
                 entry["error"] = f"{type(error).__name__}: {error}"
+            finally:
+                release_gpu_memory()
             results.append(entry)
             summary_path.write_text(json.dumps(results, indent=2, allow_nan=False) + "\n")
     logger.info(f"Round summary: {summary_path}")
