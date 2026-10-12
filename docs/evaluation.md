@@ -196,6 +196,10 @@ trained as two micro-batches of 16 so that a run fits in 8 GB of GPU memory.
 `--block test` scores the test block instead of validation. Use it only for the final
 comparison in Experiment 004's plan; select models on validation.
 
+The selected checkpoint is versioned with DVC as `models/chronos-t5-small-fine-tuned`, so
+a `dvc pull` without a target now also downloads it (176 MB). To retrieve only the data,
+pull `data/raw.dvc` and `dvc.yaml` as targets; the evaluator checks only those.
+
 When the output of these commands is piped or redirected on Windows, set
 `$env:PYTHONUTF8 = "1"` first: MLflow prints its run link with an emoji, which the
 default code page cannot encode.

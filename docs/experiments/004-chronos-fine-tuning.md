@@ -33,6 +33,11 @@ was not run. LoRA used option 1's learning rate; other learning rates were not t
 
 Option 1 with seed 8 is selected on validation. Its training run is
 [`639eba4cc7e74de08ffab64beee715db`](https://dagshub.com/pauadal03/MLOps_Endesa.mlflow/#/experiments/1/runs/639eba4cc7e74de08ffab64beee715db).
+The checkpoint is versioned with DVC as `models/chronos-t5-small-fine-tuned` (176 MB);
+its `model.safetensors` has the SHA-256 recorded by its evaluation runs,
+`746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9`. Retrieve it with
+`uv run dvc pull models/chronos-t5-small-fine-tuned.dvc -r origin`, or with the in-memory
+credentials snippet in [the evaluation guide](../evaluation.md#reproduction).
 
 ### Training length
 
