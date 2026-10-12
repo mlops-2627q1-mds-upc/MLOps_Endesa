@@ -4,9 +4,9 @@ On 2026-10-12, Sindri fine-tuned the pinned Chronos checkpoint for
 [#13](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/13), following the
 options proposed by Pablo in that issue. Training used the training block only, and
 every option was scored on the full validation block with the evaluator from
-[Experiment 001](001-baseline-chronos.md). The test block remains closed; its plan and
-decision rule are fixed [below](#test-plan-and-decision-rule) before any test result
-exists.
+[Experiment 001](001-baseline-chronos.md). The test plan and decision rule were fixed
+[below](#test-plan-and-decision-rule) before the test block was opened; the selected
+model was then scored once on test, and [meets the rule](#results-on-test).
 
 ## Results on validation
 
@@ -136,7 +136,7 @@ with seed 8 on validation to every recorded digit, without opening the test bloc
 
 ## Test plan and decision rule
 
-Fixed before the test block is opened, as requested in #13 and in
+Fixed in commit `903f7c4`, before the test block was opened, as requested in #13 and in
 [PR #30](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/30) (point 6).
 
 The test block is scored once, at a single clean commit, with the evaluator's
@@ -160,4 +160,46 @@ above.
 
 ## Results on test
 
-Pending.
+Pablo approved the test path (commit `e2cf097`) in #13 before the run. On 2026-10-12, each
+model in the plan was scored once on the test block, at clean commit
+[`0874b45`](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/commit/0874b45142706df2838d42557af516733ecb90e0),
+with 365 origins per state and the test target-table hash
+`dd5945ccd8122c02c70be44250de5d2dfdc5a3359f10442b20078d2ac4d71f3e`. Links open the test runs.
+
+| Run | Role | Test mean MASE | Validation mean MASE |
+| --- | --- | ---: | ---: |
+| [Option 1, seed 8](https://dagshub.com/pauadal03/MLOps_Endesa.mlflow/#/experiments/1/runs/afb1ac0b57644101a3331b903588a4a2) | Selected model | **0.5571** | 0.5649 |
+| [Option 1, seed 7](https://dagshub.com/pauadal03/MLOps_Endesa.mlflow/#/experiments/1/runs/fbfafacfb04d49e78684ab17df57a4f3) | Reported only | 0.5618 | 0.5720 |
+| [Option 1, seed 9](https://dagshub.com/pauadal03/MLOps_Endesa.mlflow/#/experiments/1/runs/a72cfaed9c9d423eaabb0a22a2d7d4fb) | Reported only | 0.5669 | 0.5740 |
+| [Control](https://dagshub.com/pauadal03/MLOps_Endesa.mlflow/#/experiments/1/runs/89eb2214d4814a9cbb5f146165003462) | Untuned Chronos | 0.8175 | 0.8737 |
+| [Lag 336](https://dagshub.com/pauadal03/MLOps_Endesa.mlflow/#/experiments/1/runs/02804dbcf7654ff7b42ee1722078c8a2) | Weekly baseline | 0.9617 | 1.2020 |
+| [Lag 48](https://dagshub.com/pauadal03/MLOps_Endesa.mlflow/#/experiments/1/runs/1d694eb077e54af4b815a74a4b1ecb2a) | Primary baseline | 0.9885 | 1.0422 |
+
+Each cell below contains the test MASE per state.
+
+| State | Option 1, seed 8 | Control | Lag 48 | Lag 336 |
+| --- | ---: | ---: | ---: | ---: |
+| NSW | 0.4566 | 0.7669 | 0.9066 | 0.8490 |
+| VIC | 0.6110 | 0.9383 | 1.1868 | 1.0456 |
+| QLD | 0.5690 | 0.8888 | 1.1021 | 1.0794 |
+| SA | 0.6487 | 0.8444 | 0.9343 | 0.9692 |
+| TAS | 0.5000 | 0.6489 | 0.8128 | 0.8654 |
+
+**Decision rule: met.** The test mean MASE of option 1 with seed 8 is lower than the
+control's by 0.2604, lag 48's by 0.4315 and lag 336's by 0.4046, each more than the
+0.0091 margin. By the rule fixed above, fine-tuning improves held-out forecasts: its test
+mean MASE is 31.9% below the untuned model and 43.6% below the primary baseline. It is
+also lower in every state.
+
+On test, option 1's three seeds span 0.0099, close to their validation spread of
+0.0091, in the same order. Every method scores lower on test than on validation, so the
+test period is easier to forecast in this protocol. Lag 336 scores below lag 48 on test,
+the reverse of validation; lag 48 remains the primary baseline, since it was selected on
+validation, and the rule requires beating both. The fine-tuned model's mean worst-origin
+error share is 0.183, against 0.147 for the control: its remaining error is more
+concentrated in the worst origins, as on validation. Each Chronos test pass took about
+259 s and 0.0104 kWh.
+
+These results come from one selected checkpoint on one test period, and the test block
+has now been used. Holiday breakdowns remain unavailable until the civil timestamps in
+[#6](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/6) are verified.

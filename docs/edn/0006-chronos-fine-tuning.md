@@ -4,7 +4,7 @@
 - **Milestone:** M2; planned in #13 as a model-building experiment.
 - **Activity / Topic:** Fine-tuning experiment for #13.
 - **Decision Participants:** Sindri Másson; Pablo Pérez Cano proposed the options and reviewed the validation results.
-- **Status:** Validation results reviewed by Pablo; test-path review, test run and PR review pending.
+- **Status:** Validation results and test path reviewed by Pablo; test run completed and meets the decision rule; PR review pending.
 
 ## Decision
 
@@ -49,9 +49,11 @@ arbitrary as any other, and selected seed 8 on validation.
 
 Pablo read the 18 validation runs back from MLflow and confirmed the table, the clean
 commits, the shared target hash, the link from each evaluation to its training run, and
-that training reads only the training block. He agreed with selecting option 1, with
-skipping AdaLoRA, and with scoring seed 8 once on test. The review of the test path and
-of the test results is pending.
+that training reads only the training block. Pablo agreed with selecting option 1, with
+skipping AdaLoRA, and with scoring seed 8 once on test, and approved the test path before
+the test run. On test, option 1 with seed 8 scored a mean MASE of 0.5571, against 0.8175
+for the control and 0.9885 for lag 48, which meets the decision rule. The review of the
+test results is pending.
 
 ## Other Evidence
 
