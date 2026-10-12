@@ -1,7 +1,10 @@
 import hashlib
 import json
+import logging
 from pathlib import Path
 import subprocess
+import threading
+from types import SimpleNamespace
 
 import mlflow
 from mlflow import MlflowClient
@@ -9,6 +12,10 @@ import pytest
 
 from src import tracking
 from src.modeling.tracking_smoke import smoke_run
+from tests.conftest import FakeEmissionsTracker
+
+# Saved before the autouse fixture replaces it with a fake.
+real_emissions_tracker = tracking._emissions_tracker
 
 
 @pytest.fixture
@@ -177,6 +184,227 @@ def test_smoke_command_round_trips_in_a_local_store(store):
     assert run.data.tags["run.purpose"] == "smoke"
     assert run.data.tags["data.version"] == "synthetic-fixture-v1"
     assert run.data.metrics["smoke.mae"] == 0.75
+
+
+def test_energy_of_the_measured_block_is_logged_with_its_method(store, tmp_path, fake_codecarbon):
+    uri, client, _ = store
+    with open_run(uri) as run, run.measure_energy():
+        pass
+
+    (tracker,) = fake_codecarbon
+    assert tracker.started and tracker.stopped
+    recorded = client.get_run(run.run_id)
+    assert recorded.info.status == "FINISHED"
+    assert recorded.data.metrics["energy.kwh"] == 0.002
+    assert recorded.data.metrics["energy.cpu_kwh"] == 0.0015
+    assert recorded.data.metrics["energy.emissions_kg"] == 0.0003
+    assert recorded.data.metrics["energy.duration_seconds"] == 1.5
+    assert recorded.data.params["energy.country_iso_code"] == "ESP"
+    assert recorded.data.params["energy.tracking_mode"] == "process"
+    assert recorded.data.params["energy.cpu_method"] == "TDP constant"
+    assert recorded.data.params["energy.gpu_model"] == "none"
+    artifacts = {item.path for item in client.list_artifacts(run.run_id, "energy")}
+    assert artifacts == {"energy/emissions.csv", "energy/codecarbon.log"}
+    log = Path(client.download_artifacts(run.run_id, "energy/codecarbon.log", str(tmp_path)))
+    assert "CPU Tracking Method: TDP constant" in log.read_text()
+
+
+def test_each_tracker_sets_up_hardware_and_logs_its_own_methods(monkeypatch, tmp_path):
+    import codecarbon
+    from codecarbon.core import hardware_cache
+
+    events = []
+    monkeypatch.setattr(hardware_cache, "clear_cache", lambda: events.append("clear"))
+    monkeypatch.setattr(
+        codecarbon, "OfflineEmissionsTracker", lambda **kwargs: events.append("tracker")
+    )
+    for _ in range(2):
+        real_emissions_tracker(tmp_path, "ESP")
+    assert events == ["clear", "tracker", "clear", "tracker"]
+
+
+def test_failure_inside_measured_block_stops_tracker_and_logs_no_energy(store, fake_codecarbon):
+    uri, client, _ = store
+    with (
+        pytest.raises(RuntimeError, match="forecast failed"),
+        open_run(uri) as run,
+        run.measure_energy(),
+    ):
+        raise RuntimeError("forecast failed")
+
+    (tracker,) = fake_codecarbon
+    assert tracker.stopped
+    recorded = client.get_run(run.run_id)
+    assert recorded.info.status == "FAILED"
+    assert "energy.kwh" not in recorded.data.metrics
+
+
+def test_missing_codecarbon_result_fails_the_run(store, monkeypatch):
+    class SilentlyFailingTracker:
+        """CodeCarbon suppresses its errors and then reports no data."""
+
+        def __init__(self, output_dir, country_iso_code):
+            pass
+
+        def start(self):
+            pass
+
+        def stop(self):
+            return None
+
+    monkeypatch.setattr(tracking, "_emissions_tracker", SilentlyFailingTracker)
+    uri, client, _ = store
+    with (
+        pytest.raises(RuntimeError, match="no measurement"),
+        open_run(uri) as run,
+        run.measure_energy(),
+    ):
+        pass
+    assert client.get_run(run.run_id).info.status == "FAILED"
+
+
+def test_power_samples_are_integrated_over_the_measured_interval():
+    # 100 W held from before the start, then 50 W; the interval is 2 s of each.
+    samples = [(0, 100.0), (3_000_000, 50.0)]
+    kwh = tracking._integrate_power_kwh(samples, start_us=1_000_000, stop_us=5_000_000)
+    assert kwh == pytest.approx((100 * 2 + 50 * 2) / 3.6e6)
+
+
+class FakeNvml:
+    """Stands in for pynvml's power-sample buffer of a single GPU."""
+
+    NVML_TOTAL_POWER_SAMPLES = "total-power"
+
+    class NVMLError(Exception):
+        pass
+
+    class NVMLError_NotFound(NVMLError):
+        pass
+
+    def __init__(self, buffer):
+        self.buffer = buffer
+        self.fail_next = False
+        self.failed = threading.Event()
+
+    def nvmlDeviceGetSamples(self, handle, kind, since_us):
+        if self.fail_next:
+            self.fail_next = False
+            self.failed.set()
+            raise self.NVMLError("driver error")
+        newer = [
+            SimpleNamespace(timeStamp=t, sampleValue=SimpleNamespace(uiVal=watts * 1000))
+            for t, watts in self.buffer
+            if t > since_us
+        ]
+        if not newer:
+            raise self.NVMLError_NotFound()
+        return kind, newer
+
+
+def test_gpu_sampler_measures_the_board_power_samples():
+    now = 1_000_000_000_000_000
+    clock = iter([now / 1e6, (now + 2_000_000) / 1e6]).__next__
+    nvml = FakeNvml([(now - 500_000, 50.0), (now - 100_000, 50.0)])
+    sampler = tracking._GpuPowerSampler(nvml, ["gpu0"], poll_seconds=3600, clock=clock)
+    sampler.start()
+    nvml.buffer += [(now + 1_000_000, 110.0)]
+    sampler.stop()
+    assert sampler.kwh == pytest.approx((50 * 1 + 110 * 1) / 3.6e6)
+
+
+def test_gpu_sampler_rejects_samples_lost_from_the_buffer():
+    now = 1_000_000_000_000_000
+    clock = iter([now / 1e6, (now + 5_000_000) / 1e6]).__next__
+    nvml = FakeNvml([(now - 200_000, 50.0), (now - 100_000, 50.0)])
+    sampler = tracking._GpuPowerSampler(nvml, ["gpu0"], poll_seconds=3600, clock=clock)
+    sampler.start()
+    # The two-sample buffer was fully replaced before the next read.
+    nvml.buffer = [(now + 4_000_000, 110.0), (now + 4_500_000, 110.0)]
+    with pytest.raises(RuntimeError, match="overwritten"):
+        sampler.stop()
+
+
+def test_gpu_sampler_fails_after_a_polling_error_even_if_nvml_recovers():
+    now = 1_000_000_000_000_000
+    clock = iter([now / 1e6, (now + 5_000_000) / 1e6]).__next__
+    nvml = FakeNvml([(now - 200_000, 50.0), (now - 100_000, 50.0), (now - 50_000, 50.0)])
+    sampler = tracking._GpuPowerSampler(nvml, ["gpu0"], poll_seconds=0.01, clock=clock)
+    sampler.start()
+    nvml.fail_next = True
+    assert nvml.failed.wait(5), "the polling thread never read the buffer"
+    # The driver recovers with a partly refilled buffer; earlier samples are missing.
+    nvml.buffer = [(now + 4_000_000, 110.0)]
+    with pytest.raises(RuntimeError, match="Reading GPU power samples failed") as raised:
+        sampler.stop()
+    assert isinstance(raised.value.__cause__, FakeNvml.NVMLError)
+
+
+class FakeGpuSampler:
+    def __init__(self, kwh, error=None):
+        self.kwh = kwh
+        self.error = error
+        self.started = self.stopped = False
+
+    def start(self):
+        self.started = True
+
+    def stop(self):
+        self.stopped = True
+        if self.error is not None:
+            raise self.error
+
+
+def test_gpu_sampling_failure_fails_the_run_without_energy(store, fake_codecarbon, monkeypatch):
+    error = RuntimeError("Reading GPU power samples failed; the GPU energy is incomplete.")
+    sampler = FakeGpuSampler(kwh=0.004, error=error)
+    monkeypatch.setattr(tracking, "_gpu_power_sampler", lambda: sampler)
+    uri, client, _ = store
+    with (
+        pytest.raises(RuntimeError, match="Reading GPU power samples failed"),
+        open_run(uri) as run,
+        run.measure_energy(),
+    ):
+        pass
+
+    (tracker,) = fake_codecarbon
+    assert tracker.stopped
+    recorded = client.get_run(run.run_id)
+    assert recorded.info.status == "FAILED"
+    assert not any(name.startswith("energy.") for name in recorded.data.metrics)
+
+
+def test_gpu_samples_replace_codecarbons_zero_and_add_their_emissions(store, monkeypatch):
+    sampler = FakeGpuSampler(kwh=0.004)
+    monkeypatch.setattr(tracking, "_gpu_power_sampler", lambda: sampler)
+    monkeypatch.setattr(tracking, "_grid_emissions_kg", lambda kwh, country: kwh * 0.2)
+    uri, client, _ = store
+    with open_run(uri) as run, run.measure_energy():
+        pass
+
+    assert sampler.started and sampler.stopped
+    recorded = client.get_run(run.run_id)
+    assert recorded.data.metrics["energy.gpu_kwh"] == 0.004
+    assert recorded.data.metrics["energy.kwh"] == pytest.approx(0.006)
+    assert recorded.data.metrics["energy.emissions_kg"] == pytest.approx(0.0003 + 0.0008)
+    assert recorded.data.params["energy.gpu_method"] == tracking.GPU_SAMPLES_METHOD
+
+
+def test_unmeasurable_gpu_is_recorded_instead_of_a_zero(store, fake_codecarbon, monkeypatch):
+    start = FakeEmissionsTracker.start
+
+    def start_with_failing_counter(self):
+        start(self)
+        logging.getLogger("codecarbon").warning(tracking._GPU_COUNTER_UNSUPPORTED)
+
+    monkeypatch.setattr(FakeEmissionsTracker, "start", start_with_failing_counter)
+    uri, client, _ = store
+    with open_run(uri) as run, run.measure_energy():
+        pass
+
+    recorded = client.get_run(run.run_id)
+    assert "energy.gpu_kwh" not in recorded.data.metrics
+    assert recorded.data.metrics["energy.kwh"] == 0.002
+    assert recorded.data.params["energy.gpu_method"] == tracking.GPU_UNMEASURED_METHOD
 
 
 def test_new_experiment_is_created_and_reused(store):

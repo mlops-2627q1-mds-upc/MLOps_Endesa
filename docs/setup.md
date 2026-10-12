@@ -51,6 +51,7 @@ The configuration lives in `pyproject.toml` under `[tool.pylint.*]`:
 | `redefined-outer-name` disabled | pytest injects fixtures by parameter name |
 | `no-docstring-rgx = "^(_\|test_)"` | Test names already describe the behaviour; private helpers are exempt |
 | `fail-under = 9.0` | Quality gate: the lint job fails if the score drops below 9.0 |
+| `fail-on = ["E"]` | Any error message (for example an undefined name) fails the job, even when the score stays above 9.0 |
 
 Score history: 8.89/10 with the default configuration, 9.43/10 after the
 configuration above and three small fixes (explicit UTF-8 encoding when reading
@@ -58,6 +59,10 @@ files, which matters on Windows, and an explicit exception for the optional
 Chronos/torch imports). The remaining messages (missing docstrings in `src`,
 unused arguments in template stubs, long evaluation functions) are kept visible
 on purpose as technical debt to reduce in later milestones.
+
+The score is a global average, so it depends on the size of the codebase: the
+`fail-under` threshold catches large regressions, not a single new warning.
+That is why errors are gated separately with `fail-on`.
 
 ## Pull request checks
 

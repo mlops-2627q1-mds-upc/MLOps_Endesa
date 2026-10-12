@@ -16,6 +16,7 @@ classifiers = [
     
 ]
 dependencies = [
+    "codecarbon>=3.3.1",
     "dvc>=3.67.1",
     "dvc-http>=2.32.0",
     "ipython",
@@ -76,6 +77,8 @@ testpaths = ["tests"]
 [tool.pylint.main]
 # Quality gate: CI fails if the global score drops below this value.
 fail-under = 9.0
+# Any error (E message) fails CI regardless of the score.
+fail-on = ["E"]
 
 [tool.pylint.basic]
 # Private helpers and pytest test functions do not need docstrings.
