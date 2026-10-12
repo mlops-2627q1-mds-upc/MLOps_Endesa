@@ -40,7 +40,7 @@ requires-python = "~=3.11.0"
 [project.optional-dependencies]
 forecast = [
     "chronos-forecasting>=2.3.2,<3",
-    "peft>=0.21.2",
+    "peft>=0.21.2,<1",
     "torch>=2.2,<3",
 ]
 

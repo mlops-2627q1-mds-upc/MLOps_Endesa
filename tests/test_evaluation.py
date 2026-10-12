@@ -114,6 +114,45 @@ def test_validation_windows_and_training_scale_ignore_held_out_values(validation
     assert updated.targets[1, 0] == 10448
 
 
+def write_test_block(directory):
+    test = pd.DataFrame(
+        {"A": np.arange(496, 592), "B": 2 * np.arange(496, 592)},
+        index=pd.RangeIndex(496, 592, name="timestep"),
+    )
+    test.to_parquet(directory / "test.parquet")
+
+
+def test_test_windows_use_test_targets_and_training_only_scales(validation_files):
+    _, params, directory = validation_files
+    cfg = SplitConfig.from_params(params)
+    validation = ValidationData.load(directory, cfg)
+    write_test_block(directory)
+    test = ValidationData.load(directory, cfg, "test")
+    assert test.origins.tolist() == [496, 544, 496, 544]
+    # The context ends just before the origin and may include validation values.
+    np.testing.assert_array_equal(test.contexts[0], np.arange(96, 496))
+    np.testing.assert_array_equal(test.targets[0], np.arange(496, 544))
+    np.testing.assert_array_equal(test.contexts[1][-48:], np.arange(496, 544))
+    assert test.scales == validation.scales == {"A": 336.0, "B": 672.0}
+
+
+def test_validation_is_unchanged_by_test_values(validation_files):
+    _, params, directory = validation_files
+    cfg = SplitConfig.from_params(params)
+    write_test_block(directory)
+    before = ValidationData.load(directory, cfg)
+    (pd.read_parquet(directory / "test.parquet") + 10000).to_parquet(directory / "test.parquet")
+    after = ValidationData.load(directory, cfg)
+    np.testing.assert_array_equal(before.contexts, after.contexts)
+    np.testing.assert_array_equal(before.targets, after.targets)
+
+
+def test_only_held_out_blocks_can_be_scored(validation_files):
+    _, params, directory = validation_files
+    with pytest.raises(ValueError, match="held-out block"):
+        ValidationData.load(directory, SplitConfig.from_params(params), "train")
+
+
 def test_validation_rejects_wrong_positions_and_nonfinite_predictions(validation_files):
     _, params, directory = validation_files
     cfg = SplitConfig.from_params(params)
@@ -210,6 +249,26 @@ def test_evaluator_records_comparable_runs_and_artifacts(
         pd.testing.assert_frame_equal(frame, target_tables[0])
     saved = json.loads((Path(comparison["output_dir"]) / "comparison.json").read_text())
     assert saved["results"] == comparison["results"]
+
+
+def test_test_block_runs_are_labelled_and_select_no_baseline(tracked_project, tmp_path):
+    params, directory, uri, client, _ = tracked_project
+    write_test_block(directory)
+    comparison = evaluator.evaluate(
+        params_path=params,
+        processed_dir=directory,
+        output_dir=tmp_path / "outputs",
+        tracking_uri=uri,
+        block="test",
+    )
+    assert comparison["block"] == "test"
+    # The primary baseline comes from validation; test scores never choose it.
+    assert comparison["primary_baseline_on_validation"] is None
+    for name, result in comparison["results"].items():
+        run = client.get_run(result["run_id"])
+        assert run.info.run_name == f"test-{name}"
+        assert run.data.params["block"] == "test"
+        assert result["metrics"]["A.origins"] == 2
 
 
 def test_local_checkpoint_is_scored_and_identified_by_its_weights(tracked_project, tmp_path):

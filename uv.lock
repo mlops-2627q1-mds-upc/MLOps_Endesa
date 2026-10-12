@@ -3288,7 +3288,7 @@ requires-dist = [
     { name = "notebook" },
     { name = "numpy" },
     { name = "pandas" },
-    { name = "peft", marker = "extra == 'forecast'", specifier = ">=0.21.2" },
+    { name = "peft", marker = "extra == 'forecast'", specifier = ">=0.21.2,<1" },
     { name = "pip" },
     { name = "pyarrow", specifier = ">=25.0.1" },
     { name = "python-dotenv" },
