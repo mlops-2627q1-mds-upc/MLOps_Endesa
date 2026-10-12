@@ -11,8 +11,8 @@ This repository follows the [Cookiecutter Data Science v2](https://cookiecutter-
 Requirements: Git, [uv](https://docs.astral.sh/uv/getting-started/installation/)
 (`pip install uv` also works), and **Python 3.11** installed from
 [python.org](https://www.python.org/downloads/) (on Windows, `pymanager install 3.11`
-also works). uv can download Python 3.11 itself, but that build is blocked on Windows
-machines with Smart App Control (see [Troubleshooting on Windows](#troubleshooting-on-windows)).
+also works). uv can download Python 3.11 itself, but Smart App Control on Windows 11
+blocks that build and the project's compiled dependencies (see [Troubleshooting on Windows](#troubleshooting-on-windows)).
 
 ```sh
 git clone https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa.git
@@ -55,11 +55,15 @@ checks before merge is tracked separately in [issue #20](https://github.com/mlop
 
 ### Troubleshooting on Windows
 
-If Python 3.11 is not installed, `uv sync` downloads its own Python 3.11. On Windows 11,
-**Smart App Control** can block that interpreter and `uv sync` fails with `os error 4551`.
-Install Python 3.11 from [python.org](https://www.python.org/downloads/) and run
-`uv sync` again: uv detects and uses the installed interpreter automatically
-(`uv python find 3.11` shows which one it uses).
+With **Smart App Control** on, Windows 11 blocks the project's compiled code, so the
+project does not run natively. If Python 3.11 is not installed, uv's downloaded
+interpreter is blocked and `uv sync` fails with `os error 4551`. A Python 3.11 from
+python.org runs, but compiled dependencies such as pyarrow and SQLAlchemy are still
+blocked: imports fail with `DLL load failed while importing …: An Application Control
+policy has blocked this file.`
+
+Either turn Smart App Control off (turning it back on may require resetting Windows),
+or run the project inside WSL.
 
 If `uv` is not recognised after `pip install uv`, the Python `Scripts` folder is not on
 `PATH`; use `py -m uv sync` and `py -m uv run pytest`, or install uv with the
