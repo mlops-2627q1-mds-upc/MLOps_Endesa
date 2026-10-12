@@ -12,3 +12,14 @@ forecast:
   context_length: 512
   horizon: 48
   origin_stride: 48  # one origin per nominal day in validation and test
+
+# Inference-only comparison for #12; keep final test targets out of model selection.
+evaluation:
+  model_id: amazon/chronos-t5-small
+  model_revision: a971ba21945c4f1796b17a91fe69214b5f4ad472
+  seed: 7
+  num_samples: 20
+  batch_size: 16
+  device: cpu
+  cpu_threads: 4
+  max_seconds: 3600
