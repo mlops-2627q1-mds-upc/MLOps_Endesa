@@ -36,3 +36,10 @@ fine_tuning:
   checkpoint_every: 250
   device: cuda
   max_seconds: 1800
+
+# Options proposed in #13; each changes one setting of `fine_tuning`. Seeds are set per run.
+fine_tuning_options:
+  1-reference: {}
+  2-lower-lr: {learning_rate: 0.0001}
+  3-fewer-steps: {steps: 300}
+  4-recent-data: {window_start: 143136}  # the last three years of the training block

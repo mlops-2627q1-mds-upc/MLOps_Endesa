@@ -22,6 +22,8 @@ from src.tracking import tracked_run
 
 # The loss of every step is kept; MLflow accepts at most 1,000 metrics per batch.
 _METRIC_BATCH = 1000
+# Every option in params.yaml changes the reference settings in `fine_tuning`.
+REFERENCE_OPTION = "1-reference"
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
@@ -52,8 +54,21 @@ class FineTuneConfig:
             raise ValueError("Choose an explicit cpu or cuda device")
 
     @classmethod
-    def from_params(cls, path: Path) -> "FineTuneConfig":
-        return cls(**yaml.safe_load(path.read_text())["fine_tuning"])
+    def from_params(
+        cls, path: Path, option: str = REFERENCE_OPTION, seed: int | None = None
+    ) -> "FineTuneConfig":
+        """Apply one named option's changes to the reference settings."""
+        params = yaml.safe_load(path.read_text())
+        options = params.get("fine_tuning_options", {REFERENCE_OPTION: {}})
+        if option not in options:
+            raise ValueError(f"Unknown option {option!r}; choose one of {sorted(options)}")
+        changes = options[option] or {}
+        if "seed" in changes:
+            raise ValueError("Options must not set the seed; pass it per run")
+        settings = {**params["fine_tuning"], **changes}
+        if seed is not None:
+            settings["seed"] = seed
+        return cls(**settings)
 
 
 def window_start_bounds(cfg: SplitConfig, start: int, prediction_length: int) -> tuple[int, int]:
@@ -141,8 +156,12 @@ def fine_tune(
     tracking_uri: str | None = None,
     max_steps: int | None = None,
     control: bool = False,
+    option: str = REFERENCE_OPTION,
+    seed: int | None = None,
 ) -> dict:
-    """Fine-tune the pinned checkpoint; `max_steps` stops early to measure step cost.
+    """Fine-tune the pinned checkpoint with one option and seed from params.yaml.
+
+    `max_steps` stops early to measure step cost.
 
     `control` saves the pinned checkpoint untrained, so it is scored through the same
     local-checkpoint path as the fine-tuned models.
@@ -161,7 +180,7 @@ def fine_tune(
         raise ValueError("max_steps must be positive and cannot be combined with control")
     cfg = SplitConfig.from_params(params_path)
     base = EvaluationConfig.from_params(params_path)
-    settings = FineTuneConfig.from_params(params_path)
+    settings = FineTuneConfig.from_params(params_path, option, seed)
     if settings.device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA is not available; install the CUDA build of PyTorch")
     version = data_version()
@@ -188,6 +207,7 @@ def fine_tune(
         optimizer, lambda step: linear_decay(step, settings.steps)
     )
     config = {
+        "option": None if control else option,
         "fine_tuning": asdict(settings),
         "base_model_id": base.model_id,
         "base_model_revision": base.model_revision,
@@ -200,7 +220,7 @@ def fine_tune(
         "hardware": _hardware(settings.device),
     }
     with tracked_run(
-        name="control-untuned" if control else f"fine-tune-seed{settings.seed}",
+        name="control-untuned" if control else f"fine-tune-{option}-seed{settings.seed}",
         config=config,
         data_version=version,
         model_revision=base.model_revision,
@@ -289,10 +309,13 @@ def main(
     tracking_uri: str | None = None,
     max_steps: int | None = None,
     control: bool = False,
+    option: str = REFERENCE_OPTION,
+    seed: int | None = None,
 ) -> None:
     """Fine-tune the pinned Chronos checkpoint on training windows only.
 
-    Use --control to save the untrained checkpoint for the control evaluation.
+    --option names an entry of fine_tuning_options in params.yaml; --seed overrides the
+    configured seed. Use --control to save the untrained checkpoint for the control.
     """
     result = fine_tune(
         params_path=params_path,
@@ -301,6 +324,8 @@ def main(
         tracking_uri=tracking_uri,
         max_steps=max_steps,
         control=control,
+        option=option,
+        seed=seed,
     )
     typer.echo(json.dumps(result, indent=2, allow_nan=False))
 
