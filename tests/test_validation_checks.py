@@ -11,8 +11,8 @@ import json
 import numpy as np
 import pandas as pd
 
-from src.splits import SplitConfig, forecast_origins
 import src.validate_data as vd
+from src.splits import SplitConfig, forecast_origins
 from src.validate_data import (
     _check_block_index_ranges,
     _check_finite,
@@ -42,11 +42,13 @@ _FAKE_TAS_POSITIONS = [10, 11, 12]
 
 
 def test_finite_passes_clean_data():
+    """No failures for a column with only finite values."""
     df = pd.DataFrame({"a": np.array([1.0, 2.0, 3.0], dtype="float32")})
-    assert _check_finite(df, "suite") == []
+    assert not _check_finite(df, "suite")
 
 
 def test_finite_detects_positive_inf():
+    """Positive infinity in a column is reported as a failure."""
     df = pd.DataFrame({"a": np.array([1.0, np.inf, 3.0], dtype="float64")})
     failures = _check_finite(df, "suite")
     assert len(failures) == 1
@@ -55,13 +57,15 @@ def test_finite_detects_positive_inf():
 
 
 def test_finite_detects_negative_inf():
+    """Negative infinity in a column is reported as a failure."""
     df = pd.DataFrame({"a": np.array([-np.inf, 2.0], dtype="float64")})
     assert len(_check_finite(df, "suite")) == 1
 
 
 def test_finite_ignores_nan():
+    """NaN values do not trigger the infinity check."""
     df = pd.DataFrame({"a": np.array([1.0, np.nan, 3.0], dtype="float64")})
-    assert _check_finite(df, "suite") == []
+    assert not _check_finite(df, "suite")
 
 
 # ---------------------------------------------------------------------------
@@ -77,11 +81,13 @@ def _make_tas_df(negative_positions, length=20):
 
 
 def test_tas_positions_passes(monkeypatch):
+    """Exact documented positions produce no failures."""
     monkeypatch.setattr(vd, "TAS_NEGATIVE_POSITIONS", _FAKE_TAS_POSITIONS)
-    assert _check_tas_negative_positions(_make_tas_df(_FAKE_TAS_POSITIONS)) == []
+    assert not _check_tas_negative_positions(_make_tas_df(_FAKE_TAS_POSITIONS))
 
 
 def test_tas_positions_extra_negative(monkeypatch):
+    """An undocumented negative position is reported as a failure."""
     monkeypatch.setattr(vd, "TAS_NEGATIVE_POSITIONS", _FAKE_TAS_POSITIONS)
     df = _make_tas_df(_FAKE_TAS_POSITIONS + [15])
     failures = _check_tas_negative_positions(df)
@@ -90,6 +96,7 @@ def test_tas_positions_extra_negative(monkeypatch):
 
 
 def test_tas_positions_missing_negative(monkeypatch):
+    """A documented position that is not negative is reported as a failure."""
     monkeypatch.setattr(vd, "TAS_NEGATIVE_POSITIONS", _FAKE_TAS_POSITIONS)
     df = _make_tas_df([10, 11])  # position 12 missing
     assert len(_check_tas_negative_positions(df)) == 1
@@ -115,15 +122,16 @@ def _write_blocks(tmp_path, cfg, bad_block=None, bad_index=None):
 
 
 def test_block_index_passes(tmp_path, monkeypatch):
+    """Correct contiguous RangeIndex produces no failures."""
     monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
     _write_blocks(tmp_path, _CFG)
-    assert _check_block_index_ranges(_CFG) == []
+    assert not _check_block_index_ranges(_CFG)
 
 
 def test_block_index_detects_gap(tmp_path, monkeypatch):
+    """An interior gap in the index is reported as a failure."""
     monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
     start, end = _CFG.bounds("train")
-    # Replace one interior position with a later one to create a gap.
     bad = list(range(start, end - 1)) + [end + 10]
     _write_blocks(tmp_path, _CFG, bad_block="train", bad_index=bad)
     failures = _check_block_index_ranges(_CFG)
@@ -131,6 +139,7 @@ def test_block_index_detects_gap(tmp_path, monkeypatch):
 
 
 def test_block_index_detects_wrong_start(tmp_path, monkeypatch):
+    """An index starting at the wrong position is reported as a failure."""
     monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
     start, end = _CFG.bounds("validation")
     bad = list(range(start + 1, end + 1))  # shifted by one
@@ -165,12 +174,14 @@ def _write_origins(tmp_path, df):
 
 
 def test_origins_passes(tmp_path, monkeypatch):
+    """A correct origins table produces no failures."""
     monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
     _write_origins(tmp_path, _make_origins_df(_CFG))
-    assert _check_origins_windows(_CFG) == []
+    assert not _check_origins_windows(_CFG)
 
 
 def test_origins_negative_context_start(tmp_path, monkeypatch):
+    """A row with negative context_start is reported as a failure."""
     monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
     bad = pd.DataFrame(
         [("NSW", "validation", 0, -_CFG.context_length, _CFG.horizon)],
@@ -182,6 +193,7 @@ def test_origins_negative_context_start(tmp_path, monkeypatch):
 
 
 def test_origins_duplicate_detected(tmp_path, monkeypatch):
+    """A duplicated origin row is reported as a failure."""
     monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
     df = _make_origins_df(_CFG)
     df_dup = pd.concat([df, df.iloc[[0]]], ignore_index=True)
@@ -191,6 +203,7 @@ def test_origins_duplicate_detected(tmp_path, monkeypatch):
 
 
 def test_origins_missing_window_detected(tmp_path, monkeypatch):
+    """A missing origin window is reported as a failure."""
     monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", tmp_path)
     _write_origins(tmp_path, _make_origins_df(_CFG, drop_last=True))
     failures = _check_origins_windows(_CFG)
@@ -202,12 +215,13 @@ def test_origins_missing_window_detected(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-class _FakeValidationResult:
+class _FakeValidationResult:  # pylint: disable=too-few-public-methods
     """Minimal stand-in for a GX 1.24.0 ValidationResult."""
 
     suite_name = "raw_NSW"
 
     def __getitem__(self, key):
+        """Return statistics or results for the fake failing validation."""
         data = {
             "statistics": {"evaluated_expectations": 4, "unsuccessful_expectations": 1},
             "results": [
@@ -223,15 +237,17 @@ class _FakeValidationResult:
         return data[key]
 
 
-class _FakeCheckpointResult:
+class _FakeCheckpointResult:  # pylint: disable=too-few-public-methods
+    """Minimal stand-in for a GX CheckpointResult with one failing suite."""
+
     @property
     def run_results(self):
+        """Return a single failing validation result."""
         return {"key": _FakeValidationResult()}
 
 
 def test_collect_gx_failures_uses_suite_name():
-    # Verifies that suite_name is read via the attribute (GX 1.24.0 API), not via
-    # result["meta"]["expectation_suite_name"], which raises KeyError on failure.
+    """suite_name attribute is used instead of result['meta'][...] (GX 1.24.0 API)."""
     evaluated, failed, failures = _collect_gx_failures(_FakeCheckpointResult())
     assert evaluated == 4
     assert failed == 1
@@ -242,31 +258,36 @@ def test_collect_gx_failures_uses_suite_name():
 
 
 def test_collect_gx_no_failures():
-    class _PassResult:
+    """A passing checkpoint returns zero failures and an empty list."""
+
+    class _PassResult:  # pylint: disable=too-few-public-methods
+        """Fake passing ValidationResult."""
+
         suite_name = "raw_VIC"
 
         def __getitem__(self, key):
+            """Return statistics or results for the fake passing validation."""
             return {
                 "statistics": {"evaluated_expectations": 3, "unsuccessful_expectations": 0},
                 "results": [],
             }[key]
 
-    class _PassCheckpoint:
+    class _PassCheckpoint:  # pylint: disable=too-few-public-methods
+        """Fake passing CheckpointResult."""
+
         @property
         def run_results(self):
+            """Return a single passing validation result."""
             return {"k": _PassResult()}
 
     evaluated, failed, failures = _collect_gx_failures(_PassCheckpoint())
     assert evaluated == 3
     assert failed == 0
-    assert failures == []
+    assert not failures
 
 
 def test_gx_failure_report_written_and_exit_1(tmp_path):
-    # End-to-end: when _collect_gx_failures returns failures the report must show
-    # success=false and the process must exit with code 1.
-    # We exercise _collect_gx_failures + the report/exit logic together.
-
+    """Failures from _collect_gx_failures are written to the report with success=false."""
     report_path = tmp_path / "validation.json"
     evaluated, failed, failures = _collect_gx_failures(_FakeCheckpointResult())
     success = failed == 0
