@@ -44,7 +44,7 @@ always runs configure before validate.
 ```json
 {
   "success": true,
-  "evaluated_expectations": 120,
+  "evaluated_expectations": 116,
   "failed_expectations": 0,
   "failures": []
 }

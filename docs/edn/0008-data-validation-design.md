@@ -1,4 +1,4 @@
-# EDN-006: Data validation as DVC stages with Great Expectations
+# EDN-008: Data validation as DVC stages with Great Expectations
 
 - **Date:** 2026-10-13
 - **Milestone:** M3 - Quality assurance.
@@ -12,16 +12,18 @@ Run data validation as two explicit DVC stages (`configure_gx` and `validate-dat
 using Great Expectations (GX) with a file data context, rather than as ad-hoc checks
 inside the EDA notebook. One expectation suite is defined per table (five raw state
 files, three processed blocks, and the origins table). The checkpoint runs all nine
-suites and exits with code 1 when any check fails, stopping the pipeline before
-evaluation or training. Four additional Python functions cover checks that GX cannot
+suites and exits with code 1 when any check fails, stopping the DVC pipeline at the
+`validate-data` stage. Four additional Python functions cover checks that GX cannot
 express directly.
 
 The 22 known TAS negative values are preserved as-is and verified explicitly: the
 raw TAS series must contain negatives at exactly the 22 positions documented in the
 EDA (§5) and nowhere else.
 
-GX Data Docs HTML reports are written to `gx/data_docs/` and committed to Git so
-they can be reviewed without re-running the pipeline.
+GX Data Docs expectation pages (`gx/data_docs/expectations/`) are committed to Git
+so they can be reviewed without re-running the pipeline. Per-run validation HTML
+reports (`gx/data_docs/validations/`) are excluded via `.gitignore` to prevent
+unbounded repository growth.
 
 ## Rationale
 
