@@ -11,8 +11,8 @@ import json
 import numpy as np
 import pandas as pd
 
-import src.validate_data as vd
 from src.splits import SplitConfig, forecast_origins
+import src.validate_data as vd
 from src.validate_data import (
     _check_block_index_ranges,
     _check_finite,
