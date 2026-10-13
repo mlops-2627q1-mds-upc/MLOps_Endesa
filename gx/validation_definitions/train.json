@@ -1,11 +1,11 @@
 {
   "data": {
     "asset": {
-      "id": "2b99f353-cb68-4576-bab2-14e781ccf602",
+      "id": "cedb4115-25d6-4b66-bb01-d3c3346c7a3a",
       "name": "train"
     },
     "batch_definition": {
-      "id": "6068e540-1025-4c1e-aa8b-ca12723f7196",
+      "id": "20fda777-687a-44c0-8b42-fa52a6e31028",
       "name": "train_batch"
     },
     "datasource": {

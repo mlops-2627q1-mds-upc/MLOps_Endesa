@@ -1,7 +1,7 @@
 {
   "expectations": [
     {
-      "id": "797aa046-96f5-4064-93dc-e5ad822360ef",
+      "id": "566eb9b9-10a3-40e8-b115-9c136269bc6a",
       "kwargs": {
         "value": 230784
       },
@@ -10,7 +10,7 @@
       "type": "expect_table_row_count_to_equal"
     },
     {
-      "id": "04ced8fb-7b33-4168-acaa-04b99e2c7341",
+      "id": "76a54962-4331-411d-bc17-f7f207b03e04",
       "kwargs": {
         "column": "SA"
       },
@@ -19,7 +19,7 @@
       "type": "expect_column_to_exist"
     },
     {
-      "id": "91eaa8a4-f276-46d5-a097-9ad00a6f6e38",
+      "id": "4326da86-ef95-4e5a-8be2-7e9234ea33b3",
       "kwargs": {
         "column": "SA",
         "type_": "float32"
@@ -29,7 +29,7 @@
       "type": "expect_column_values_to_be_of_type"
     },
     {
-      "id": "7fd1d90e-d05d-4aa5-a1a1-e71428959236",
+      "id": "b4785af1-c033-4977-9834-8068eff7f214",
       "kwargs": {
         "column": "SA"
       },
@@ -38,7 +38,7 @@
       "type": "expect_column_values_to_not_be_null"
     },
     {
-      "id": "0f8da36d-5e40-42fb-be54-42588415613d",
+      "id": "a042c452-08bd-4cc7-bb59-52c157d54929",
       "kwargs": {
         "column": "SA",
         "min_value": 0.0

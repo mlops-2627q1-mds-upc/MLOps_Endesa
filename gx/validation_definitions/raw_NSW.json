@@ -1,11 +1,11 @@
 {
   "data": {
     "asset": {
-      "id": "d6306081-8848-4eca-bffe-a5971947b5a6",
+      "id": "fcabcb39-c7f2-46e0-8ffe-5a0379f5870a",
       "name": "raw_NSW"
     },
     "batch_definition": {
-      "id": "4380da51-a0b6-46d3-92a2-c97d11f9d173",
+      "id": "69c44f75-1c0e-4d56-a77a-b9a7482f86a4",
       "name": "raw_NSW_batch"
     },
     "datasource": {

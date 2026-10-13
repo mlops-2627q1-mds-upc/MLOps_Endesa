@@ -1,11 +1,11 @@
 {
   "data": {
     "asset": {
-      "id": "684e37fb-8fa2-41e9-a2d5-58bc96ad346d",
+      "id": "f45585b8-36a4-4d62-9827-42b9e1e08cf5",
       "name": "raw_VIC"
     },
     "batch_definition": {
-      "id": "3b90c4a2-ccab-44e5-9f29-555898261ccb",
+      "id": "4d935149-f615-48a0-a0ab-6cd4efd4d856",
       "name": "raw_VIC_batch"
     },
     "datasource": {

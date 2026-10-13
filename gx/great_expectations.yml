@@ -86,74 +86,74 @@ fluent_datasources:
     assets:
       raw_NSW:
         type: parquet
-        id: 3611bdec-f8a1-4068-8649-3809d16a8e18
+        id: fcabcb39-c7f2-46e0-8ffe-5a0379f5870a
         batch_definitions:
           raw_NSW_batch:
-            id: 48e42ea3-22a9-4bac-b494-cf7fc2074a62
+            id: 69c44f75-1c0e-4d56-a77a-b9a7482f86a4
             partitioner:
         path: data/raw/NSW.parquet
       raw_VIC:
         type: parquet
-        id: 909fcde3-cd4e-46d8-ab0f-75e0542447c0
+        id: f45585b8-36a4-4d62-9827-42b9e1e08cf5
         batch_definitions:
           raw_VIC_batch:
-            id: 6b9c0fbf-1cbb-45d2-9f0d-e2f34de8e4ce
+            id: 4d935149-f615-48a0-a0ab-6cd4efd4d856
             partitioner:
         path: data/raw/VIC.parquet
       raw_QLD:
         type: parquet
-        id: 901ea87e-8c94-4e51-8f58-64b106d40939
+        id: e1ab502a-c2cf-4cca-a88e-4342ec8527cb
         batch_definitions:
           raw_QLD_batch:
-            id: fcb8655f-88e9-468e-a732-64db8f17c2ff
+            id: 1fd4d2f3-16ea-440d-8339-a3207f8496c7
             partitioner:
         path: data/raw/QLD.parquet
       raw_SA:
         type: parquet
-        id: 4b715c0f-a163-4907-b703-281560ec762b
+        id: 26719e8b-3188-4a1c-8a18-f4146fe69f59
         batch_definitions:
           raw_SA_batch:
-            id: 2dcdf5f8-de30-48b5-8f24-bdd624a57e4b
+            id: 1c1750c5-f381-430f-83a1-ff5d3bafdd33
             partitioner:
         path: data/raw/SA.parquet
       raw_TAS:
         type: parquet
-        id: 4a615252-1906-4697-852f-1a8135848f06
+        id: 47b36ad2-b5bf-465d-91da-3b4562376e2b
         batch_definitions:
           raw_TAS_batch:
-            id: 263970a6-975a-4cfe-9d64-f0b7756242ff
+            id: 2bffcebb-aff0-4032-951c-87f41c63991a
             partitioner:
         path: data/raw/TAS.parquet
       train:
         type: parquet
-        id: 7c9d2d22-b8b2-41ae-9ab9-69cb14413891
+        id: cedb4115-25d6-4b66-bb01-d3c3346c7a3a
         batch_definitions:
           train_batch:
-            id: daec62c8-7ff1-4dd2-beac-25340588e9b0
+            id: 20fda777-687a-44c0-8b42-fa52a6e31028
             partitioner:
         path: data/processed/train.parquet
       validation:
         type: parquet
-        id: 4720e0a2-d28a-4a71-9c0e-099f8765e3bb
+        id: b3f827d6-d783-41d1-a37f-6c1281ec1441
         batch_definitions:
           validation_batch:
-            id: acc42edd-4075-4ebf-aee6-fae99417e69a
+            id: c78bc7de-673f-49eb-a7cd-1fe45df246bf
             partitioner:
         path: data/processed/validation.parquet
       test:
         type: parquet
-        id: 8d4afac6-57ef-4a98-9eca-f3f5107c6841
+        id: 2a9341eb-d5e8-4142-b389-678fbb608947
         batch_definitions:
           test_batch:
-            id: d42a08ad-7fab-480a-95e7-35f5034d1df3
+            id: 2126d8de-06d8-4429-9251-20af8d49e197
             partitioner:
         path: data/processed/test.parquet
       origins:
         type: parquet
-        id: 8a5dd9c0-1a80-41d6-991b-6c0c9b780d30
+        id: 66671f76-a0b7-40f6-ae93-f341d32fa391
         batch_definitions:
           origins_batch:
-            id: 0fa4ac66-8ecb-458b-a393-17089579ed7b
+            id: 7fefd697-e9b3-4433-937c-e3a378fde5ff
             partitioner:
         path: data/processed/origins.parquet
 analytics_enabled:
