@@ -22,7 +22,7 @@ random stream on both sides and keeps the comparison interpretable. Comparing
 only forecast averages could hide an isolated large change; both mean and
 maximum step differences are therefore checked.
 
-Scale equivariance has a mathematical justification under exact normalization;
+The scale relationship has a mathematical justification under exact normalization;
 quantization and float32 arithmetic still need empirical checks. Small-noise
 stability is a robustness hypothesis. The [protocol](../forecast-invariance.md)
 sets initial numerical and investigation thresholds before running the model.

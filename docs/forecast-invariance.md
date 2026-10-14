@@ -108,6 +108,6 @@ uv run --extra forecast pytest tests/test_invariance.py \
 The module fixture runs the model once and saves the entire report before the
 70 assertions. Counterexamples fail those assertions; they are not skipped or
 marked as expected failures. These optional checks stay outside ordinary CI.
-The [experiment record](experiments/004-forecast-invariance.md) will link the
-observed results and peer review. One checkpoint, seed and perturbation direction
-cannot establish general robustness, accuracy or behaviour after fine-tuning.
+The [experiment record](experiments/004-forecast-invariance.md) links the
+observed results; peer review is pending. One checkpoint, seed and perturbation
+direction cannot establish general robustness, accuracy or behaviour after fine-tuning.
