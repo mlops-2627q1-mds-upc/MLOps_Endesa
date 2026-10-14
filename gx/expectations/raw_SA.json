@@ -1,0 +1,61 @@
+{
+  "expectations": [
+    {
+      "id": "566eb9b9-10a3-40e8-b115-9c136269bc6a",
+      "kwargs": {
+        "value": 230784
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_table_row_count_to_equal"
+    },
+    {
+      "id": "76a54962-4331-411d-bc17-f7f207b03e04",
+      "kwargs": {
+        "column": "SA"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_to_exist"
+    },
+    {
+      "id": "4326da86-ef95-4e5a-8be2-7e9234ea33b3",
+      "kwargs": {
+        "column": "SA",
+        "type_": "float32"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_be_of_type"
+    },
+    {
+      "id": "b4785af1-c033-4977-9834-8068eff7f214",
+      "kwargs": {
+        "column": "SA"
+      },
+      "meta": {},
+      "severity": "critical",
+      "type": "expect_column_values_to_not_be_null"
+    },
+    {
+      "id": "a042c452-08bd-4cc7-bb59-52c157d54929",
+      "kwargs": {
+        "column": "SA",
+        "min_value": 0.0
+      },
+      "meta": {
+        "note": "no negatives outside TAS",
+        "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a72"
+      },
+      "severity": "critical",
+      "type": "expect_column_values_to_be_between"
+    }
+  ],
+  "id": "183153ec-950b-4836-823a-2fb8935dd1c5",
+  "meta": {
+    "great_expectations_version": "1.24.0",
+    "source": "notebooks/1.0-pp-demand-eda.ipynb \u00a71"
+  },
+  "name": "raw_SA",
+  "notes": null
+}
