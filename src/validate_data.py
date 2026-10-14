@@ -239,7 +239,9 @@ if __name__ == "__main__":
         "failed_expectations": total_failed,
         "failures": failures,
     }
-    VALIDATION_REPORT.write_text(json.dumps(report, indent=2))
+    VALIDATION_REPORT.write_text(
+        json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
     logger.info(f"Validation report written to {VALIDATION_REPORT}")
 
     if success:
