@@ -6,6 +6,9 @@ are known. These checks address the M3 model-testing feedback reported by Sindri
 on 2026-10-14. They use synthetic demand units and do not estimate performance
 on Australian electricity data.
 
+The [first real-model run](experiments/005-minimum-functionality.md) records all
+ten outcomes and the exact executed revision. Human review remains pending.
+
 ## Cases and limits declared before inference
 
 Every case contains 512 historical values and 48 future values. Demand levels

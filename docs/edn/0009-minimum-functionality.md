@@ -55,5 +55,6 @@ recorded separately so reviewers can assess the proposal and implementation.
 
 - [Issue #54](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/54).
 - [Protocol and reproduction](../minimum-functionality.md).
+- [Initial real-model results](../experiments/005-minimum-functionality.md) and [complete report](../evidence/issue-54-minimum-functionality.json).
 - [Declared cases and bounded runner](../../src/modeling/minimum_functionality.py).
 - [Real-model tests](../../tests/test_minimum_functionality_model.py) and [fast harness tests](../../tests/test_minimum_functionality.py).

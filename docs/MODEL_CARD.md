@@ -31,11 +31,20 @@ The [M1 problem definition](problem-definition.md#evaluation-contract-for-m2) se
 
 The [2026-10-05 comparison](experiments/001-baseline-chronos.md) used the median of 20 sampled trajectories with seed 7. Untuned Chronos's validation mean MASE was 0.872259, compared with 1.042173 for the selected lag-48 baseline. The result record links per-state errors, run IDs, code/data versions and CPU wall-clock conditions. No final test evaluation or project training was performed. Prediction interval coverage and width remain unmeasured. A "zero-shot" label would mean no training *in this project*; it does not establish that the pretrained model never saw these public series.
 
+The [2026-10-14 minimum functionality run](experiments/005-minimum-functionality.md)
+checked constant demand, zero demand and repeated 48-step patterns at three demand
+levels against the same pinned checkpoint. All ten real-model cases passed the
+[predeclared mean and maximum error limits](minimum-functionality.md); the capped
+CPU process took 31.774 seconds. The complete report retains every prediction and
+error, including small offsets in constant and zero forecasts. These are synthetic
+behaviour checks, separate from demand-data accuracy. Human review of the limits
+and results is pending in [#54](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/54).
+
 ## Limitations, risks, and future evidence
 
 - The upstream paper lists Australian Electricity as a zero-shot evaluation dataset, separate from training datasets. This [disclosure](evaluation.md#interpretation-and-limitations) is not an independent audit of pretraining exposure.
 - The selected demand data is historical and covers five Australian states. The [dataset card](DATASET_CARD.md#source-meaning-units-and-clock-limits) records MW evidence from the extraction package and limits on the archive's unit and civil-clock interpretation.
-- Evidence covers untuned validation point errors and one CPU forecast-loop timing. Held-out accuracy, interval quality, energy use, fine-tuning gains and deployment remain unverified.
+- Evidence covers untuned validation point errors, one CPU forecast-loop timing, and ten synthetic minimum functionality cases. Held-out accuracy, interval quality, energy use, fine-tuning gains and deployment remain unverified.
 - A later card update must identify the exact fine-tuned artifact, training dataset version, evaluation runs, failure cases, and serving requirements. See [issue #7](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/7).
 
 ## License, citation, and update path
