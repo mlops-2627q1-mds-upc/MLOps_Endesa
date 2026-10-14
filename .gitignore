@@ -28,6 +28,7 @@ mlflow.db
 mlflow.db-*
 emissions.csv
 /reports/evaluation/
+/reports/minimum-functionality/
 
 # Python caches and build outputs
 __pycache__/

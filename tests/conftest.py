@@ -7,6 +7,14 @@ import pytest
 from src import tracking
 
 
+def pytest_addoption(parser):
+    """Keep real model inference out of routine tests."""
+    parser.addoption("--run-model-tests", action="store_true", help="Enable real model inference")
+    parser.addoption(
+        "--model-test-report", help="Report prepared by the bounded model-test runner"
+    )
+
+
 class FakeEmissionsTracker:
     """Stands in for CodeCarbon so tests never probe hardware or measure energy."""
 
