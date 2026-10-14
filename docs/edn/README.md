@@ -11,6 +11,7 @@ part, and how AI contributed where applicable.
 | [EDN-004: Dataset source limits](0004-dataset-source-limits.md) | 2026-10-10 | M1; related to M2 | Source-scale, positional-only use proposed for teammate review |
 | [EDN-005: Energy measurement of the forecast step](0005-energy-measurement.md) | 2026-10-11 | M3 | Proposed; team review of the GPU measurement and PR review pending |
 | [EDN-008: Data validation as DVC stages with Great Expectations](0008-data-validation-design.md) | 2026-10-13 | M3 | Proposed; PR #37 peer review pending |
+| [EDN-009: Directional expectations for sustained demand changes](0009-directional-expectations.md) | 2026-10-14 | M3 | Proposed; numerical hypotheses and teammate review pending |
 
 ## Adding an entry
 

@@ -7,6 +7,15 @@ import pytest
 from src import tracking
 
 
+def pytest_addoption(parser):
+    """Keep the bounded real-checkpoint directional run opt-in."""
+    parser.addoption(
+        "--run-directional",
+        action="store_true",
+        help="Run the synthetic directional cases with one real checkpoint load (180s cap)",
+    )
+
+
 class FakeEmissionsTracker:
     """Stands in for CodeCarbon so tests never probe hardware or measure energy."""
 
