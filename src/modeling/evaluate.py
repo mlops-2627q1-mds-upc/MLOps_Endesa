@@ -75,8 +75,12 @@ def chronos_forecast(
     cfg: EvaluationConfig,
     deadline: float,
     measure: Callable[[], AbstractContextManager[None]] = nullcontext,
+    *,
+    reset_seed_per_batch: bool = False,
 ) -> tuple[np.ndarray, dict[str, float]]:
-    """Forecast every context; `measure` wraps the forecast loop but not model loading."""
+    """Load once and forecast; optionally match random draws for single-history pairs."""
+    if reset_seed_per_batch and cfg.batch_size != 1:
+        raise ValueError("Matched sampling requires batch_size=1")
     # Optional imports keep baseline reproduction and CI free of model dependencies.
     try:
         from chronos import ChronosPipeline  # pylint: disable=import-outside-toplevel
@@ -104,6 +108,8 @@ def chronos_forecast(
         for offset in range(0, len(contexts), cfg.batch_size):
             if time.monotonic() >= deadline:
                 raise TimeoutError("Evaluation exceeded max_seconds; no complete result recorded")
+            if reset_seed_per_batch:
+                torch.manual_seed(cfg.seed)
             batch = torch.as_tensor(
                 contexts[offset : offset + cfg.batch_size].copy(), dtype=torch.float32
             )

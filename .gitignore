@@ -28,6 +28,7 @@ mlflow.db
 mlflow.db-*
 emissions.csv
 /reports/evaluation/
+/reports/invariance/
 
 # Python caches and build outputs
 __pycache__/

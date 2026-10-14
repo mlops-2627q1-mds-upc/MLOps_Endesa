@@ -7,6 +7,15 @@ import pytest
 from src import tracking
 
 
+def pytest_addoption(parser):
+    """Keep real-checkpoint behaviour checks outside routine CI."""
+    parser.addoption(
+        "--run-forecast-invariance",
+        action="store_true",
+        help="Run the 300-second paired Chronos checks, loading the checkpoint once",
+    )
+
+
 class FakeEmissionsTracker:
     """Stands in for CodeCarbon so tests never probe hardware or measure energy."""
 
