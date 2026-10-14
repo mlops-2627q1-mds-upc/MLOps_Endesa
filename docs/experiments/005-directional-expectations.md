@@ -44,7 +44,7 @@ two threads, batch size 1, temperature 1, top-k 50 and top-p 1. Reset the seed
 before each of the 14 calls: reference, unchanged control and 12 interventions.
 One checkpoint is loaded for the whole run. Matching the seed and sampling setup
 reduces an avoidable difference between pairs; it does not require bitwise
-agreement across platforms, as the [PyTorch reproducibility guidance](https://docs.pytorch.org/docs/stable/notes/randomness.html)
+agreement across platforms, as the [PyTorch reproducibility guidance](https://docs.pytorch.org/docs/2.14/notes/randomness.html)
 explains. The inference adapter follows the project's existing evaluator and the
 [upstream Chronos interface](https://github.com/amazon-science/chronos-forecasting).
 
@@ -84,10 +84,50 @@ are not dependencies of this implementation.
 
 ## Results and limitations
 
-Execution has not yet been recorded. Record the clean source commit, complete
-per-case results, unchanged control, package/checkpoint versions and observed
-runtime here after the bounded run. Retain counterexamples with the declared
-margin unchanged.
+On 2026-10-14, all 12 directional cases and the unchanged control passed on clean
+source commit [`57236a624eed310c694c7840c5f6ce96f948f136`](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/commit/57236a624eed310c694c7840c5f6ce96f948f136).
+The protocol and comparison rules were committed before inference. No cases or
+margins were changed after observing the results. The unchanged control's maximum
+absolute difference was **0.0**. No counterexamples were observed in this run.
+Teammate review of the proposed hypotheses and findings remains pending.
+
+The [complete evidence report](../evidence/issue-56-directional-expectations.json)
+retains the base history, case definitions, input hashes, all 14 median forecasts,
+declared margins, results, source/checkpoint versions, environment and timings.
+Its SHA-256 is
+`943b4b99e9b1697950bc3c18a9a778bda772ab8f1944969e25e94d931056a55a`.
+The report was copied without modification from the runner's output. All input
+hashes and decision statistics were independently recalculated from its arrays.
+
+| Direction | Offset, synthetic units | Recent observations | Observed mean change, Δ | Minimum signed change | Result |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Increase | +50 | 48 | +20.146267 | 5 | Pass |
+| Increase | +50 | 96 | +49.644725 | 5 | Pass |
+| Increase | +50 | 192 | +48.882449 | 5 | Pass |
+| Increase | +150 | 48 | +101.061283 | 15 | Pass |
+| Increase | +150 | 96 | +155.979874 | 15 | Pass |
+| Increase | +150 | 192 | +146.895826 | 15 | Pass |
+| Decrease | −50 | 48 | −60.673697 | 5 | Pass |
+| Decrease | −50 | 96 | −55.885988 | 5 | Pass |
+| Decrease | −50 | 192 | −56.200214 | 5 | Pass |
+| Decrease | −150 | 48 | −181.729560 | 15 | Pass |
+| Decrease | −150 | 96 | −156.231700 | 15 | Pass |
+| Decrease | −150 | 192 | −154.688459 | 15 | Pass |
+
+The bounded invocation took **31.127 seconds**, below its 180-second cap.
+Checkpoint loading took 0.090 seconds from an existing cache and the forecast loop
+took 11.531 seconds. The total also includes worker startup, imports and report
+preparation; this is a single observed run, not a cold-start or latency benchmark.
+The host was an Apple M4 with ten logical CPUs, macOS 26.2 arm64. Recorded versions
+were Python 3.11.15, Chronos 2.3.2, PyTorch 2.14.1, Transformers 5.18.0 and NumPy
+2.4.6. The report records the full lockfile hash and unchanged checkpoint/sampling
+settings declared above.
+
+The real pytest reproduction command above returned **13 passed, 27 deselected**.
+The separate `make test` run returned **98 passed, 22 skipped**: nine checks need
+the absent DVC data and the 13 real-checkpoint assertions are opt-in. `make lint`
+passed Ruff and the Pylint gate at 9.50/10. These results do not substitute for the
+pending teammate review.
 
 One pattern, one phase and one seed test a narrow persistence hypothesis. Even
 passing all cases would not establish forecast accuracy, causal demand effects,

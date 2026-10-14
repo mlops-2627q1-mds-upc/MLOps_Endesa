@@ -31,7 +31,7 @@ the formula, cases, unchanged control and sampling settings.
 
 Alternative generation; Recommendation; Solution generation. Codex proposed the
 controlled cases and comparison rules, implemented tests using the existing
-evaluator, and prepared the bounded run and evidence record.
+evaluator, executed the bounded checks and drafted the evidence record.
 
 ## Response to AI
 
@@ -48,5 +48,6 @@ real-checkpoint evidence so a teammate can assess the hypotheses and limitations
 
 - [Issue #56](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/56).
 - [Experiment 005 and reproduction](../experiments/005-directional-expectations.md).
+- [Complete real-checkpoint report](../evidence/issue-56-directional-expectations.json).
 - [Directional runner](../../src/modeling/directional.py) and
   [tests](../../tests/test_directional.py).
