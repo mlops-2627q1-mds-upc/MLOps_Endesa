@@ -155,14 +155,13 @@ def test_evaluator_records_comparable_runs_and_artifacts(
     monkeypatch.setattr(tracking, "PROJ_ROOT", root)
     monkeypatch.setattr(evaluator, "data_version", lambda: "fixture-data")
     monkeypatch.delenv("MLFLOW_EXPERIMENT_NAME", raising=False)
-    monkeypatch.setattr(
-        evaluator,
-        "chronos_forecast",
-        lambda contexts, horizon, cfg, deadline: (
-            np.repeat(contexts[:, -1:], horizon, axis=1),
-            {"inference_seconds": 0.1, "model_load_seconds": 0.2},
-        ),
-    )
+
+    def fake_chronos(contexts, horizon, cfg, deadline, measure):
+        with measure():
+            predictions = np.repeat(contexts[:, -1:], horizon, axis=1)
+        return predictions, {"inference_seconds": 0.1, "model_load_seconds": 0.2}
+
+    monkeypatch.setattr(evaluator, "chronos_forecast", fake_chronos)
     uri = f"sqlite:///{tmp_path / 'mlflow.db'}"
     client = MlflowClient(tracking_uri=uri)
     client.create_experiment("MLOps_Endesa", artifact_location=(tmp_path / "artifacts").as_uri())
@@ -194,6 +193,9 @@ def test_evaluator_records_comparable_runs_and_artifacts(
         if name == "chronos":
             assert run.data.tags["model.revision"] == "a" * 40
         assert run.data.metrics["mean.mase"] == result["metrics"]["mean.mase"]
+        # Every method's forecast step is measured with the same settings.
+        assert run.data.metrics["energy.kwh"] == 0.002
+        assert run.data.params["energy.country_iso_code"] == "ESP"
     for frame in target_tables[1:]:
         pd.testing.assert_frame_equal(frame, target_tables[0])
     saved = json.loads((Path(comparison["output_dir"]) / "comparison.json").read_text())

@@ -48,7 +48,7 @@ The API reports `strict: true` and these required checks:
 Comparing the branch-protection responses before and after configuration showed
 that every other protection field was unchanged. The repository still allows
 merge commits only and automatically deletes merged branches. The choice of a
-strict gate and its trade-off are recorded in [EDN-005](edn/0005-required-ci-checks.md).
+strict gate and its trade-off are recorded in [EDN-006](edn/0006-required-ci-checks.md).
 
 ### Failure and recovery verification
 
@@ -75,13 +75,21 @@ gh pr checks 42 --repo mlops-2627q1-mds-upc/MLOps_Endesa --required
 gh run view 38159790049 --repo mlops-2627q1-mds-upc/MLOps_Endesa
 ```
 
-The gate covers Ruff formatting/lint and the current pytest suite on Ubuntu
-24.04 with Python 3.11. It does not retrieve shared DVC artifacts, run full model
-training, establish native Windows portability, promote models, or deploy a
-service. Those tasks need their own evidence.
-[GitHub also accepts skipped or neutral required check conclusions](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging);
-this verification observed actual successful
-job execution, without skipped tests. Changes to CI must preserve that execution.
+As of 2026-10-16, `make lint` runs Ruff formatting/lint and Pylint with
+`fail-under = 9.0` and `fail-on = ["E"]`, added in
+[PR #38](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/38). The test job
+runs the default pytest suite on Ubuntu 24.04 with Python 3.11. It does not pull
+DVC artifacts, so the nine data-backed checks in `tests/test_data.py`, added in
+[PR #37](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/37), are skipped
+when those files are absent. Synthetic validation tests still run in CI; a green
+gate does not establish successful validation of the shared dataset.
+
+The 2026-10-11 failure/recovery verification above executed all 43 tests without
+skips; that is historical evidence for the gate at that revision.
+[GitHub also accepts skipped or neutral required check conclusions](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging),
+so executed tests and intentional skips must be reported separately. Shared-data
+validation, full training, native Windows verification, model promotion and
+deployment require their own evidence.
 
 The remote rule is effective. Issue #20 stays open until the documentation PR
 receives a teammate's review and is merged.

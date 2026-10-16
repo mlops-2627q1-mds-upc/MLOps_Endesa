@@ -1,6 +1,6 @@
 # Chronos-T5-small: project extension of the upstream model card
 
-**Status:** Project extension of the [existing Chronos-T5-small model card](https://huggingface.co/amazon/chronos-t5-small/tree/a971ba21945c4f1796b17a91fe69214b5f4ad472), with intended use and a first [untuned validation result](experiments/001-baseline-chronos.md) reviewed and merged in [PR #28](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28) on 2026-10-10. Sindri reproduced lag-336 on Windows; Chronos was not independently rerun. No project fine-tuned checkpoint exists. [Issue #7](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/7) tracks the remaining project-specific evidence.
+**Status:** Project extension of the [existing Chronos-T5-small model card](https://huggingface.co/amazon/chronos-t5-small/tree/a971ba21945c4f1796b17a91fe69214b5f4ad472), with intended use and a first [untuned validation result](experiments/001-baseline-chronos.md) reviewed and merged in [PR #28](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28) on 2026-10-10. Sindri reproduced lag-336 on Windows; Chronos was not independently rerun. A fine-tuned checkpoint and results are proposed in [PR #53](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/53), awaiting peer review. [Issue #7](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/7) tracks the remaining project-specific evidence.
 
 ## Model details and intended use
 
@@ -35,7 +35,7 @@ The [2026-10-05 comparison](experiments/001-baseline-chronos.md) used the median
 
 - The upstream paper lists Australian Electricity as a zero-shot evaluation dataset, separate from training datasets. This [disclosure](evaluation.md#interpretation-and-limitations) is not an independent audit of pretraining exposure.
 - The selected demand data is historical and covers five Australian states. The [dataset card](DATASET_CARD.md#source-meaning-units-and-clock-limits) records MW evidence from the extraction package and limits on the archive's unit and civil-clock interpretation.
-- Evidence covers untuned validation point errors and one CPU forecast-loop timing. Held-out accuracy, interval quality, energy use, fine-tuning gains and deployment remain unverified.
+- Reviewed evidence covers untuned validation point errors and the [CPU energy/timing comparison](experiments/002-energy-measurement.md). Fine-tuned and final-test results are proposed in PR #53 and await peer review; interval quality and deployment remain unverified.
 - A later card update must identify the exact fine-tuned artifact, training dataset version, evaluation runs, failure cases, and serving requirements. See [issue #7](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/7).
 
 ## License, citation, and update path

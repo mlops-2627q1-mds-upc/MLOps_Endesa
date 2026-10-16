@@ -1,9 +1,9 @@
-# EDN-005: Require CI against the current main branch
+# EDN-006: Require CI against the current main branch
 
 - **Date:** 2026-10-11
 - **Milestone:** M5 - Model packaging
-- **Decision Participants:** Dídac Cayuela (task owner; requested implementation).
-- **Status:** Implemented in GitHub; documentation and teammate review pending.
+- **Decision Participants:** Dídac Cayuela (task owner; authorized implementation); Pablo Pérez Cano (configuration and documentation review on 2026-10-16).
+- **Status:** Implemented in GitHub; Pablo verified the live configuration on 2026-10-16 and requested documentation corrections; updated PR review and merge pending.
 
 ## Decision
 
@@ -38,15 +38,19 @@ and recovery on a temporary organization PR; and drafted the evidence and PR.
 
 ## Response to AI
 
-Dídac requested completion of [#20](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/20)
-and a review-ready PR. The implementation follows that authorization. His
-assessment of the specific configuration and a teammate's review remain pending.
+Dídac authorized implementation of [#20](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/20)
+and a review-ready PR. Pablo subsequently verified the configured rule and
+requested documentation corrections. No separate team agreement on the strict
+gate or a 2026-10-13 meeting has been recorded in this entry.
 
 ## Assessment of the AI Contribution
 
-Pending human assessment. The recorded checks establish the remote configuration
-and failure/recovery behavior; they do not establish team consensus or extend the
-gate to training, model promotion, or deployment.
+In his [2026-10-16 review comment](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/43#issuecomment-6213376233),
+Pablo described the failure/recovery verification as thorough and independently
+confirmed the required check source, strict mode, peer approval and administrator
+enforcement. He requested clearer gate scope and participant records before
+approval. This is the recorded peer assessment; Dídac's separate assessment of
+the AI contribution and team consensus have not been recorded.
 
 ## Other Evidence
 

@@ -148,6 +148,9 @@ requesting a fresh approval if the earlier approval was dismissed. Local checks
 support review; GitHub's required checks enforce the merge gate. See the
 [verified settings and failure/recovery evidence](docs/project-setup.md#required-ci-checks).
 
+Renaming `CI / lint` or `CI / test` requires updating the required check names in
+branch protection in the same change, before merging with the new names.
+
 Use `Closes #<issue>` when merging completes the task; otherwise use
 `Related to #<issue>`. Keep deployment tasks open until the deployment is verified.
 An experiment can be complete with a negative result if its method and conclusion
