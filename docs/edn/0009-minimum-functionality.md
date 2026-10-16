@@ -3,8 +3,8 @@
 - **Date:** 2026-10-14
 - **Milestone:** M3 - Quality assurance.
 - **Activity / Topic:** Minimum functionality tests for issue #54.
-- **Decision Participants:** Dídac Cayuela requested implementation of the issue; review of the proposed limits is pending.
-- **Status:** Proposed; human assessment and peer review pending.
+- **Decision Participants:** Dídac Cayuela (task owner); Sindri Másson and Pau Adal (protocol and implementation review).
+- **Status:** Protocol and implementation approved by Sindri and Pau at `a970d0f` on 2026-10-15; scope clarification awaits review.
 
 ## Decision
 
@@ -42,14 +42,17 @@ implemented the cases, test harness, bounded reproduction and evidence records.
 
 ## Response to AI
 
-Other: Dídac requested implementation and a reviewable PR with maintainable code
-and clear writing. The specific tolerance proposal remains open for human review;
-no acceptance of those values is inferred from that request.
+Dídac requested implementation and a reviewable PR with maintainable code and
+clear writing. Sindri and Pau subsequently approved the original protocol and
+implementation in PR #57; this records their reviews rather than team consensus.
 
 ## Assessment of the AI Contribution
 
-Human assessment is pending. The real-model results and fast harness checks are
-recorded separately so reviewers can assess the proposal and implementation.
+In the [2026-10-15 reviews](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/57),
+Sindri independently reproduced all ten model cases on Windows and checked that
+the pattern limits reject a flat forecast. Pau checked the protocol hash, metric
+choice and zero-case limits. Sindri suggested clarifying that these are minimum
+functionality checks, with the declared limits unchanged.
 
 ## Other Evidence
 

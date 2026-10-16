@@ -7,7 +7,8 @@ on 2026-10-14. They use synthetic demand units and do not estimate performance
 on Australian electricity data.
 
 The [first real-model run](experiments/005-minimum-functionality.md) records all
-ten outcomes and the exact executed revision. Human review remains pending.
+ten outcomes and the exact executed revision. Sindri and Pau approved `a970d0f`
+on 2026-10-15; this scope clarification awaits review.
 
 ## Cases and limits declared before inference
 
@@ -28,8 +29,10 @@ the 48 absolute errors; maximum error is the largest absolute error at any step.
 
 These are proposed regression limits for simple synthetic behaviour, rather than
 operational demand thresholds. They are deliberately fixed before the first run.
-An exact lag-48 continuation has zero error. A flat forecast at the pattern's
-mean fails the pattern limits. MAE prevents positive and negative errors from
+These checks detect a failure to continue a simple pattern; the limits are not
+intended to detect gradual degradation. The observed errors are well below
+the declared limits, which remain unchanged. An exact lag-48 continuation has
+zero error. A flat forecast at the pattern's mean fails the pattern limits. MAE prevents positive and negative errors from
 cancelling; maximum error prevents one bad step from being hidden by the average.
 MASE is unsuitable here because a constant or exactly repeated seasonal history
 has a zero seasonal error scale. MAPE also divides by zero for the zero case.
@@ -40,7 +43,7 @@ substitutes scale 1 for an all-zero context. The zero limits allow roughly one
 bin of average error and fewer than three bins at any step; exact floating-point
 zero is not required. This is a rationale for the declared limits, not a result
 of running the model. [EDN-009](edn/0009-minimum-functionality.md) records the choice
-and its pending human review.
+and the subsequent human review.
 
 ## Bounded reproduction
 
