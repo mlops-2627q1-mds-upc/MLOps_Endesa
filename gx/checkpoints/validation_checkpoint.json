@@ -1,0 +1,50 @@
+{
+  "actions": [
+    {
+      "name": "update_data_docs",
+      "site_names": [],
+      "type": "update_data_docs"
+    }
+  ],
+  "id": "92206c6f-18f1-4c10-9952-5cb3bad67caf",
+  "name": "validation_checkpoint",
+  "result_format": "SUMMARY",
+  "validation_definitions": [
+    {
+      "id": "ed7a6e55-9d3c-4c05-a096-1914d9c351c4",
+      "name": "raw_NSW"
+    },
+    {
+      "id": "33888392-4507-44b3-91d4-d2fc6f2796f4",
+      "name": "raw_VIC"
+    },
+    {
+      "id": "33ab4b44-1675-4d2e-a568-fc0f67700fe1",
+      "name": "raw_QLD"
+    },
+    {
+      "id": "05a9c2de-d561-4ea5-ba58-0d0fb62e8d50",
+      "name": "raw_SA"
+    },
+    {
+      "id": "80da310a-d0f4-473b-9670-723ead3dee57",
+      "name": "raw_TAS"
+    },
+    {
+      "id": "61dfda24-77bd-4a6c-b8d3-b258fe652e06",
+      "name": "train"
+    },
+    {
+      "id": "c93af8d6-e40a-4d42-acfe-750db67f9158",
+      "name": "validation"
+    },
+    {
+      "id": "56f1cc21-f469-4785-a774-739f261d9817",
+      "name": "test"
+    },
+    {
+      "id": "4f42b3bf-54b6-4fc5-ba73-52f9cff4e943",
+      "name": "origins"
+    }
+  ]
+}
