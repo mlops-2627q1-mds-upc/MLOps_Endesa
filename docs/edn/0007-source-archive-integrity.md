@@ -3,15 +3,17 @@
 - **Date:** 2026-10-11
 - **Milestone:** M3 - Quality assurance; related to M2 reproducibility.
 - **Activity / Topic:** Source integrity and ingestion validation.
-- **Decision Participants:** Dídac Cayuela.
-- **Status:** Accepted for planning by Dídac; implementation and teammate review pending.
+- **Decision Participants:** Dídac Cayuela (decision owner); Sindri Másson (planning-record review); Pablo Pérez Cano (rationale and documentation review).
+- **Status:** Accepted for planning by Dídac; Sindri approved the original record at `2d3bf00`; implementation tracked in PR #51 and updated documentation awaits review.
 
 ## Decision
 
 Create [issue #46](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/46)
 to verify the downloaded archive against its documented SHA-256 and require the
 expected series IDs before writing raw Parquet files. Keep the current source
-values, float32 storage, state mapping, and positional indexes.
+values, float32 storage, state mapping, and positional indexes. The implementation
+and offline checks are available in
+[PR #51](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/51).
 
 ## Rationale
 
@@ -27,7 +29,7 @@ Recommendation; Solution generation.
 
 Codex identified the missing integrity check and proposed this bounded robustness
 task, its acceptance criteria, and offline tests. It drafted the issue and this
-decision record.
+decision record, then supported the implementation and validation in PR #51.
 
 ## Response to AI
 
@@ -36,12 +38,19 @@ be acknowledged in the EDN specifically for this task.
 
 ## Assessment of the AI Contribution
 
-Dídac accepted the proposal as a focused addition to ingestion robustness. This
-records his acceptance of the task; implementation results and teammate review
-remain pending.
+Dídac accepted the proposal as a focused addition to ingestion robustness. Sindri
+approved the original planning record on 2026-10-12. In his
+[2026-10-16 review comment](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/47#issuecomment-6213640019),
+Pablo confirmed the distinction between archive integrity, DVC identity and GX
+validation, and requested this implementation follow-up. PR #51 supplies checksum
+verification before ZIP decoding and complete-series validation before writes.
+Its 16 offline cases cover LF/CRLF input, series ordering, and rejection without
+creating or changing outputs; implementation approval and merge are tracked in
+that PR.
 
 ## Other Evidence
 
 - [Issue #46: source archive integrity and TSF ingestion](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/46).
 - [Documented source archive and digest](../DATASET_CARD.md#dataset-structure-and-provenance).
-- [Existing ingestion implementation](../../src/dataset.py).
+- [Ingestion implementation](../../src/dataset.py) and [implementation PR #51](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/51).
+- [Sindri's approval of the planning record](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/47).
