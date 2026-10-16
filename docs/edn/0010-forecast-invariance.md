@@ -1,9 +1,9 @@
-# EDN-009: Paired scale and perturbation checks
+# EDN-010: Paired scale and perturbation checks
 
 - **Date:** 2026-10-14.
 - **Milestone:** M3.
-- **Decision Participants:** Dídac Cayuela.
-- **Status:** Selected for implementation; numerical thresholds and findings await peer review.
+- **Decision Participants:** Dídac Cayuela (decision owner); Pau Adal (protocol and implementation review).
+- **Status:** Pau reviewed the design and tests at `dc86fbb` on 2026-10-15; numbering corrections await re-review.
 
 ## Decision
 
@@ -41,12 +41,15 @@ and a reviewable PR in the task worktree.
 
 ## Assessment of the AI Contribution
 
-The proposals supported Dídac's decision. Peer assessment of the implementation,
-thresholds and model findings is pending.
+The proposals supported Dídac's decision. In his
+[2026-10-15 review](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/59#pullrequestreview-5534033689),
+Pau reported 117 passing routine tests on Windows, with the 70 real-model cases
+skipped, and accepted the design and thresholds subject to numbering corrections.
+That review does not add an independent real-model run.
 
 ## Other Evidence
 
 - [Issue #55](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/55).
 - [Case construction and comparisons](../../src/invariance.py).
 - [Runner](../../src/modeling/invariance.py) and [tests](../../tests/test_invariance.py).
-- [Experiment record](../experiments/004-forecast-invariance.md).
+- [Experiment record](../experiments/006-forecast-invariance.md).

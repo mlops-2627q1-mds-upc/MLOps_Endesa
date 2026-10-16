@@ -4,7 +4,7 @@
 checks whether a change to a 512-value history causes an unexpected change in
 its complete 48-step forecast. These comparisons measure behaviour, without
 training a model or evaluating accuracy against future targets.
-[EDN-009](edn/0009-forecast-invariance.md) records the design choice.
+[EDN-010](edn/0010-forecast-invariance.md) records the design choice.
 
 ## Relationships and thresholds
 
@@ -108,6 +108,6 @@ uv run --extra forecast pytest tests/test_invariance.py \
 The module fixture runs the model once and saves the entire report before the
 70 assertions. Counterexamples fail those assertions; they are not skipped or
 marked as expected failures. These optional checks stay outside ordinary CI.
-The [experiment record](experiments/004-forecast-invariance.md) links the
+The [experiment record](experiments/006-forecast-invariance.md) links the
 observed results; peer review is pending. One checkpoint, seed and perturbation
 direction cannot establish general robustness, accuracy or behaviour after fine-tuning.

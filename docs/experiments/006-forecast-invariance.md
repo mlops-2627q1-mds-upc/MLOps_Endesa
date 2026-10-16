@@ -1,7 +1,7 @@
-# Experiment 004: Paired forecast behaviour
+# Experiment 006: Paired forecast behaviour
 
 The [protocol](../forecast-invariance.md) and
-[EDN-009](../edn/0009-forecast-invariance.md) define the cases, relationships,
+[EDN-010](../edn/0010-forecast-invariance.md) define the cases, relationships,
 sampling controls and thresholds for
 [issue #55](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/55).
 
