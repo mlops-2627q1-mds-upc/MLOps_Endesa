@@ -1,10 +1,10 @@
-# Experiment 005: Directional expectations for synthetic demand
+# Experiment 007: Directional expectations for synthetic demand
 
 Issue [#56](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/56)
 asks whether sustained changes in recent demand move the next forecast's average
 level in the expected direction. These are controlled hypotheses for the pinned
 untuned checkpoint, not a requirement that Chronos always responds monotonically.
-[EDN-009](../edn/0009-directional-expectations.md) records the proposed acceptance
+[EDN-011](../edn/0011-directional-expectations.md) records the proposed acceptance
 rules. Peer review is pending.
 
 ## Protocol declared before inference

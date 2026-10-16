@@ -1,10 +1,10 @@
-# EDN-009: Directional expectations for sustained demand changes
+# EDN-011: Directional expectations for sustained demand changes
 
 - **Date:** 2026-10-14.
 - **Milestone:** M3 - Quality assurance.
 - **Activity / Topic:** Controlled model expectations for #56.
-- **Decision Participants:** Dídac Cayuela (task scope and implementation request).
-- **Status:** Proposed; numerical hypotheses and teammate review pending.
+- **Decision Participants:** Dídac Cayuela (task scope and implementation request); Pau Adal (protocol and implementation review).
+- **Status:** Pau reviewed the rules and tests at `f2be1eb` on 2026-10-15; numbering corrections await re-review.
 
 ## Decision
 
@@ -24,7 +24,7 @@ the expected response harder to justify. A horizon summary allows individual
 steps to differ, while the effect margin prevents unchanged forecasts from
 passing. The margin is proposed for review, not calibrated against observed
 results. A single checkpoint load and a 180-second process limit bound the run.
-The [experiment protocol](../experiments/005-directional-expectations.md) states
+The [experiment protocol](../experiments/007-directional-expectations.md) states
 the formula, cases, unchanged control and sampling settings.
 
 ## AI Involvement
@@ -36,18 +36,21 @@ evaluator, executed the bounded checks and drafted the evidence record.
 ## Response to AI
 
 Dídac requested implementation of #56 and professional, maintainable code under
-the project instructions. The proposed numerical rules and findings remain for
-human review; no acceptance or team agreement is inferred from that request.
+the project instructions. Pau subsequently reviewed the proposed rules and
+implementation and requested numbering corrections before approval.
 
 ## Assessment of the AI Contribution
 
-Human assessment is pending. The experiment separates implementation checks from
-real-checkpoint evidence so a teammate can assess the hypotheses and limitations.
+In his [2026-10-15 review](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/58#pullrequestreview-5534363238),
+Pau reported 107 passing routine tests on Windows, with 13 real-model cases
+skipped, and found the paired cases, horizon-mean response and unchanged control
+appropriate. He requested documentation renumbering before approval; the review
+does not add an independent real-model run.
 
 ## Other Evidence
 
 - [Issue #56](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/56).
-- [Experiment 005 and reproduction](../experiments/005-directional-expectations.md).
+- [Experiment 007 and reproduction](../experiments/007-directional-expectations.md).
 - [Complete real-checkpoint report](../evidence/issue-56-directional-expectations.json).
 - [Directional runner](../../src/modeling/directional.py) and
   [tests](../../tests/test_directional.py).
