@@ -18,12 +18,16 @@ temporary/
 .venv/
 venv/
 
+# GX Data Docs validations: timestamped per-run folders grow unboundedly with each pipeline run
+gx/data_docs/validations/
+
 # Experiment tracking and energy logs produced locally
 mlruns/
 mlartifacts/
 mlflow.db
 mlflow.db-*
 emissions.csv
+/reports/evaluation/
 
 # Python caches and build outputs
 __pycache__/
