@@ -38,7 +38,7 @@ Sources:
 The system builds, evaluates, serves, and monitors one ML component: given past
 half-hourly demand for one of five Australian states, it forecasts the next 48
 steps. The immediate users are the team and course reviewers. It is not intended
-for operational grid scheduling ([model card](MODEL_CARD.md#model-details-and-intended-use)).
+for operational grid scheduling ([model card](MODEL_CARD.md#intended-use-and-inputs)).
 
 ## Functional requirements
 

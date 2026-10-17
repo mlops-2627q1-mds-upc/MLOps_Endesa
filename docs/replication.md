@@ -5,6 +5,12 @@ branches can move; record `git rev-parse HEAD` before running anything. The
 submission tag is created only after review and merge. The report and slides
 must identify the same version.
 
+The [17 October verification record](evidence/submission-replication-2026-10-17.json)
+identifies the exact executed commits, successful repeated DVC reproduction,
+retrieved checkpoint identity and deterministic baseline results.
+[Coverage snapshots](evidence/coverage-2026-10-17.md) distinguish the component
+baselines from the combined checks.
+
 ## Environment and fast checks
 
 Clone the organization repository, check out the submitted commit, and follow
@@ -87,7 +93,7 @@ validation block. Do not add `--block test` to a routine replication check.
 
 ## Optional selected-model behaviour checks
 
-Install the locked forecast extra and run the existing declared synthetic cases:
+Install the locked forecast extra and run the existing declared behaviour cases:
 
 ```sh
 uv sync --locked --dev --extra forecast
@@ -96,12 +102,15 @@ uv run --extra forecast python -m src.modeling.directional --checkpoint models/c
 uv run --extra forecast python -m src.modeling.invariance --checkpoint models/chronos-t5-small-fine-tuned --max-seconds 300
 ```
 
-Run these sequentially. They use synthetic histories and record the actual
-checkpoint digest, settings, declared limits and every outcome. A nonzero exit
+Run these sequentially. Minimum functionality and directional cases use synthetic
+histories; invariance also uses training/validation windows. The reports record
+the checkpoint digest, settings, declared limits and every outcome. A nonzero exit
 can report a failed behaviour hypothesis, not just a setup problem. Preserve
 that evidence; do not change limits to obtain passing results. The base-model
-results remain separate. Supervise the invariance command with an external
-300-second timeout because its internal deadline is cooperative.
+results remain separate. [Experiment 008](experiments/008-selected-checkpoint-behaviour.md)
+records the selected-checkpoint outcomes and its two-thread configuration copy.
+Use its process-group wrapper for the cooperative invariance deadline: 300 seconds
+inside the runner and a 330-second external hard limit.
 
 Historical training and held-out model results are in
 [Experiment 004](experiments/004-chronos-fine-tuning.md). This replication route
