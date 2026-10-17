@@ -88,7 +88,7 @@ Run an available local checkpoint with the unchanged protocol:
 
 ```sh
 uv run --locked --extra forecast python -m src.modeling.invariance \
-  --checkpoint models/selected-chronos-small --max-seconds 300
+  --checkpoint models/chronos-t5-small-fine-tuned --max-seconds 300
 ```
 
 The opt-in pytest route also accepts `--model-checkpoint <directory>`. The report's

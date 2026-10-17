@@ -72,7 +72,7 @@ Use an available local checkpoint without changing the declared protocol:
 
 ```sh
 uv run --locked --extra forecast python -m src.modeling.directional \
-  --checkpoint models/selected-chronos-small --max-seconds 180
+  --checkpoint models/chronos-t5-small-fine-tuned --max-seconds 180
 ```
 
 The opt-in pytest route accepts `--model-checkpoint <directory>`. The plan's `model`

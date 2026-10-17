@@ -87,7 +87,7 @@ Use a local checkpoint with the same cases, ordering and limits:
 
 ```sh
 uv run --locked --extra forecast python -m src.modeling.minimum_functionality \
-  --checkpoint models/selected-chronos-small
+  --checkpoint models/chronos-t5-small-fine-tuned
 ```
 
 The report's `model` field identifies the executed source: a Hub ID and revision
