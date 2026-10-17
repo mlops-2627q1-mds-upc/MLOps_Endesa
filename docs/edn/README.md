@@ -17,6 +17,8 @@ part, and how AI contributed where applicable.
 | [EDN-011: Directional expectations for sustained demand changes](0011-directional-expectations.md) | 2026-10-14 | M3 | Pau reviewed rules and tests; numbering corrections await re-review |
 | [EDN-010: Paired scale and perturbation checks](0010-forecast-invariance.md) | 2026-10-14 | M3 | Pau reviewed design and tests; numbering corrections await re-review |
 
+| [EDN-012: Bounded Chronos fine-tuning and its selection](0012-chronos-fine-tuning.md) | 2026-10-12 | M2 | Validation results and test path reviewed by Pablo; test run meets the decision rule; PR review pending |
+
 ## Adding an entry
 
 Use the [template](TEMPLATE.md) for a choice with meaningful consequences that

@@ -117,7 +117,7 @@ def run_checks(
             HORIZON,
             settings,
             start + max_seconds,
-            reset_seed_per_batch=True,
+            reset_seed_per_context=True,
         )
         if time.monotonic() - start >= max_seconds:
             raise TimeoutError("Invariance checks exceeded max_seconds")

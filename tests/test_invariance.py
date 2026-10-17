@@ -142,12 +142,12 @@ def test_runner_records_protocol_before_inference_and_keeps_all_outcomes(monkeyp
     monkeypatch.setattr(runner, "_versions", lambda _: {"fixture": True})
     calls = []
 
-    def fake_forecast(contexts, horizon, cfg, deadline, *, reset_seed_per_batch):
+    def fake_forecast(contexts, horizon, cfg, deadline, *, reset_seed_per_context):
         prepared = json.loads(next(tmp_path.glob("*/report.json")).read_text())
         assert prepared["status"] == "prepared"
         assert prepared["results"] == []
         assert prepared["transformations"][0]["mean_tolerance"] == 1e-5
-        assert cfg.batch_size == 1 and reset_seed_per_batch
+        assert cfg.batch_size == 1 and reset_seed_per_context
         assert deadline > time.monotonic()
         calls.append(contexts.copy())
         predictions = seasonal_forecast(contexts, horizon, 48)
@@ -224,7 +224,7 @@ def test_evaluator_loads_once_and_can_match_random_draws(monkeypatch, reset_seed
         HORIZON,
         cfg,
         time.monotonic() + 30,
-        reset_seed_per_batch=reset_seed,
+        reset_seed_per_context=reset_seed,
     )
     assert len(loads) == 1
     assert loads[0]["revision"] == cfg.model_revision
@@ -236,7 +236,7 @@ def test_matched_sampling_rejects_multi_history_batches():
     cfg = evaluator.EvaluationConfig.from_params(runner.PARAMS_PATH)
     with pytest.raises(ValueError, match="batch_size=1"):
         evaluator.chronos_forecast(
-            np.ones((2, 512)), HORIZON, cfg, time.monotonic() + 30, reset_seed_per_batch=True
+            np.ones((2, 512)), HORIZON, cfg, time.monotonic() + 30, reset_seed_per_context=True
         )
 
 

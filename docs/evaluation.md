@@ -18,6 +18,7 @@ any local edits. LF keeps DVC source checksums and the lockfile hash consistent.
 1. Install `uv sync --locked --dev --extra forecast`. The optional `forecast`
    dependencies are needed for Chronos; baseline execution and CI use the base environment.
    Linux resolves PyTorch from its CPU index to avoid installing CUDA packages.
+   Windows resolves the CUDA 13.0 build for GPU training; it also runs on CPU.
 2. Restore the data with `uv run dvc pull -r origin` using your own DagsHub credentials.
    Check `uv run dvc status`; the evaluator rejects missing or modified DVC inputs.
 3. Configure your own MLflow credentials as described in [the setup guide](mlflow.md).
@@ -161,9 +162,55 @@ These values have the following scope:
 - GPU energy is the board power of the whole device, while CPU energy is
   attributed to this process in CodeCarbon's `process` mode.
 - GPU energy includes the device's idle draw, as CodeCarbon's RAM estimate does.
-  Chronos inference runs on the CPU, so its GPU energy is mainly idle draw.
+  With the default `device: cpu`, Chronos inference runs on the CPU, so its GPU energy
+  is mainly idle draw.
 - Emissions use CodeCarbon's annual energy mix for Spain (0.174 kg CO₂eq/kWh in
   version 3.3.1), not the grid's intensity at the time of the run.
+
+## Fine-tuning
+
+[#13](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/13) fine-tunes the
+pinned checkpoint on the training block; [Experiment 004](experiments/004-chronos-fine-tuning.md)
+records the options, results and test plan. Training is configured for an NVIDIA GPU
+(`device: cuda`); on Windows, `uv sync --locked --dev --extra forecast` installs the
+CUDA build of PyTorch. The settings are in `params.yaml` under `fine_tuning`, and each entry of
+`fine_tuning_options` changes one of them.
+
+```sh
+# Save the untrained checkpoint as the control
+uv run python -m src.modeling.train --control
+# Train one option with one seed
+uv run python -m src.modeling.train --option 1-reference --seed 8
+# Score a checkpoint on validation on the GPU
+uv run python -m src.modeling.evaluate --method chronos --device cuda --checkpoint models/fine-tuning/<training run ID>/final
+# Or train and score several options and seeds in one process
+uv run python -m src.modeling.fine_tune_round --option 1-reference --option 2-lower-lr --seed 7 --seed 8
+```
+
+Each training run saves its checkpoints under `models/fine-tuning/<training run ID>/`,
+which Git ignores: `final` loads with `from_pretrained`, `step-<n>` are intermediate
+checkpoints, and LoRA runs also save their adapter in `adapter`. New full checkpoints
+include `training_metadata.json`, which binds the MLflow training run ID to the
+SHA-256 of `model.safetensors`. Evaluation validates that hash before recording the
+training lineage; a checkpoint without metadata records an unknown run ID (`null`).
+Directory names are not treated as evidence of a training run. Batches of 32 are
+trained as two micro-batches of 16 so that a run fits in 8 GB of GPU memory.
+
+`--block test` scores the test block instead of validation. Use it only for the final
+comparison in Experiment 004's plan; select models on validation.
+
+The selected checkpoint is versioned with DVC as `models/chronos-t5-small-fine-tuned`, so
+a `dvc pull` without a target now also downloads it (176 MB). To retrieve only the data,
+pull `data/raw.dvc` and `dvc.yaml` as targets; the evaluator checks only those.
+The versioned sibling `models/chronos-t5-small-fine-tuned.provenance.json` supplies
+the run ID and weights hash recorded in Experiment 004 for this existing artifact.
+It preserves the published DVC directory and is checked against the retrieved weights
+before evaluation. Keep this sidecar with the directory when relocating it; newly
+trained checkpoints carry their metadata inside the directory instead.
+
+When the output of these commands is piped or redirected on Windows, set
+`$env:PYTHONUTF8 = "1"` first: MLflow prints its run link with an emoji, which the
+default code page cannot encode.
 
 ## Interpretation and limitations
 

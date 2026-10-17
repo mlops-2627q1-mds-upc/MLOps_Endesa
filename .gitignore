@@ -8,6 +8,9 @@ temporary/
 # Model weights and checkpoints (versioned with DVC / MLflow)
 /models/*
 !/models/.gitkeep
+# DVC references to selected models; their weights stay ignored
+!/models/*.dvc
+!/models/*.provenance.json
 
 # Secrets and local configuration
 .env
@@ -31,6 +34,7 @@ emissions.csv
 /reports/minimum-functionality/
 /reports/directional/
 /reports/invariance/
+/reports/fine-tuning/
 
 # Python caches and build outputs
 __pycache__/
