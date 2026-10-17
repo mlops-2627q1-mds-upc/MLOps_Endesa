@@ -166,8 +166,8 @@ def test_adapter_loads_once_and_resets_seed_before_each_context(monkeypatch):
         model=SimpleNamespace(model=SimpleNamespace(eval=lambda: None)), predict=predict
     )
 
-    def load(model_id, **kwargs):
-        loads.append((model_id, kwargs))
+    def load(pretrained_model_name_or_path, **kwargs):
+        loads.append((pretrained_model_name_or_path, kwargs))
         return pipeline
 
     torch = SimpleNamespace(
