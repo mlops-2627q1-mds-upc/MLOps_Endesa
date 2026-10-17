@@ -46,13 +46,12 @@ adapted to this repository as described in [docs/setup.md](docs/setup.md).
 
 ```text
 .github/            Issue and PR templates
-data/               Raw, interim, processed, and external data (contents versioned with DVC)
+data/               Raw data and processed splits (contents versioned with DVC)
 docs/               Problem definition, dataset and model cards, setup guide, EDN
 models/             Model checkpoints and predictions
 notebooks/          Exploration notebooks
-references/         Data dictionaries and explanatory material
 reports/figures/    Generated figures
-src/                Python package: config, dataset, features, modeling, plots
+src/                Python package: data preparation, validation, evaluation and tracking
 tests/              Pytest suite
 AGENTS.md           Instructions for AI-assisted contributions
 CONTRIBUTING.md     Working agreement

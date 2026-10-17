@@ -158,25 +158,27 @@ implementation and peer review are tracked in [#46](https://github.com/mlops-262
 ```text
 data/
   raw/            Original, immutable source data (DVC, issue #11)
-  interim/        Intermediate transformed data
   processed/      Train/validation/test blocks and forecast origins (DVC stage `split`)
-  external/       Third-party data
 models/           Model checkpoints and predictions (DVC / MLflow)
 notebooks/        Exploration notebooks, named like 1.0-tl-initial-eda.ipynb
-references/       Data dictionaries and explanatory material
 reports/figures/  Generated figures for the reports
 src/              Python package with the project code
   config.py       Project paths and configuration
   dataset.py      Data download and preparation
-  features.py     Feature engineering
-  modeling/       train.py (training) and predict.py (inference)
-  plots.py        Visualisation code
+  modeling/       Evaluation commands; training (#13) and later prediction (M4)
 tests/            Pytest suite
 docs/             Project documentation, cards and EDN
 pyproject.toml    Package metadata, dependencies and tool configuration
 uv.lock           Exact, locked dependency versions
 Makefile          Shortcuts for common tasks
 ```
+
+The EDA notebook creates `data/external/aus_elec/` on demand to cache pinned
+upstream AEMO files for source checks. The cache is ignored by Git and does not
+need a checked-in placeholder. `src/modeling/predict.py` is reserved for the M4
+prediction interface; it exits with an explicit error until implemented. The
+validation forecasting command is `python -m src.modeling.evaluate`, documented
+in [evaluation.md](evaluation.md).
 
 ## Adaptations from the CCDS template
 
@@ -190,3 +192,8 @@ Makefile          Shortcuts for common tasks
 | `.gitignore` excludes generated data and model files; `data/raw.dvc` tracks raw data | Checked-in placeholders retain the other layout directories. `data/raw/` is created when DVC data is pulled and is absent from a clean checkout. |
 | `.gitattributes` normalises line endings | The team works on Windows and Unix systems; avoids whole-file diffs caused by CRLF/LF |
 | Placeholder failing test replaced by smoke tests | Gives a working check from a clean checkout; real data and model tests come in M3 |
+| Removed `src/features.py` | Its example loop produced no features; the current forecasting protocol uses the demand sequence directly |
+| Removed `src/plots.py` | Its example loop produced no plot; project figures are generated in the EDA notebook |
+| Removed `data/interim/` placeholder and `INTERIM_DATA_DIR` | Splits are written directly from raw data to `data/processed/`; there is no interim artifact |
+| Removed `data/external/` placeholder and `EXTERNAL_DATA_DIR` | The notebook creates its ignored upstream cache only when needed; production modules do not use the constant |
+| Removed `references/` placeholder | Source references and data descriptions are maintained in the project documentation and notebook |
