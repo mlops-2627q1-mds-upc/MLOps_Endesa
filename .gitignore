@@ -22,8 +22,8 @@ temporary/
 .venv/
 venv/
 
-# GX Data Docs validations: timestamped per-run folders grow unboundedly with each pipeline run
-gx/data_docs/validations/
+# Legacy GX runtime output; new Data Docs live in ignored gx/uncommitted/data_docs/.
+/gx/data_docs/
 
 # Experiment tracking and energy logs produced locally
 mlruns/

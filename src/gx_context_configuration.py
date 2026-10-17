@@ -10,10 +10,14 @@ One suite per table:
   - origins                    (split stage output)
 """
 
+import json
+from pathlib import Path
+
 import great_expectations as gx
+from great_expectations.exceptions import DataContextError
 from loguru import logger
 
-from src.config import PROCESSED_DATA_DIR, PROJ_ROOT, RAW_DATA_DIR, REPORTS_DIR
+from src.config import PROJ_ROOT
 from src.splits import SplitConfig
 
 # Names imported by validate_data.py and tests/test_data.py
@@ -76,20 +80,19 @@ def _build_raw_suite(state: str, n_rows: int) -> gx.ExpectationSuite:
     # that the demand column exists with the right type (float32), has no null values,
     # and contains only finite numbers. For states other than TAS we also require
     # that all values are non-negative, since only TAS has documented negative readings.
-    suite = gx.ExpectationSuite(
-        name=f"raw_{state}",
-        meta={"source": "notebooks/1.0-pp-demand-eda.ipynb §1"},
-    )
-    suite.add_expectation(gx.expectations.ExpectTableRowCountToEqual(value=n_rows))
-    suite.add_expectation(gx.expectations.ExpectColumnToExist(column=state))
-    suite.add_expectation(
+    # add_expectation() can write immediately when a same-named suite exists.
+    # Pass the complete list to the constructor so candidate rules stay in memory.
+    expectations = []
+    expectations.append(gx.expectations.ExpectTableRowCountToEqual(value=n_rows))
+    expectations.append(gx.expectations.ExpectColumnToExist(column=state))
+    expectations.append(
         gx.expectations.ExpectColumnValuesToBeOfType(column=state, type_="float32")
     )
-    suite.add_expectation(gx.expectations.ExpectColumnValuesToNotBeNull(column=state))
+    expectations.append(gx.expectations.ExpectColumnValuesToNotBeNull(column=state))
     # Infinity check is handled by a Python function in validate_data.py because
     # ExpectColumnValuesToBeBetween(-inf, inf) always passes and does not catch inf.
     if state != "TAS":
-        suite.add_expectation(
+        expectations.append(
             gx.expectations.ExpectColumnValuesToBeBetween(
                 column=state,
                 min_value=0.0,
@@ -99,7 +102,11 @@ def _build_raw_suite(state: str, n_rows: int) -> gx.ExpectationSuite:
                 },
             )
         )
-    return suite
+    return gx.ExpectationSuite(
+        name=f"raw_{state}",
+        expectations=expectations,
+        meta={"source": "notebooks/1.0-pp-demand-eda.ipynb §1"},
+    )
 
 
 def _build_block_suite(name: str, cfg: SplitConfig) -> gx.ExpectationSuite:
@@ -113,23 +120,20 @@ def _build_block_suite(name: str, cfg: SplitConfig) -> gx.ExpectationSuite:
     start, end = cfg.bounds(name)
     n_rows = end - start
 
-    suite = gx.ExpectationSuite(
-        name=name,
-        meta={"source": "notebooks/1.0-pp-demand-eda.ipynb §9"},
-    )
-    suite.add_expectation(gx.expectations.ExpectTableRowCountToEqual(value=n_rows))
-    suite.add_expectation(
+    expectations = []
+    expectations.append(gx.expectations.ExpectTableRowCountToEqual(value=n_rows))
+    expectations.append(
         gx.expectations.ExpectTableColumnsToMatchOrderedList(column_list=list(cfg.states))
     )
 
     for state in cfg.states:
-        suite.add_expectation(gx.expectations.ExpectColumnValuesToNotBeNull(column=state))
-        suite.add_expectation(
+        expectations.append(gx.expectations.ExpectColumnValuesToNotBeNull(column=state))
+        expectations.append(
             gx.expectations.ExpectColumnValuesToBeOfType(column=state, type_="float32")
         )
         if name == "train":
             lo, hi = TRAIN_RANGES[state]
-            suite.add_expectation(
+            expectations.append(
                 gx.expectations.ExpectColumnValuesToBeBetween(
                     column=state,
                     min_value=float(lo),
@@ -141,7 +145,11 @@ def _build_block_suite(name: str, cfg: SplitConfig) -> gx.ExpectationSuite:
                 )
             )
 
-    return suite
+    return gx.ExpectationSuite(
+        name=name,
+        expectations=expectations,
+        meta={"source": "notebooks/1.0-pp-demand-eda.ipynb §9"},
+    )
 
 
 def _build_origins_suite(cfg: SplitConfig) -> gx.ExpectationSuite:
@@ -155,132 +163,152 @@ def _build_origins_suite(cfg: SplitConfig) -> gx.ExpectationSuite:
         * len(cfg.states)
         for b in ("validation", "test")
     )
-    suite = gx.ExpectationSuite(
-        name="origins",
-        meta={"source": "notebooks/1.0-pp-demand-eda.ipynb §9"},
-    )
-    suite.add_expectation(gx.expectations.ExpectTableRowCountToEqual(value=n_rows))
-    suite.add_expectation(
+    expectations = []
+    expectations.append(gx.expectations.ExpectTableRowCountToEqual(value=n_rows))
+    expectations.append(
         gx.expectations.ExpectTableColumnsToMatchOrderedList(
             column_list=["state", "block", "origin", "context_start", "target_end"]
         )
     )
     for col in ["state", "block", "origin", "context_start", "target_end"]:
-        suite.add_expectation(gx.expectations.ExpectColumnValuesToNotBeNull(column=col))
-    suite.add_expectation(
+        expectations.append(gx.expectations.ExpectColumnValuesToNotBeNull(column=col))
+    expectations.append(
         gx.expectations.ExpectColumnValuesToBeInSet(column="state", value_set=list(cfg.states))
     )
-    suite.add_expectation(
+    expectations.append(
         gx.expectations.ExpectColumnValuesToBeInSet(
             column="block", value_set=["validation", "test"]
         )
     )
-    return suite
+    return gx.ExpectationSuite(
+        name="origins",
+        expectations=expectations,
+        meta={"source": "notebooks/1.0-pp-demand-eda.ipynb §9"},
+    )
 
 
-if __name__ == "__main__":
-    # Read the split parameters from params.yaml so the suite boundaries
-    # always stay in sync with what the split stage actually produces.
-    cfg = SplitConfig.from_params()
+def _suite_definition(suite: gx.ExpectationSuite) -> dict:
+    """Compare validation rules and annotations without opaque object identifiers."""
+    definition = suite.to_json_dict()
+    definition.pop("id", None)
+    for expectation in definition["expectations"]:
+        expectation.pop("id", None)
+    return definition
 
-    # Create or open the GX file data context rooted at the project directory.
-    # On the first run this creates the gx/ folder with great_expectations.yml.
-    context = gx.get_context(mode="file", project_root_dir=PROJ_ROOT)
 
-    # Store the Data Docs HTML report inside gx/data_docs/ so it is committed
-    # to Git and can be reviewed without running GX again.
+def _configure_suite(context, wanted: gx.ExpectationSuite) -> gx.ExpectationSuite:
+    try:
+        existing = context.suites.get(wanted.name)
+    except DataContextError:
+        return context.suites.add(wanted)
+    if _suite_definition(existing) == _suite_definition(wanted):
+        return existing
+    return context.suites.add_or_update(wanted)
+
+
+def _configure_definition(context, datasource, suite, path):
+    name = suite.name
+    try:
+        asset = datasource.get_asset(name)
+    except LookupError:
+        asset = datasource.add_parquet_asset(name=name, path=path)
+    if asset.type != "parquet":
+        raise ValueError(f"GX asset {name!r} must read Parquet data")
+    path_changed = asset.path != Path(path)
+    if path_changed:
+        asset.path = Path(path)
+    try:
+        batch = asset.get_batch_definition(f"{name}_batch")
+    except KeyError:
+        batch = asset.add_batch_definition(name=f"{name}_batch")
+    if batch.partitioner is not None:
+        raise ValueError(f"GX batch {name!r} must cover the complete file")
+    if path_changed:
+        batch.save()
+    try:
+        existing = context.validation_definitions.get(name)
+    except DataContextError:
+        existing = None
+    if existing is not None and existing.data.id == batch.id and existing.suite.id == suite.id:
+        return existing
+    return context.validation_definitions.add_or_update(
+        gx.ValidationDefinition(name=name, data=batch, suite=suite)
+    )
+
+
+def _configure_checkpoint(context, definitions):
+    wanted = gx.Checkpoint(
+        name=CHECKPOINT,
+        validation_definitions=definitions,
+        actions=[gx.checkpoint.UpdateDataDocsAction(name="update_data_docs")],
+        result_format="SUMMARY",
+    )
+    try:
+        existing = context.checkpoints.get(CHECKPOINT)
+    except DataContextError:
+        existing = None
+    if existing is not None:
+        same_definitions = [definition.id for definition in existing.validation_definitions] == [
+            definition.id for definition in definitions
+        ]
+        same_actions = [action.dict() for action in existing.actions] == [
+            action.dict() for action in wanted.actions
+        ]
+        if same_definitions and same_actions and existing.result_format == wanted.result_format:
+            return existing
+    return context.checkpoints.add_or_update(wanted)
+
+
+def configure_context(project_root: Path = PROJ_ROOT, cfg: SplitConfig | None = None) -> None:
+    """Persist changed GX resources and preserve equivalent saved resources."""
+    if cfg is None:
+        cfg = SplitConfig.from_params(project_root / "params.yaml")
+    context = gx.get_context(mode="file", project_root_dir=project_root)
     data_docs_config = {
         "class_name": "SiteBuilder",
         "site_index_builder": {"class_name": "DefaultSiteIndexBuilder"},
         "store_backend": {
             "class_name": "TupleFilesystemStoreBackend",
-            "base_directory": "data_docs",
+            "base_directory": "uncommitted/data_docs",
         },
     }
     context.update_data_docs_site("local_site", data_docs_config)
+    datasource = context.data_sources.all().get(DATASOURCE_NAME)
+    if datasource is None:
+        datasource = context.data_sources.add_pandas(name=DATASOURCE_NAME)
+    if datasource.type != "pandas":
+        raise ValueError(f"GX datasource {DATASOURCE_NAME!r} must use pandas")
 
-    datasource = context.data_sources.add_or_update_pandas(name=DATASOURCE_NAME)
-
-    validation_definitions = []
-
-    # Register one asset, suite and validation definition per raw state file.
-    for state in cfg.states:
-        asset = datasource.add_parquet_asset(
-            name=f"raw_{state}",
-            path=(RAW_DATA_DIR / f"{state}.parquet").relative_to(PROJ_ROOT).as_posix(),
-        )
-        batch_def = asset.add_batch_definition(name=f"raw_{state}_batch")
-        suite = _build_raw_suite(state, CARD_LENGTHS[state])
-        context.suites.add_or_update(suite)
-        suite.save()
-        val_def = gx.ValidationDefinition(
-            name=f"raw_{state}",
-            data=batch_def,
-            suite=suite,
-        )
-        context.validation_definitions.add_or_update(val_def)
-        validation_definitions.append(val_def)
-        logger.info(f"Configured suite for raw_{state}")
-
-    # Register one asset, suite and validation definition per processed block.
-    for block_name in ("train", "validation", "test"):
-        asset = datasource.add_parquet_asset(
-            name=block_name,
-            path=(PROCESSED_DATA_DIR / f"{block_name}.parquet").relative_to(PROJ_ROOT).as_posix(),
-        )
-        batch_def = asset.add_batch_definition(name=f"{block_name}_batch")
-        suite = _build_block_suite(block_name, cfg)
-        context.suites.add_or_update(suite)
-        suite.save()
-        val_def = gx.ValidationDefinition(
-            name=block_name,
-            data=batch_def,
-            suite=suite,
-        )
-        context.validation_definitions.add_or_update(val_def)
-        validation_definitions.append(val_def)
-        logger.info(f"Configured suite for {block_name}")
-
-    # Register the origins table.
-    asset = datasource.add_parquet_asset(
-        name="origins",
-        path=(PROCESSED_DATA_DIR / "origins.parquet").relative_to(PROJ_ROOT).as_posix(),
+    tables = [
+        (_build_raw_suite(state, CARD_LENGTHS[state]), f"data/raw/{state}.parquet")
+        for state in cfg.states
+    ]
+    tables.extend(
+        (_build_block_suite(name, cfg), f"data/processed/{name}.parquet")
+        for name in ("train", "validation", "test")
     )
-    batch_def = asset.add_batch_definition(name="origins_batch")
-    suite = _build_origins_suite(cfg)
-    context.suites.add_or_update(suite)
-    suite.save()
-    val_def = gx.ValidationDefinition(
-        name="origins",
-        data=batch_def,
-        suite=suite,
+    tables.append((_build_origins_suite(cfg), "data/processed/origins.parquet"))
+    definitions = []
+    for wanted, path in tables:
+        suite = _configure_suite(context, wanted)
+        definitions.append(_configure_definition(context, datasource, suite, path))
+        logger.info(f"Configured suite for {wanted.name}")
+    _configure_checkpoint(context, definitions)
+
+    # GX may serialize native Windows separators; persisted paths stay portable.
+    gx_yml = project_root / "gx" / "great_expectations.yml"
+    gx_yml.write_text(
+        gx_yml.read_text(encoding="utf-8").replace("\\", "/"),
+        encoding="utf-8",
+        newline="\n",
     )
-    context.validation_definitions.add_or_update(val_def)
-    validation_definitions.append(val_def)
-    logger.info("Configured suite for origins")
-
-    # Create a single checkpoint that runs all validation definitions and
-    # regenerates the Data Docs HTML report after each run.
-    checkpoint = gx.Checkpoint(
-        name=CHECKPOINT,
-        validation_definitions=validation_definitions,
-        actions=[gx.checkpoint.UpdateDataDocsAction(name="update_data_docs")],
-        result_format="SUMMARY",
-    )
-    context.checkpoints.add_or_update(checkpoint)
-
-    # GX on Windows writes backslash separators into great_expectations.yml even
-    # when paths are passed as posix strings. Replace them so the stored config
-    # is portable across operating systems.
-    gx_yml = PROJ_ROOT / "gx" / "great_expectations.yml"
-    gx_yml.write_text(gx_yml.read_text(encoding="utf-8").replace("\\", "/"), encoding="utf-8")
-    logger.info("Normalised path separators in great_expectations.yml")
-
-    # Write a stamp file so DVC can track that configure_gx ran and validate-data
-    # can declare it as a dep, guaranteeing the correct execution order.
-    import json as _json
-
-    (REPORTS_DIR / "gx_configured.json").write_text(
-        _json.dumps({"configured": True, "suites": len(validation_definitions)})
+    reports = project_root / "reports"
+    reports.mkdir(exist_ok=True)
+    (reports / "gx_configured.json").write_text(
+        json.dumps({"configured": True, "suites": len(definitions)}), encoding="utf-8"
     )
     logger.success("GX context configured successfully.")
+
+
+if __name__ == "__main__":
+    configure_context()

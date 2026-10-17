@@ -16,6 +16,12 @@ Two DVC stages handle validation:
 `reports/gx_configured.json`. `validate-data` depends on that stamp, so DVC
 always runs configure before validate.
 
+Repeating setup compares the saved suites with the current rules and retains
+equivalent resources and their identifiers. Changed parameters update the affected
+expectations; missing suites, assets, batches and validation definitions are
+recreated. Setup still reads the saved resources,
+so a stamp cannot conceal missing or malformed configuration.
+
 ## What is checked
 
 ### Great Expectations suites (9 tables)
@@ -23,7 +29,7 @@ always runs configure before validate.
 | Suite | File | Key expectations |
 |---|---|---|
 | `raw_NSW/VIC/QLD/SA/TAS` | `data/raw/<STATE>.parquet` | Row count matches dataset card; column exists; float32; no nulls; non-negative (all except TAS) |
-| `train` | `data/processed/train.parquet` | Row count; column order; no nulls; float32; values within training-block range (no leakage) |
+| `train` | `data/processed/train.parquet` | Row count; column order; no nulls; float32; values within training-block range |
 | `validation` | `data/processed/validation.parquet` | Row count; column order; no nulls; float32 |
 | `test` | `data/processed/test.parquet` | Row count; column order; no nulls; float32 |
 | `origins` | `data/processed/origins.parquet` | Row count; column order; no nulls; valid state and block values |
@@ -56,6 +62,11 @@ checks). The origin-window count includes three integer checks, three non-negati
 checks, context length, horizon, two block bounds, and two origin grids per state.
 
 The pipeline exits with code 1 and logs each failure if any check fails.
+
+The JSON summary above remains versioned evidence. GX's generated HTML pages and
+validation history are runtime output under `gx/uncommitted/data_docs/`, ignored
+by Git. Open `gx/uncommitted/data_docs/index.html` after running validation; the
+tracked suite JSON files define the rules independently of those pages.
 
 ## Running locally
 
@@ -90,3 +101,9 @@ uv run --locked pytest tests/test_validation_checks.py -q
 To verify the exit regression locally, temporarily remove `sys.exit(1)` from
 `main()` and run `test_validation_command_gx_failure_exits_1`. It must fail with
 `DID NOT RAISE`; restore the line before running the checks again.
+
+`tests/test_gx_configuration.py` checks that repeated setup preserves the saved
+configuration, a changed split updates row-count rules, missing resources are
+recreated, changed saved rules are corrected, and malformed JSON fails explicitly.
+It builds Data Docs in an isolated temporary context without loading datasets or
+contacting shared services.
