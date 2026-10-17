@@ -8,10 +8,15 @@ from src import tracking
 
 
 def pytest_addoption(parser):
-    """Keep real model inference out of routine tests."""
+    """Keep real checkpoint inference opt-in."""
     parser.addoption("--run-model-tests", action="store_true", help="Enable real model inference")
     parser.addoption(
         "--model-test-report", help="Report prepared by the bounded model-test runner"
+    )
+    parser.addoption(
+        "--run-directional",
+        action="store_true",
+        help="Run the synthetic directional cases with one real checkpoint load (180s cap)",
     )
 
 
