@@ -1,0 +1,10 @@
+outs:
+- md5: 0377ee21f89c25da36b95db59841c3d4.dir
+  size: 184633793
+  nfiles: 3
+  hash: md5
+  path: chronos-t5-small-fine-tuned
+  desc: >-
+    Chronos-T5-small fine-tuned for #13, selected on validation: option 1, seed 8,
+    training run 639eba4cc7e74de08ffab64beee715db (Experiment 004).
+    model.safetensors sha256 746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9.

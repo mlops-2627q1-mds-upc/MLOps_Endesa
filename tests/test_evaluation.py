@@ -114,6 +114,45 @@ def test_validation_windows_and_training_scale_ignore_held_out_values(validation
     assert updated.targets[1, 0] == 10448
 
 
+def write_test_block(directory):
+    test = pd.DataFrame(
+        {"A": np.arange(496, 592), "B": 2 * np.arange(496, 592)},
+        index=pd.RangeIndex(496, 592, name="timestep"),
+    )
+    test.to_parquet(directory / "test.parquet")
+
+
+def test_test_windows_use_test_targets_and_training_only_scales(validation_files):
+    _, params, directory = validation_files
+    cfg = SplitConfig.from_params(params)
+    validation = ValidationData.load(directory, cfg)
+    write_test_block(directory)
+    test = ValidationData.load(directory, cfg, "test")
+    assert test.origins.tolist() == [496, 544, 496, 544]
+    # The context ends just before the origin and may include validation values.
+    np.testing.assert_array_equal(test.contexts[0], np.arange(96, 496))
+    np.testing.assert_array_equal(test.targets[0], np.arange(496, 544))
+    np.testing.assert_array_equal(test.contexts[1][-48:], np.arange(496, 544))
+    assert test.scales == validation.scales == {"A": 336.0, "B": 672.0}
+
+
+def test_validation_is_unchanged_by_test_values(validation_files):
+    _, params, directory = validation_files
+    cfg = SplitConfig.from_params(params)
+    write_test_block(directory)
+    before = ValidationData.load(directory, cfg)
+    (pd.read_parquet(directory / "test.parquet") + 10000).to_parquet(directory / "test.parquet")
+    after = ValidationData.load(directory, cfg)
+    np.testing.assert_array_equal(before.contexts, after.contexts)
+    np.testing.assert_array_equal(before.targets, after.targets)
+
+
+def test_only_held_out_blocks_can_be_scored(validation_files):
+    _, params, directory = validation_files
+    with pytest.raises(ValueError, match="held-out block"):
+        ValidationData.load(directory, SplitConfig.from_params(params), "train")
+
+
 def test_validation_rejects_wrong_positions_and_nonfinite_predictions(validation_files):
     _, params, directory = validation_files
     cfg = SplitConfig.from_params(params)
@@ -126,11 +165,9 @@ def test_validation_rejects_wrong_positions_and_nonfinite_predictions(validation
         ValidationData.load(directory, cfg)
 
 
-@pytest.mark.parametrize("native_linesep", ["\n", "\r\n"], ids=["lf", "windows-crlf"])
-def test_evaluator_records_comparable_runs_and_artifacts(
-    validation_files, monkeypatch, tmp_path, native_linesep
-):
-    monkeypatch.setattr(evaluator.os, "linesep", native_linesep)
+@pytest.fixture
+def tracked_project(validation_files, monkeypatch, tmp_path):
+    """A committed fixture project with a local MLflow store and a fake Chronos."""
     root, params, directory = validation_files
     (root / "uv.lock").write_text("version = 1\n")
     (root / "dvc.lock").write_text("schema: '2.0'\n")
@@ -156,7 +193,10 @@ def test_evaluator_records_comparable_runs_and_artifacts(
     monkeypatch.setattr(evaluator, "data_version", lambda: "fixture-data")
     monkeypatch.delenv("MLFLOW_EXPERIMENT_NAME", raising=False)
 
-    def fake_chronos(contexts, horizon, cfg, deadline, measure):
+    calls = []
+
+    def fake_chronos(contexts, horizon, cfg, deadline, measure, checkpoint=None):
+        calls.append({"device": cfg.device, "checkpoint": checkpoint})
         with measure():
             predictions = np.repeat(contexts[:, -1:], horizon, axis=1)
         return predictions, {"inference_seconds": 0.1, "model_load_seconds": 0.2}
@@ -165,6 +205,15 @@ def test_evaluator_records_comparable_runs_and_artifacts(
     uri = f"sqlite:///{tmp_path / 'mlflow.db'}"
     client = MlflowClient(tracking_uri=uri)
     client.create_experiment("MLOps_Endesa", artifact_location=(tmp_path / "artifacts").as_uri())
+    return params, directory, uri, client, calls
+
+
+@pytest.mark.parametrize("native_linesep", ["\n", "\r\n"], ids=["lf", "windows-crlf"])
+def test_evaluator_records_comparable_runs_and_artifacts(
+    tracked_project, monkeypatch, tmp_path, native_linesep
+):
+    monkeypatch.setattr(evaluator.os, "linesep", native_linesep)
+    params, directory, uri, client, _ = tracked_project
     comparison = evaluator.evaluate(
         params_path=params,
         processed_dir=directory,
@@ -202,6 +251,66 @@ def test_evaluator_records_comparable_runs_and_artifacts(
     assert saved["results"] == comparison["results"]
 
 
+def test_test_block_runs_are_labelled_and_select_no_baseline(tracked_project, tmp_path):
+    params, directory, uri, client, _ = tracked_project
+    write_test_block(directory)
+    comparison = evaluator.evaluate(
+        params_path=params,
+        processed_dir=directory,
+        output_dir=tmp_path / "outputs",
+        tracking_uri=uri,
+        block="test",
+    )
+    assert comparison["block"] == "test"
+    # The primary baseline comes from validation; test scores never choose it.
+    assert comparison["primary_baseline_on_validation"] is None
+    for name, result in comparison["results"].items():
+        run = client.get_run(result["run_id"])
+        assert run.info.run_name == f"test-{name}"
+        assert run.data.params["block"] == "test"
+        assert result["metrics"]["A.origins"] == 2
+
+
+def test_local_checkpoint_is_scored_and_identified_by_its_weights(tracked_project, tmp_path):
+    params, directory, uri, client, calls = tracked_project
+    checkpoint = tmp_path / "models/fine-tuning/training-run-1/final"
+    checkpoint.mkdir(parents=True)
+    (checkpoint / "model.safetensors").write_bytes(b"fine-tuned weights")
+    comparison = evaluator.evaluate(
+        params_path=params,
+        processed_dir=directory,
+        output_dir=tmp_path / "outputs",
+        tracking_uri=uri,
+        method="chronos",
+        checkpoint=checkpoint,
+    )
+    weights_hash = hashlib.sha256(b"fine-tuned weights").hexdigest()
+    run = client.get_run(comparison["results"]["chronos"]["run_id"])
+    assert calls == [{"device": "cpu", "checkpoint": checkpoint.resolve()}]
+    assert run.info.run_name == "validation-chronos-checkpoint"
+    assert run.data.tags["model.revision"] == f"local-sha256:{weights_hash}"
+    recorded = json.loads(run.data.params["checkpoint"])
+    assert recorded["sha256"] == weights_hash
+    assert recorded["training_run_id"] == "training-run-1"
+
+
+@pytest.mark.parametrize(
+    ("changes", "message"),
+    [
+        ({"method": "all", "checkpoint": Path("final")}, "method chronos only"),
+        ({"method": "chronos", "checkpoint": Path("missing")}, "No model.safetensors"),
+        ({"method": "chronos", "device": "tpu"}, "explicit cpu, mps or cuda"),
+    ],
+)
+def test_invalid_checkpoint_or_device_stops_before_a_run(tracked_project, changes, message):
+    params, directory, uri, _, calls = tracked_project
+    with pytest.raises(ValueError, match=message):
+        evaluator.evaluate(
+            params_path=params, processed_dir=directory, tracking_uri=uri, **changes
+        )
+    assert calls == []
+
+
 def test_model_revision_must_be_pinned(validation_files):
     _, params, _ = validation_files
     config = yaml.safe_load(params.read_text())["evaluation"]
@@ -215,6 +324,18 @@ def test_missing_or_changed_dvc_inputs_stop_before_a_run(monkeypatch):
     )
     with pytest.raises(ValueError, match="DVC inputs have changed or are missing"):
         evaluator.data_version()
+
+
+def test_data_version_checks_only_the_data_not_tracked_models(monkeypatch):
+    commands = []
+
+    def fake_check_output(command, **kwargs):
+        commands.append(command)
+        return "{}"
+
+    monkeypatch.setattr(evaluator.subprocess, "check_output", fake_check_output)
+    evaluator.data_version()
+    assert commands == [["dvc", "status", "--json", "data/raw.dvc", "dvc.yaml"]]
 
 
 def test_untracked_input_directory_is_rejected(tmp_path):

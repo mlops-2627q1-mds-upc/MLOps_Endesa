@@ -1,4 +1,4 @@
-"""Validation windows, seasonal forecasts and point-error metrics for #12."""
+"""Held-out forecast windows, seasonal forecasts and point-error metrics for #12 and #13."""
 
 from dataclasses import dataclass
 import math
@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.splits import SplitConfig, forecast_origins, forecast_window
+from src.splits import HELD_OUT_BLOCKS, SplitConfig, forecast_origins, forecast_window
 
 MASE_LAG = 336
 BASELINE_LAGS = (48, 336)
@@ -57,10 +57,18 @@ class ValidationData:
     scales: dict[str, float]
 
     @classmethod
-    def load(cls, directory: Path, cfg: SplitConfig) -> "ValidationData":
-        # Test targets are deliberately never opened by this evaluator.
+    def load(
+        cls, directory: Path, cfg: SplitConfig, block: str = "validation"
+    ) -> "ValidationData":
+        """Build every forecast of a held-out block, with MASE scales from training only.
+
+        The test file is opened only when `block` is "test". Contexts may include earlier
+        held-out values, as a rolling forecast would.
+        """
+        if block not in HELD_OUT_BLOCKS:
+            raise ValueError(f"Choose a held-out block: {HELD_OUT_BLOCKS}")
         frames = {}
-        for name in ("train", "validation"):
+        for name in ("train", "validation", "test")[: 2 if block == "validation" else 3]:
             frame = pd.read_parquet(directory / f"{name}.parquet")
             start, end = cfg.bounds(name)
             if list(frame.columns) != list(cfg.states) or not np.array_equal(
@@ -75,8 +83,8 @@ class ValidationData:
         for state in cfg.states:
             training = frames["train"][state].to_numpy()
             scales[state] = mase_scale(training)
-            history = np.concatenate((training, frames["validation"][state].to_numpy()))
-            for origin in forecast_origins("validation", cfg):
+            history = np.concatenate([frame[state].to_numpy() for frame in frames.values()])
+            for origin in forecast_origins(block, cfg):
                 context, target = forecast_window(history, int(origin), cfg)
                 contexts.append(context)
                 targets.append(target)
@@ -89,7 +97,7 @@ class ValidationData:
     def predictions_frame(self, predictions: np.ndarray) -> pd.DataFrame:
         predictions = np.asarray(predictions, dtype=np.float64)
         if predictions.shape != self.targets.shape or not np.isfinite(predictions).all():
-            raise ValueError("Predictions must be finite and match every validation target")
+            raise ValueError("Predictions must be finite and match every forecast target")
         horizon = self.targets.shape[1]
         return pd.DataFrame(
             {
@@ -103,7 +111,7 @@ class ValidationData:
 
     def metrics(self, predictions: np.ndarray) -> dict[str, float]:
         if predictions.shape != self.targets.shape or not np.isfinite(predictions).all():
-            raise ValueError("Predictions must be finite and match every validation target")
+            raise ValueError("Predictions must be finite and match every forecast target")
         errors = np.abs(predictions.astype(np.float64) - self.targets)
         metrics = {}
         for state, scale in self.scales.items():

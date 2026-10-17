@@ -13,6 +13,8 @@ part, and how AI contributed where applicable.
 | [EDN-006: Required CI checks](0006-required-ci-checks.md) | 2026-10-11 | M5 | Implemented; Pablo verified configuration; documentation corrections await review |
 | [EDN-008: Data validation as DVC stages with Great Expectations](0008-data-validation-design.md) | 2026-10-13 | M3 | Proposed; PR #37 peer review pending |
 
+| [EDN-012: Bounded Chronos fine-tuning and its selection](0012-chronos-fine-tuning.md) | 2026-10-12 | M2 | Validation results and test path reviewed by Pablo; test run meets the decision rule; PR review pending |
+
 ## Adding an entry
 
 Use the [template](TEMPLATE.md) for a choice with meaningful consequences that
