@@ -30,6 +30,7 @@ emissions.csv
 /reports/evaluation/
 /reports/minimum-functionality/
 /reports/directional/
+/reports/invariance/
 
 # Python caches and build outputs
 __pycache__/

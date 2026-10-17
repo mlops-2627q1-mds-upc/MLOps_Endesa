@@ -18,6 +18,11 @@ def pytest_addoption(parser):
         action="store_true",
         help="Run the synthetic directional cases with one real checkpoint load (180s cap)",
     )
+    parser.addoption(
+        "--run-forecast-invariance",
+        action="store_true",
+        help="Run the 300-second paired Chronos checks, loading the checkpoint once",
+    )
 
 
 class FakeEmissionsTracker:

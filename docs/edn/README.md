@@ -14,6 +14,7 @@ part, and how AI contributed where applicable.
 | [EDN-008: Data validation as DVC stages with Great Expectations](0008-data-validation-design.md) | 2026-10-13 | M3 | Proposed; PR #37 peer review pending |
 | [EDN-009: Known continuations and declared model-test limits](0009-minimum-functionality.md) | 2026-10-14 | M3 | Original protocol and implementation approved by Sindri and Pau; scope clarification awaits review |
 | [EDN-011: Directional expectations for sustained demand changes](0011-directional-expectations.md) | 2026-10-14 | M3 | Pau reviewed rules and tests; numbering corrections await re-review |
+| [EDN-010: Paired scale and perturbation checks](0010-forecast-invariance.md) | 2026-10-14 | M3 | Pau reviewed design and tests; numbering corrections await re-review |
 
 ## Adding an entry
 
