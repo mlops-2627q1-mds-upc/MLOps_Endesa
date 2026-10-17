@@ -65,7 +65,7 @@ for operational grid scheduling ([model card](MODEL_CARD.md#model-details-and-in
   grid. A failed check stops the DVC pipeline at `validate-data`.
   *Source:* Course M3; implemented in [#37](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/37)
   ([data validation](data-validation.md#what-is-checked), [EDN-008](edn/0008-data-validation-design.md)).
-  *Verify:* `dvc repro`: 116 expectations pass on the real data; synthetic failure
+  *Verify:* `dvc repro`: 118 expectations pass on the real data; synthetic failure
   cases in `tests/test_validation_checks.py`.
 
 ### Modelling and evaluation

@@ -226,7 +226,7 @@ if __name__ == "__main__":
     origin_failures = _check_origins_windows(cfg)
     # 3 integer checks + 3 non-negative checks + context + horizon + 2 in-block +
     # 2 blocks * len(states) grid checks
-    total_evaluated += 8 + 2 * len(cfg.states)
+    total_evaluated += 10 + 2 * len(cfg.states)
     total_failed += len(origin_failures)
     failures.extend(origin_failures)
 
