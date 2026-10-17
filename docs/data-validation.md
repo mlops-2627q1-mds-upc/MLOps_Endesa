@@ -71,6 +71,17 @@ uv run dvc repro validate-data
 DVC data. It is skipped automatically in CI where data is absent.
 
 `tests/test_validation_checks.py` tests the four Python check functions with
-synthetic in-memory fixtures. These always run in CI and cover the failure cases:
-infinity rejection, wrong TAS positions, index gaps, duplicate origins, and
-missing origin windows.
+small synthetic fixtures: infinity rejection, wrong TAS positions, index gaps,
+duplicate origins, and missing origin windows. It also calls the production
+`main()` with temporary Parquet files and deterministic GX results, checking the
+passing report and normal return (CLI exit 0), and the failed report, failure
+details, and `SystemExit(1)`. These tests run in ordinary CI without DVC data,
+credentials, or model downloads.
+
+```sh
+uv run --locked pytest tests/test_validation_checks.py -q
+```
+
+To verify the exit regression locally, temporarily remove `sys.exit(1)` from
+`main()` and run `test_validation_command_gx_failure_exits_1`. It must fail with
+`DID NOT RAISE`; restore the line before running the checks again.

@@ -184,7 +184,8 @@ def _check_origins_windows(cfg: SplitConfig) -> list[dict]:
     return failures
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Write the validation report and exit with code 1 if any check fails."""
     cfg = SplitConfig.from_params()
 
     # Load the file data context that gx_context_configuration.py built.
@@ -252,3 +253,7 @@ if __name__ == "__main__":
         for f in failures:
             logger.error(f"  [{f['suite']}] {f['expectation']} on '{f['column']}'")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
