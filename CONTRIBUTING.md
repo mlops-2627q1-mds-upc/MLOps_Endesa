@@ -138,10 +138,18 @@ records their verification and any outstanding setup.
 | Block force pushes and deletion of `main` | Preserve shared history, contribution records, and reproducible versions. |
 | Allow merge commits; disable squash and rebase merging | Retain the individual commits and the PR boundary. Linear history is not required because it would conflict with merge commits. |
 | Automatically delete merged branches in this repository | Keep the branch list focused on active work. |
+| Require `CI / lint` and `CI / test` from GitHub Actions | Formatting, lint, and the repository tests must pass before merging. |
+| Require PR branches to be up to date with `main` | Check the change against the current shared branch before merging. |
 
-Required CI checks are not configured yet. Add them after the jobs exist and have
-run successfully, so the rule refers to working checks. Peer review and local
-validation apply now; they do not replace the planned code, data, and model CI.
+The [CI workflow](.github/workflows/ci.yml) runs both required jobs for pull requests
+to `main` and pushes to `main`, without path filters or conditional job skips.
+When `main` advances, update the PR branch and wait for both checks again before
+requesting a fresh approval if the earlier approval was dismissed. Local checks
+support review; GitHub's required checks enforce the merge gate. See the
+[verified settings and failure/recovery evidence](docs/project-setup.md#required-ci-checks).
+
+Renaming `CI / lint` or `CI / test` requires updating the required check names in
+branch protection in the same change, before merging with the new names.
 
 Use `Closes #<issue>` when merging completes the task; otherwise use
 `Related to #<issue>`. Keep deployment tasks open until the deployment is verified.
