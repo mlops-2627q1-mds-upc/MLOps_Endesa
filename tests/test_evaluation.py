@@ -12,6 +12,7 @@ import yaml
 from src import tracking
 from src.evaluation import ValidationData, mase_scale, sample_median, seasonal_forecast
 from src.modeling import evaluate as evaluator
+from src.modeling.checkpoints import write_training_metadata
 from src.splits import SplitConfig
 
 
@@ -276,6 +277,7 @@ def test_local_checkpoint_is_scored_and_identified_by_its_weights(tracked_projec
     checkpoint = tmp_path / "models/fine-tuning/training-run-1/final"
     checkpoint.mkdir(parents=True)
     (checkpoint / "model.safetensors").write_bytes(b"fine-tuned weights")
+    write_training_metadata(checkpoint, "a" * 32)
     comparison = evaluator.evaluate(
         params_path=params,
         processed_dir=directory,
@@ -291,7 +293,28 @@ def test_local_checkpoint_is_scored_and_identified_by_its_weights(tracked_projec
     assert run.data.tags["model.revision"] == f"local-sha256:{weights_hash}"
     recorded = json.loads(run.data.params["checkpoint"])
     assert recorded["sha256"] == weights_hash
-    assert recorded["training_run_id"] == "training-run-1"
+    assert recorded["training_run_id"] == "a" * 32
+    assert comparison["checkpoint"] == recorded
+
+
+def test_checkpoint_provenance_mismatch_stops_before_inference(tracked_project, tmp_path):
+    params, directory, uri, client, calls = tracked_project
+    checkpoint = tmp_path / "models/selected-checkpoint"
+    checkpoint.mkdir(parents=True)
+    (checkpoint / "model.safetensors").write_bytes(b"trained weights")
+    write_training_metadata(checkpoint, "a" * 32)
+    (checkpoint / "model.safetensors").write_bytes(b"changed weights")
+    with pytest.raises(ValueError, match="does not match checkpoint weights"):
+        evaluator.evaluate(
+            params_path=params,
+            processed_dir=directory,
+            tracking_uri=uri,
+            method="chronos",
+            checkpoint=checkpoint,
+        )
+    assert calls == []
+    experiment = client.get_experiment_by_name("MLOps_Endesa")
+    assert client.search_runs([experiment.experiment_id]) == []
 
 
 @pytest.mark.parametrize(

@@ -109,7 +109,7 @@ def test_full_fine_tuning_trains_every_weight_and_saves_no_adapter(tmp_path):
     model = tiny_t5()
     model, trainable = train.prepare_model(model, settings())
     assert len(trainable) == len(list(model.parameters()))
-    saved = train.save_final(model, tmp_path, lora=False)
+    saved = train.save_final(model, tmp_path, lora=False, training_run_id="a" * 32)
     assert (tmp_path / "final" / "model.safetensors").is_file()
     assert "adapter_path" not in saved
 
@@ -132,7 +132,7 @@ def test_lora_trains_only_adapters_and_saves_a_loadable_merged_checkpoint(tmp_pa
     model.eval()
     expected = model(**inputs).logits
 
-    saved = train.save_final(model, tmp_path, lora=True)
+    saved = train.save_final(model, tmp_path, lora=True, training_run_id="a" * 32)
     assert (tmp_path / "adapter" / "adapter_model.safetensors").is_file()
     assert len(saved["adapter_safetensors_sha256"]) == 64
     reloaded = transformers.T5ForConditionalGeneration.from_pretrained(tmp_path / "final").eval()

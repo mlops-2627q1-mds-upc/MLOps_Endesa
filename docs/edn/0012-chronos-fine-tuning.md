@@ -38,6 +38,8 @@ Claude Code (Anthropic) implemented the training, the round and the evaluator's
 checkpoint, device and test-block options, with their tests. It diagnosed the 8 GB
 limit and the cached GPU memory that slowed the round's evaluations and drafted
 Experiment 004 and this entry.
+On 2026-10-17, Codex assisted with integrating the branch and correcting checkpoint
+lineage with hash-validated metadata and tests; teammate review of that repair is pending.
 
 ## Response to AI
 

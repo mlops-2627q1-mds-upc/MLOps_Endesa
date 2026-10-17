@@ -10,6 +10,7 @@ temporary/
 !/models/.gitkeep
 # DVC references to selected models; their weights stay ignored
 !/models/*.dvc
+!/models/*.provenance.json
 
 # Secrets and local configuration
 .env

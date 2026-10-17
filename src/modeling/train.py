@@ -16,6 +16,7 @@ import typer
 import yaml
 
 from src.config import MODELS_DIR, PROCESSED_DATA_DIR, PROJ_ROOT
+from src.modeling.checkpoints import write_training_metadata
 from src.modeling.evaluate import EvaluationConfig, data_version
 from src.splits import PARAMS_PATH, SplitConfig
 from src.tracking import tracked_run
@@ -125,7 +126,7 @@ def load_training_block(directory: Path, cfg: SplitConfig) -> np.ndarray:
 
 def tokenize(tokenizer, contexts: np.ndarray, labels: np.ndarray) -> dict:
     """Encode windows as the checkpoint does; padded label tokens are ignored by the loss."""
-    import torch
+    torch = _require_torch()
 
     input_ids, attention_mask, scale = tokenizer.context_input_transform(
         torch.as_tensor(contexts, dtype=torch.float32)
@@ -143,7 +144,15 @@ def prepare_model(model, settings: FineTuneConfig) -> tuple:
     With a LoRA rank, the base weights are frozen and adapters train in their place.
     """
     if settings.lora_rank:
-        from peft import LoraConfig, get_peft_model
+        try:
+            from peft import (  # pylint: disable=import-outside-toplevel
+                LoraConfig,
+                get_peft_model,
+            )
+        except ImportError as error:
+            raise RuntimeError(
+                "Install forecasting dependencies with uv sync --extra forecast"
+            ) from error
 
         model = get_peft_model(
             model,
@@ -158,7 +167,7 @@ def prepare_model(model, settings: FineTuneConfig) -> tuple:
     return model, [parameter for parameter in model.parameters() if parameter.requires_grad]
 
 
-def save_final(model, directory: Path, lora: bool) -> dict:
+def save_final(model, directory: Path, lora: bool, *, training_run_id: str) -> dict:
     """Save a full checkpoint that `from_pretrained` loads, plus the adapter for LoRA."""
     saved = {}
     if lora:
@@ -172,12 +181,22 @@ def save_final(model, directory: Path, lora: bool) -> dict:
         model = model.merge_and_unload()
     model.save_pretrained(directory / "final")
     saved["path"] = str(directory / "final")
-    saved["model_safetensors_sha256"] = _sha256(directory / "final" / "model.safetensors")
+    saved.update(write_training_metadata(directory / "final", training_run_id))
     return saved
 
 
+def _require_torch():
+    try:
+        import torch  # pylint: disable=import-outside-toplevel
+    except ImportError as error:
+        raise RuntimeError(
+            "Install forecasting dependencies with uv sync --extra forecast"
+        ) from error
+    return torch
+
+
 def _hardware(device: str) -> dict:
-    import torch
+    torch = _require_torch()
 
     hardware = {"device": device, "torch": torch.__version__, "cuda": torch.version.cuda}
     if device == "cuda":
@@ -324,11 +343,14 @@ def fine_tune(
                 losses.append(loss)
                 if step % settings.checkpoint_every == 0 and step < steps:
                     # For LoRA, intermediate checkpoints hold the adapter only.
-                    model.save_pretrained(directory / f"step-{step}")
+                    intermediate = directory / f"step-{step}"
+                    model.save_pretrained(intermediate)
+                    if not lora:
+                        write_training_metadata(intermediate, run.run_id)
             if settings.device == "cuda":
                 torch.cuda.synchronize()
             train_seconds = time.perf_counter() - start
-        checkpoint = save_final(model, directory, lora)
+        checkpoint = save_final(model, directory, lora, training_run_id=run.run_id)
         timestamp = int(time.time() * 1000)
         history = [
             Metric("train.loss", loss, timestamp, step) for step, loss in enumerate(losses, 1)

@@ -26,6 +26,7 @@ from src.evaluation import (
     sample_median,
     seasonal_forecast,
 )
+from src.modeling.checkpoints import describe_checkpoint
 from src.splits import HELD_OUT_BLOCKS, PARAMS_PATH, SplitConfig
 from src.tracking import tracked_run
 
@@ -79,7 +80,12 @@ def data_version() -> str:
 
 def _cuda_hardware() -> dict:
     """Record the GPU and the CUDA build that produced GPU forecasts."""
-    import torch
+    try:
+        import torch  # pylint: disable=import-outside-toplevel
+    except ImportError as error:
+        raise RuntimeError(
+            "Install forecasting dependencies with uv sync --extra forecast"
+        ) from error
 
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is not available; install the CUDA build of PyTorch")
@@ -88,15 +94,6 @@ def _cuda_hardware() -> dict:
         "cuda": torch.version.cuda,
         "torch": torch.__version__,
     }
-
-
-def checkpoint_sha256(checkpoint: Path) -> str:
-    """Identify a local checkpoint by the hash of its weights."""
-    digest = hashlib.sha256()
-    with (checkpoint / "model.safetensors").open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def chronos_forecast(
@@ -196,14 +193,7 @@ def evaluate(
     checkpoint_record = None
     if checkpoint is not None:
         checkpoint = checkpoint.resolve()
-        if not (checkpoint / "model.safetensors").is_file():
-            raise ValueError(f"No model.safetensors in checkpoint {checkpoint}")
-        checkpoint_record = {
-            "path": str(checkpoint),
-            "sha256": checkpoint_sha256(checkpoint),
-            # Training saves checkpoints under <output_dir>/<training run ID>/.
-            "training_run_id": checkpoint.parent.name,
-        }
+        checkpoint_record = describe_checkpoint(checkpoint)
     if cfg.context_length < max(BASELINE_LAGS):
         raise ValueError("The agreed seasonal baselines need at least 336 context observations")
     version = data_version()

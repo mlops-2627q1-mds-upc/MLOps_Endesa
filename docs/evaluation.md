@@ -189,8 +189,11 @@ uv run python -m src.modeling.fine_tune_round --option 1-reference --option 2-lo
 
 Each training run saves its checkpoints under `models/fine-tuning/<training run ID>/`,
 which Git ignores: `final` loads with `from_pretrained`, `step-<n>` are intermediate
-checkpoints, and LoRA runs also save their adapter in `adapter`. An evaluation of a
-checkpoint records the hash of its weights and the training run ID. Batches of 32 are
+checkpoints, and LoRA runs also save their adapter in `adapter`. New full checkpoints
+include `training_metadata.json`, which binds the MLflow training run ID to the
+SHA-256 of `model.safetensors`. Evaluation validates that hash before recording the
+training lineage; a checkpoint without metadata records an unknown run ID (`null`).
+Directory names are not treated as evidence of a training run. Batches of 32 are
 trained as two micro-batches of 16 so that a run fits in 8 GB of GPU memory.
 
 `--block test` scores the test block instead of validation. Use it only for the final
@@ -199,6 +202,11 @@ comparison in Experiment 004's plan; select models on validation.
 The selected checkpoint is versioned with DVC as `models/chronos-t5-small-fine-tuned`, so
 a `dvc pull` without a target now also downloads it (176 MB). To retrieve only the data,
 pull `data/raw.dvc` and `dvc.yaml` as targets; the evaluator checks only those.
+The versioned sibling `models/chronos-t5-small-fine-tuned.provenance.json` supplies
+the run ID and weights hash recorded in Experiment 004 for this existing artifact.
+It preserves the published DVC directory and is checked against the retrieved weights
+before evaluation. Keep this sidecar with the directory when relocating it; newly
+trained checkpoints carry their metadata inside the directory instead.
 
 When the output of these commands is piped or redirected on Windows, set
 `$env:PYTHONUTF8 = "1"` first: MLflow prints its run link with an emoji, which the

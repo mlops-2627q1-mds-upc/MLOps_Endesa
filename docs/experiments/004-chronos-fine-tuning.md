@@ -38,6 +38,9 @@ its `model.safetensors` has the SHA-256 recorded by its evaluation runs,
 `746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9`. Retrieve it with
 `uv run dvc pull models/chronos-t5-small-fine-tuned.dvc -r origin`, or with the in-memory
 credentials snippet in [the evaluation guide](../evaluation.md#reproduction).
+The tracked sibling `models/chronos-t5-small-fine-tuned.provenance.json` binds that
+training run to this weights hash for retrieval-time checks. It does not change the
+published checkpoint or the historical evaluation records.
 
 ### Training length
 
