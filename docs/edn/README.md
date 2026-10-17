@@ -5,13 +5,13 @@ part, and how AI contributed where applicable.
 
 | Entry | Date | Milestone | Status |
 | --- | --- | --- | --- |
-| [EDN-001: Task planning and review](0001-team-workflow.md) | 2026-09-22 | M1; related to M2 and M5 | Accepted by all team members; documentation PR review pending |
+| [EDN-001: Task planning and review](0001-team-workflow.md) | 2026-09-22 | M1; related to M2 and M5 | Accepted by all team members; Toni approved documentation; merged in PR #4 |
 | [EDN-002: Explicit MLflow run records](0002-mlflow-tracking.md) | 2026-10-02 | M2 | Tracking implementation approved by Pablo and merged in PR #26 |
-| [EDN-003: Bounded validation comparison](0003-validation-comparison.md) | 2026-10-05 | M2 | Sindri's assessment recorded; Windows corrections implemented; current-head peer review pending |
-| [EDN-004: Dataset source limits](0004-dataset-source-limits.md) | 2026-10-10 | M1; related to M2 | Source-scale, positional-only use proposed for teammate review |
-| [EDN-005: Energy measurement of the forecast step](0005-energy-measurement.md) | 2026-10-11 | M3 | Proposed; team review of the GPU measurement and PR review pending |
+| [EDN-003: Bounded validation comparison](0003-validation-comparison.md) | 2026-10-05 | M2 | Windows corrections verified by Sindri; Pablo and Sindri approved; merged in PR #28 |
+| [EDN-004: Dataset source limits](0004-dataset-source-limits.md) | 2026-10-10 | M1; related to M2 | Source-scale, positional-only limits accepted by Pau; merged in PR #40 |
+| [EDN-005: Energy measurement of the forecast step](0005-energy-measurement.md) | 2026-10-11 | M3 | Reviewed by Dídac; merged in PR #41 |
 | [EDN-006: Required CI checks](0006-required-ci-checks.md) | 2026-10-11 | M5 | Implemented; Pablo verified configuration; documentation corrections await review |
-| [EDN-008: Data validation as DVC stages with Great Expectations](0008-data-validation-design.md) | 2026-10-13 | M3 | Proposed; PR #37 peer review pending |
+| [EDN-008: Data validation as DVC stages with Great Expectations](0008-data-validation-design.md) | 2026-10-13 | M3 | Sindri approved the final revision; merged in PR #37 |
 
 ## Adding an entry
 
