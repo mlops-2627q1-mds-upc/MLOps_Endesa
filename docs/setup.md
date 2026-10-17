@@ -29,10 +29,12 @@ Other useful commands:
 | `uv add --group dev <package>` | Add a development-only dependency |
 | `uv run ruff check` / `uv run ruff format` | Lint and format the code |
 | `uv run pylint src tests` | Static analysis and quality score (see below) |
+| `make coverage` / `uv run pytest --cov --cov-report=term-missing` | Test statement and branch coverage for `src/` |
 | `uv run python -m src.dataset` | Run a module inside the environment |
 
 Commit `pyproject.toml` and `uv.lock` together whenever dependencies change.
-`make` targets (`make test`, `make lint`) are available on systems with GNU Make.
+`make` targets (`make test`, `make lint`, `make coverage`) are available on systems
+with GNU Make.
 
 ## Static analysis with Ruff and Pylint
 
@@ -80,14 +82,22 @@ That is why errors are gated separately with `fail-on`.
 
 The [CI workflow](../.github/workflows/ci.yml) runs on pull requests to `main`
 and pushes to `main`. It uses Ubuntu 24.04 and Python 3.11, installs from the
-committed lockfile, then runs `make lint` and `make test` in separate jobs. Run
+committed lockfile, then runs `make lint` and `make coverage` in separate jobs. Run
 the same checks locally:
 
 ```sh
 uv sync --locked --dev
 make lint
-make test
+make coverage
 ```
+
+Coverage measures all modules under `src/`, including branches and modules that
+the default suite does not import. The test job prints the per-module report and
+publishes it in the GitHub Actions job summary. The baseline is diagnostic:
+there is no minimum coverage threshold yet. Data-dependent tests skip when DVC
+data has not been retrieved, so the CI report describes the default suite rather
+than the separate real-data validation run. Tracked in
+[issue #32](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/32).
 
 If a job fails, open its GitHub Actions log and run the failing command locally.
 The pytest suite checks package imports, checked-in directories, raw-data DVC

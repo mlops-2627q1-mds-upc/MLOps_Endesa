@@ -66,6 +66,7 @@ explicit = true
 dev = [
     "pylint>=4.1.2",
     "pytest",
+    "pytest-cov>=7.1.0",
     "ruff",
 ]
 
@@ -85,6 +86,13 @@ force-sort-within-sections = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["model: opt-in tests that load and run a real forecasting checkpoint"]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
 
 [tool.pylint.main]
 # Quality gate: CI fails if the global score drops below this value.
