@@ -128,8 +128,8 @@ stages:
       size: 11279
     - path: src/validate_data.py
       hash: md5
-      md5: cb78d8de4fb59288c6325637cd382753
-      size: 9907
+      md5: 7a433f38c966dc6863b1cce1611be518
+      size: 10019
     outs:
     - path: reports/validation.json
       hash: md5
