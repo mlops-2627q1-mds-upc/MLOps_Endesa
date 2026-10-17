@@ -26,7 +26,9 @@ def write_training_metadata(checkpoint: Path, training_run_id: str) -> dict:
         "training_run_id": training_run_id,
         "model_safetensors_sha256": weights_sha256(checkpoint),
     }
-    (checkpoint / METADATA_FILENAME).write_text(json.dumps(metadata, indent=2) + "\n")
+    (checkpoint / METADATA_FILENAME).write_text(
+        json.dumps(metadata, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
     return metadata
 
 

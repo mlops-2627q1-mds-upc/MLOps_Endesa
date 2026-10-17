@@ -6,7 +6,8 @@ temporary/
 !/data/*/.gitkeep
 
 # Model weights and checkpoints (versioned with DVC / MLflow)
-/models/*
+# Require a child name so DVC can traverse models/ to discover its .dvc files.
+/models/?*
 !/models/.gitkeep
 # DVC references to selected models; their weights stay ignored
 !/models/*.dvc
