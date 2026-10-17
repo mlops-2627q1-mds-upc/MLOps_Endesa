@@ -7,6 +7,24 @@ import pytest
 from src import tracking
 
 
+def pytest_addoption(parser):
+    """Keep real checkpoint inference opt-in."""
+    parser.addoption("--run-model-tests", action="store_true", help="Enable real model inference")
+    parser.addoption(
+        "--model-test-report", help="Report prepared by the bounded model-test runner"
+    )
+    parser.addoption(
+        "--run-directional",
+        action="store_true",
+        help="Run the synthetic directional cases with one real checkpoint load (180s cap)",
+    )
+    parser.addoption(
+        "--run-forecast-invariance",
+        action="store_true",
+        help="Run the 300-second paired Chronos checks, loading the checkpoint once",
+    )
+
+
 class FakeEmissionsTracker:
     """Stands in for CodeCarbon so tests never probe hardware or measure energy."""
 
