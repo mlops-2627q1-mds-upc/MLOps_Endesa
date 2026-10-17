@@ -3,7 +3,7 @@
 - **Date:** 2026-10-05.
 - **Milestone:** M2 - Reproducibility.
 - **Activity / Topic:** Real experiment records for #12.
-- **Decision Participants:** Dídac Cayuela.
+- **Decision Participants:** Dídac Cayuela (task owner and review of the split implementation); Sindri Másson (reproduction and interpretation review); Pablo Pérez Cano (implementation review).
 - **Status:** Windows corrections verified by Sindri; Pablo and Sindri approved `89da830`; merged in PR #28 on 2026-10-10.
 
 ## Decision
@@ -35,10 +35,11 @@ corrections, added regression checks and updated the reproduction documentation.
 
 ## Response to AI
 
-Accepted to proceed with #12 after Dídac reported his approval of #17. This is
-authorization for the task. The CPU/batch/budget choices are the agent's initial
-implementation choices, not a separately recorded team agreement.
-Dídac authorized addressing Sindri's Windows findings on 2026-10-08.
+Accepted with modifications. Dídac reviewed and approved the split work in #17
+before directing the validation comparison to proceed under #12. The split,
+horizon and metrics came from the existing team protocol; Codex selected the
+initial CPU, batch and execution-budget settings. Dídac then requested the
+corrections to Sindri's Windows findings on 2026-10-08.
 
 ## Assessment of the AI Contribution
 

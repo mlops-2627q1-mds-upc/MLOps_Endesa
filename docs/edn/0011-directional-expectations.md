@@ -3,7 +3,7 @@
 - **Date:** 2026-10-14.
 - **Milestone:** M3 - Quality assurance.
 - **Activity / Topic:** Controlled model expectations for #56.
-- **Decision Participants:** Dídac Cayuela (task scope and implementation request); Pau Adal (protocol and implementation review).
+- **Decision Participants:** Dídac Cayuela (test scope and implementation constraints); Pau Adal (protocol and implementation review).
 - **Status:** Base-checkpoint protocol and implementation approved in PR #58; local-checkpoint extension awaits current-version review.
 
 ## Decision
@@ -35,9 +35,10 @@ evaluator, executed the bounded checks and drafted the evidence record.
 
 ## Response to AI
 
-Dídac requested implementation of #56 and professional, maintainable code under
-the project instructions. Pau subsequently reviewed the proposed rules and
-implementation and requested numbering corrections before approval.
+Dídac commissioned the controlled demand-change checks in #56 and required
+professional, maintainable code. Codex proposed the detailed paired cases and
+comparison rules within that scope. Pau reviewed those rules and the
+implementation, and requested numbering corrections before approval.
 
 ## Assessment of the AI Contribution
 

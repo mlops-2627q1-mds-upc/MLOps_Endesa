@@ -3,7 +3,7 @@
 - **Date:** 2026-10-14
 - **Milestone:** M3 - Quality assurance.
 - **Activity / Topic:** Minimum functionality tests for issue #54.
-- **Decision Participants:** Dídac Cayuela (task owner); Sindri Másson and Pau Adal (protocol and implementation review).
+- **Decision Participants:** Dídac Cayuela (test scope and implementation constraints); Sindri Másson and Pau Adal (protocol and implementation review).
 - **Status:** Base-checkpoint protocol and implementation approved in PR #57; local-checkpoint extension awaits current-version review.
 
 ## Decision
@@ -42,9 +42,10 @@ implemented the cases, test harness, bounded reproduction and evidence records.
 
 ## Response to AI
 
-Dídac requested implementation and a reviewable PR with maintainable code and
-clear writing. Sindri and Pau subsequently approved the original protocol and
-implementation in PR #57; this records their reviews rather than team consensus.
+Dídac commissioned the real-model checks in #54 and required maintainable code,
+meaningful tests and a reviewable PR. Codex proposed the detailed metrics and
+numeric limits within that scope. Sindri and Pau reviewed and approved the
+original protocol and implementation in PR #57.
 
 ## Assessment of the AI Contribution
 

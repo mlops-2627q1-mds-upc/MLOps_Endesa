@@ -8,8 +8,9 @@
 
 ## Decision
 
-Create [issue #46](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/46)
-to verify the downloaded archive against its documented SHA-256 and require the
+Dídac accepted the bounded ingestion change in
+[issue #46](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/46):
+verify the downloaded archive against its documented SHA-256 and require the
 expected series IDs before writing raw Parquet files. Keep the current source
 values, float32 storage, state mapping, and positional indexes. The implementation
 and offline checks are available in

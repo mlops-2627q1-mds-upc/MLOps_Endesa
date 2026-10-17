@@ -3,7 +3,7 @@
 - **Date:** 2026-10-10.
 - **Milestone:** M1 - Inception; related to M2 - Reproducibility.
 - **Activity / Topic:** Dataset-card completion for #6.
-- **Decision Participants:** Dídac Cayuela authorized the investigation and card update; Pau Adal reviewed and accepted the documented limits.
+- **Decision Participants:** Dídac Cayuela (source investigation and card requirements); Pau Adal (interpretation and evidence review).
 - **Status:** Accepted by Pau in the 2026-10-10 review; merged in PR #40 on 2026-10-11.
 
 ## Decision
@@ -38,17 +38,17 @@ earlier EDA and source evidence are credited separately.
 
 ## Response to AI
 
-Dídac authorized resolving or explicitly documenting the unit/clock limitations,
-adding the current DVC version and obtaining review. This authorizes the work;
-it is not approval of the drafted interpretation or evidence of team consensus.
+Dídac required the card update to resolve the unit/clock questions where evidence
+allowed, document the remaining limitations, identify the current DVC version
+and obtain teammate review. Codex investigated the source and drafted the
+interpretation; Pau accepted the documented limits in PR #40.
 
 ## Assessment of the AI Contribution
 
 In his [2026-10-10 review of `e86fac2`](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/40#pullrequestreview-5481087502),
 Pau accepted the source-scale and positional-only interpretation with its stated
 limits, and confirmed that row counts, split boundaries and the 22 TAS negatives
-match the project. A separate owner assessment of the AI contribution has not
-been recorded. This acceptance does not verify the archive's physical unit or
+match the project. This acceptance does not verify the archive's physical unit or
 resolve the interval-start/end mapping.
 
 ## Other Evidence
