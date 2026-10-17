@@ -4,7 +4,7 @@
 - **Milestone:** M3 - Quality assurance.
 - **Activity / Topic:** Implementation of issue #36 (data validation before training).
 - **Decision Participants:** Pau Adal implemented the stage. Dídac Cayuela reviewed the PR.
-- **Status:** Proposed; PR #37 peer review pending.
+- **Status:** Sindri approved final revision `9e9b230`; PR #37 merged on 2026-10-14.
 
 ## Decision
 
@@ -68,7 +68,8 @@ negatives against the full raw series rather than only the training block, and t
 The structural approach and the four Python check functions were sound. The initial
 implementation missed edge cases that only became apparent when the reviewer tested
 with synthetic corrupted data. The iterative review process caught them. The
-owner's assessment of the final implementation is pending PR approval.
+final revision was approved by Sindri and merged in PR #37 on 2026-10-14. A separate
+assessment of the AI contribution by the owner has not been recorded.
 
 ## Other Evidence
 

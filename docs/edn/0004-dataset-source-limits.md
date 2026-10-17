@@ -3,15 +3,15 @@
 - **Date:** 2026-10-10.
 - **Milestone:** M1 - Inception; related to M2 - Reproducibility.
 - **Activity / Topic:** Dataset-card completion for #6.
-- **Decision Participants:** Dídac Cayuela authorized the investigation and card update. Peer acceptance is pending.
-- **Status:** Proposed for teammate review.
+- **Decision Participants:** Dídac Cayuela authorized the investigation and card update; Pau Adal reviewed and accepted the documented limits.
+- **Status:** Accepted by Pau in the 2026-10-10 review; merged in PR #40 on 2026-10-11.
 
 ## Decision
 
 Retain the current DVC artifacts and the positional evaluation protocol agreed in
 #5 and implemented in #17. Report targets and MAE in stored source scale. Document
 MW as supported by the pinned extraction package, with the archive's unit and
-civil-clock limits explicit. A reviewer must accept these limits before #6 closes.
+civil-clock limits explicit. Pau accepted these limits in PR #40; #6 closed after merge.
 Do not rescale values, change precision, or add civil timestamps in this update.
 
 ## Rationale
@@ -44,8 +44,12 @@ it is not approval of the drafted interpretation or evidence of team consensus.
 
 ## Assessment of the AI Contribution
 
-The owner has not yet assessed this draft. Teammate assessment and explicit
-acceptance of source-scale, positional-only use remain pending.
+In his [2026-10-10 review of `e86fac2`](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/40#pullrequestreview-5481087502),
+Pau accepted the source-scale and positional-only interpretation with its stated
+limits, and confirmed that row counts, split boundaries and the 22 TAS negatives
+match the project. A separate owner assessment of the AI contribution has not
+been recorded. This acceptance does not verify the archive's physical unit or
+resolve the interval-start/end mapping.
 
 ## Other Evidence
 

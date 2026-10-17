@@ -4,7 +4,7 @@
 - **Milestone:** M3 - Energy efficiency awareness.
 - **Activity / Topic:** CodeCarbon measurement for #39.
 - **Decision Participants:** Sindri Másson.
-- **Status:** Proposed; team review of the GPU measurement and PR review pending.
+- **Status:** Measurement implementation reviewed by Dídac and merged in PR #41 on 2026-10-11.
 
 ## Decision
 
@@ -51,7 +51,8 @@ recommended the separate sampler, which Sindri accepted.
 Sindri committed the sampler after a 10 s check under full load, which read 497
 samples without loss and gave 3.03 × 10⁻⁴ kWh at a mean of 109 W.
 The measured comparison is recorded in [Experiment 002](../experiments/002-energy-measurement.md);
-teammates' review of the GPU measurement is pending.
+Dídac reviewed the NVML integration and error handling, approved PR #41, and
+the implementation merged on 2026-10-11.
 
 ## Other Evidence
 
