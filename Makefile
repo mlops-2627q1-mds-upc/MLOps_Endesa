@@ -31,6 +31,7 @@ clean:
 lint:
 	uv run ruff format --check
 	uv run ruff check
+	uv run ruff check --isolated --select E4,E7,E9,F notebooks/1.0-pp-demand-eda.ipynb
 	uv run pylint src tests
 
 ## Format source code with ruff
