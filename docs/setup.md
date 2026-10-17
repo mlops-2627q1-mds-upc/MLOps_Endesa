@@ -34,13 +34,25 @@ Other useful commands:
 Commit `pyproject.toml` and `uv.lock` together whenever dependencies change.
 `make` targets (`make test`, `make lint`) are available on systems with GNU Make.
 
-## Static analysis with Pylint
+## Static analysis with Ruff and Pylint
 
 `make lint` runs Ruff first and then Pylint. Both tools are complementary:
 Ruff is a fast linter and formatter (style, import order, common errors),
 while Pylint does deeper static analysis (docstrings, unused arguments, design
 smells such as too many locals or arguments, duplicated code) and gives a global
 score out of 10. Tracked in [issue #34](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/34).
+
+`make lint` also runs a focused Ruff check on the demand EDA notebook:
+
+```sh
+uv run ruff check --isolated --select E4,E7,E9,F notebooks/1.0-pp-demand-eda.ipynb
+```
+
+`--isolated` keeps this check independent of the Python-only Ruff configuration.
+The selected rules check syntax/import errors, undefined names and ambiguous
+identifiers. The command checks source without formatting or executing cells;
+it needs no datasets or model weights. The existing CI lint job runs it through
+`make lint`.
 
 The configuration lives in `pyproject.toml` under `[tool.pylint.*]`:
 
