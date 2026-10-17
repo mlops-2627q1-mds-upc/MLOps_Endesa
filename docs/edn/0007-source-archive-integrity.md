@@ -4,7 +4,7 @@
 - **Milestone:** M3 - Quality assurance; related to M2 reproducibility.
 - **Activity / Topic:** Source integrity and ingestion validation.
 - **Decision Participants:** Dídac Cayuela (decision owner); Sindri Másson (planning-record review); Pablo Pérez Cano (rationale and documentation review).
-- **Status:** Accepted for planning by Dídac; Sindri approved the original record at `2d3bf00`; implementation validated locally on 2026-10-16; updated PR #51 review and merge pending.
+- **Status:** Decision record approved in PR #47 and implementation in PR #51; the combined conflict resolution awaits current-version review.
 
 ## Decision
 
@@ -61,3 +61,5 @@ execution was needed for these checks.
 - [Sindri's approval of the planning record](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/47).
 
 - [Offline ingestion cases](../../tests/test_dataset.py).
+
+On 2026-10-17, Pablo Pérez Cano approved `92a56f4` in [PR #47](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/47).

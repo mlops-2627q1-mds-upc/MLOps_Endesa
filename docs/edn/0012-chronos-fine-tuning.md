@@ -23,13 +23,13 @@ scoring about 16 runs on the CPU would have taken 8 to 9 hours. Scoring the cont
 the GPU as well keeps every option under the same conditions; its difference from the
 untuned CPU result on the same machine (0.0015 in mean MASE) is reported. A batch of 32
 does not fit the RTX 4060's 8 GB, so it is trained as two accumulated micro-batches of
-16, which gives the same update.
+16, which gives an effective batch size of 32.
 
 Option 1 scored lowest on validation (mean MASE 0.570 over three seeds, against 0.874
-for the control). Seed 8 is its best validation run; the test score of a model chosen on
-validation is not biased by that choice. The decision rule requires a test margin larger
-than option 1's validation seed spread (0.0091), so that a difference the seed alone could
-produce is not reported as an improvement.
+for the control). Seed 8 is its best validation run. Both choices were fixed using
+validation, before evaluating test targets.
+The decision rule requires a test margin larger than option 1's observed validation
+seed spread (0.0091). This is an engineering margin, not a confidence bound.
 
 ## AI Involvement
 
@@ -38,8 +38,10 @@ Claude Code (Anthropic) implemented the training, the round and the evaluator's
 checkpoint, device and test-block options, with their tests. It diagnosed the 8 GB
 limit and the cached GPU memory that slowed the round's evaluations and drafted
 Experiment 004 and this entry.
-On 2026-10-17, Codex assisted with integrating the branch and correcting checkpoint
-lineage with hash-validated metadata and tests; teammate review of that repair is pending.
+On 2026-10-17, Codex integrated the branches, repaired checkpoint lineage and DVC
+discovery, and extended the existing behaviour runners to local checkpoints, with
+regression tests. Dídac requested the submission fixes; teammate assessment of
+these new changes is pending.
 
 ## Response to AI
 

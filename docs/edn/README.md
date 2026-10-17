@@ -5,19 +5,18 @@ part, and how AI contributed where applicable.
 
 | Entry | Date | Milestone | Status |
 | --- | --- | --- | --- |
-| [EDN-001: Task planning and review](0001-team-workflow.md) | 2026-09-22 | M1; related to M2 and M5 | Accepted by all team members; documentation PR review pending |
-| [EDN-002: Explicit MLflow run records](0002-mlflow-tracking.md) | 2026-10-02 | M2 | Tracking implementation approved by Pablo and merged in PR #26 |
-| [EDN-003: Bounded validation comparison](0003-validation-comparison.md) | 2026-10-05 | M2 | Sindri's assessment recorded; Windows corrections implemented; current-head peer review pending |
-| [EDN-004: Dataset source limits](0004-dataset-source-limits.md) | 2026-10-10 | M1; related to M2 | Source-scale, positional-only use proposed for teammate review |
-| [EDN-005: Energy measurement of the forecast step](0005-energy-measurement.md) | 2026-10-11 | M3 | Proposed; team review of the GPU measurement and PR review pending |
-| [EDN-006: Required CI checks](0006-required-ci-checks.md) | 2026-10-11 | M5 | Implemented; Pablo verified configuration; documentation corrections await review |
-| [EDN-007: Source archive integrity](0007-source-archive-integrity.md) | 2026-10-11 | M3; related to M2 | Planning record approved by Sindri; 16 offline implementation cases passed; PR #51 review pending |
-| [EDN-008: Data validation as DVC stages with Great Expectations](0008-data-validation-design.md) | 2026-10-13 | M3 | Proposed; PR #37 peer review pending |
-| [EDN-009: Known continuations and declared model-test limits](0009-minimum-functionality.md) | 2026-10-14 | M3 | Original protocol and implementation approved by Sindri and Pau; scope clarification awaits review |
-| [EDN-011: Directional expectations for sustained demand changes](0011-directional-expectations.md) | 2026-10-14 | M3 | Pau reviewed rules and tests; numbering corrections await re-review |
-| [EDN-010: Paired scale and perturbation checks](0010-forecast-invariance.md) | 2026-10-14 | M3 | Pau reviewed design and tests; numbering corrections await re-review |
-
-| [EDN-012: Bounded Chronos fine-tuning and its selection](0012-chronos-fine-tuning.md) | 2026-10-12 | M2 | Validation results and test path reviewed by Pablo; test run meets the decision rule; PR review pending |
+| [EDN-001: Task planning and review](0001-team-workflow.md) | 2026-09-22 | M1 | Working agreement reviewed and merged in PR #4 |
+| [EDN-002: Explicit MLflow run records](0002-mlflow-tracking.md) | 2026-10-02 | M2 | Implementation reviewed by Pablo and merged in PR #26 |
+| [EDN-003: Bounded validation comparison](0003-validation-comparison.md) | 2026-10-05 | M2 | Windows corrections reviewed; PR #28 merged |
+| [EDN-004: Dataset source limits](0004-dataset-source-limits.md) | 2026-10-10 | M1/M2 | Source-scale and positional limits accepted in PR #40 |
+| [EDN-005: Forecast energy measurement](0005-energy-measurement.md) | 2026-10-11 | M3 | Implementation reviewed and merged in PR #41 |
+| [EDN-006: Required CI checks](0006-required-ci-checks.md) | 2026-10-11 | M5 | Controls verified; documentation merged in PR #43 on 2026-10-17 |
+| [EDN-007: Source archive integrity](0007-source-archive-integrity.md) | 2026-10-11 | M3/M2 | Decision and implementation reviewed in PRs #47/#51; combined conflict resolution awaits review |
+| [EDN-008: Data validation](0008-data-validation-design.md) | 2026-10-13 | M3 | GX implementation reviewed and merged in PR #37 |
+| [EDN-009: Minimum functionality](0009-minimum-functionality.md) | 2026-10-14 | M3 | Base-model cases reviewed in PR #57; local-checkpoint extension under review |
+| [EDN-010: Forecast invariance](0010-forecast-invariance.md) | 2026-10-14 | M3 | Base-model cases reviewed in PR #59; local-checkpoint extension under review |
+| [EDN-011: Directional expectations](0011-directional-expectations.md) | 2026-10-14 | M3 | Base-model cases reviewed in PR #58; local-checkpoint extension under review |
+| [EDN-012: Bounded fine-tuning](0012-chronos-fine-tuning.md) | 2026-10-12 | M2/M3 | Experiment recorded; integration and provenance repair await current-version peer review |
 
 ## Adding an entry
 

@@ -4,7 +4,7 @@
 - **Milestone:** M3 - Quality assurance.
 - **Activity / Topic:** Controlled model expectations for #56.
 - **Decision Participants:** Dídac Cayuela (task scope and implementation request); Pau Adal (protocol and implementation review).
-- **Status:** Pau reviewed the rules and tests at `f2be1eb` on 2026-10-15; numbering corrections await re-review.
+- **Status:** Base-checkpoint protocol and implementation approved in PR #58; local-checkpoint extension awaits current-version review.
 
 ## Decision
 
@@ -54,3 +54,5 @@ does not add an independent real-model run.
 - [Complete real-checkpoint report](../evidence/issue-56-directional-expectations.json).
 - [Directional runner](../../src/modeling/directional.py) and
   [tests](../../tests/test_directional.py).
+
+On 2026-10-17, Pau Adal approved `43d6851` in [PR #58](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/58).

@@ -4,7 +4,7 @@
 - **Milestone:** M3 - Quality assurance.
 - **Activity / Topic:** Minimum functionality tests for issue #54.
 - **Decision Participants:** Dídac Cayuela (task owner); Sindri Másson and Pau Adal (protocol and implementation review).
-- **Status:** Protocol and implementation approved by Sindri and Pau at `a970d0f` on 2026-10-15; scope clarification awaits review.
+- **Status:** Base-checkpoint protocol and implementation approved in PR #57; local-checkpoint extension awaits current-version review.
 
 ## Decision
 
@@ -61,3 +61,5 @@ functionality checks, with the declared limits unchanged.
 - [Initial real-model results](../experiments/005-minimum-functionality.md) and [complete report](../evidence/issue-54-minimum-functionality.json).
 - [Declared cases and bounded runner](../../src/modeling/minimum_functionality.py).
 - [Real-model tests](../../tests/test_minimum_functionality_model.py) and [fast harness tests](../../tests/test_minimum_functionality.py).
+
+On 2026-10-17, Pau Adal approved `32bdbe1` in [PR #57](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/57).

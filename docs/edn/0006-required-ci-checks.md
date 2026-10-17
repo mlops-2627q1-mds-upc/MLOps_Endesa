@@ -3,7 +3,7 @@
 - **Date:** 2026-10-11
 - **Milestone:** M5 - Model packaging
 - **Decision Participants:** Dídac Cayuela (task owner; authorized implementation); Pablo Pérez Cano (configuration and documentation review on 2026-10-16).
-- **Status:** Implemented in GitHub; Pablo verified the live configuration on 2026-10-16 and requested documentation corrections; updated PR review and merge pending.
+- **Status:** Required checks verified by Pablo; documentation approved and merged in PR #43 on 2026-10-17.
 
 ## Decision
 
@@ -59,3 +59,5 @@ the AI contribution and team consensus have not been recorded.
 - [Working agreement](../../CONTRIBUTING.md#repository-enforcement) and
   [original workflow decision](0001-team-workflow.md).
 - [GitHub's strict and loose status-check semantics](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging).
+
+On 2026-10-17, Pablo Pérez Cano approved `223b469` in [PR #43](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/43).

@@ -3,7 +3,7 @@
 - **Date:** 2026-10-14.
 - **Milestone:** M3.
 - **Decision Participants:** Dídac Cayuela (decision owner); Pau Adal (protocol and implementation review).
-- **Status:** Pau reviewed the design and tests at `dc86fbb` on 2026-10-15; numbering corrections await re-review.
+- **Status:** Base-checkpoint protocol and implementation approved in PR #59; local-checkpoint extension awaits current-version review.
 
 ## Decision
 
@@ -53,3 +53,5 @@ That review does not add an independent real-model run.
 - [Case construction and comparisons](../../src/invariance.py).
 - [Runner](../../src/modeling/invariance.py) and [tests](../../tests/test_invariance.py).
 - [Experiment record](../experiments/006-forecast-invariance.md).
+
+On 2026-10-17, Pau Adal approved `c8acaa9` in [PR #59](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/59).
