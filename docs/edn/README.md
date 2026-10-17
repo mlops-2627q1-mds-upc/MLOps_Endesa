@@ -12,6 +12,7 @@ part, and how AI contributed where applicable.
 | [EDN-005: Energy measurement of the forecast step](0005-energy-measurement.md) | 2026-10-11 | M3 | Proposed; team review of the GPU measurement and PR review pending |
 | [EDN-006: Required CI checks](0006-required-ci-checks.md) | 2026-10-11 | M5 | Implemented; Pablo verified configuration; documentation corrections await review |
 | [EDN-008: Data validation as DVC stages with Great Expectations](0008-data-validation-design.md) | 2026-10-13 | M3 | Proposed; PR #37 peer review pending |
+| [EDN-009: Known continuations and declared model-test limits](0009-minimum-functionality.md) | 2026-10-14 | M3 | Original protocol and implementation approved by Sindri and Pau; scope clarification awaits review |
 
 ## Adding an entry
 
