@@ -4,7 +4,7 @@
 - **Milestone:** M3 - Quality assurance.
 - **Activity / Topic:** Implementation of issue #36 (data validation before training).
 - **Decision Participants:** Pau Adal implemented the stage. Dídac Cayuela reviewed the PR.
-- **Status:** Proposed; PR #37 peer review pending.
+- **Status:** Sindri approved final revision `9e9b230`; PR #37 merged on 2026-10-14.
 
 ## Decision
 
@@ -68,7 +68,8 @@ negatives against the full raw series rather than only the training block, and t
 The structural approach and the four Python check functions were sound. The initial
 implementation missed edge cases that only became apparent when the reviewer tested
 with synthetic corrupted data. The iterative review process caught them. The
-owner's assessment of the final implementation is pending PR approval.
+final revision was approved by Sindri and merged in PR #37 on 2026-10-14. A separate
+assessment of the AI contribution by the owner has not been recorded.
 
 ## Other Evidence
 
@@ -76,3 +77,31 @@ owner's assessment of the final implementation is pending PR approval.
 - [Issue #36](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/36) — original task and acceptance criteria.
 - [docs/data-validation.md](../data-validation.md) — what is checked and how to run it.
 - [EDA source](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/31) — Pablo's source investigation that informed the TAS and range checks.
+
+## Amendment: repeatable setup and runtime reports, 2026-10-17
+
+A forced DVC reproduction at candidate `81c5b82893ba1bb5c44409b48fe85908919a3931`
+kept all nine raw/processed Parquet hashes unchanged and passed 118 checks, but
+rewrote GX object identifiers and generated HTML timestamps. The validation rules
+had not changed. This finding is tracked in
+[issue #68](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/68).
+
+Setup now constructs candidate suites without persisting expectations during
+construction. It reuses saved resources when their rules, asset paths and
+references match, and updates changed rules. This retains GX's own identifiers
+instead of adding a separate deterministic-UUID scheme. Resource reads and tests
+for missing or altered suites prevent a cached stamp from hiding invalid setup.
+
+This amendment supersedes the original Data Docs storage choice above. Generated
+HTML and validation history belong in `gx/uncommitted/data_docs/`, outside Git;
+the suite JSON configuration and `reports/validation.json` remain versioned.
+The nine suites and validation rules are preserved. Tests cover repeated setup,
+a changed split, missing/altered resources and the runtime-output boundary.
+
+**AI involvement:** Codex diagnosed the forced-reproduction diff, identified GX's
+write-on-add behavior, implemented resource reuse and wrote the regression tests.
+**Human response:** Dídac requested preparation of the first delivery and fixes
+for remaining gaps. No teammate assessment of this repair has been recorded.
+**Assessment/status:** implementation and local checks are available for review;
+human peer review remains pending. The original Pau implementation and review
+attribution above are unchanged.

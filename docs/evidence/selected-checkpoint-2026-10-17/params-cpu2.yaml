@@ -1,0 +1,46 @@
+data:
+  states:
+  - NSW
+  - VIC
+  - QLD
+  - SA
+  - TAS
+  common_length: 230736
+split:
+  train_end: 195696
+  validation_end: 213216
+forecast:
+  context_length: 512
+  horizon: 48
+  origin_stride: 48
+evaluation:
+  model_id: amazon/chronos-t5-small
+  model_revision: a971ba21945c4f1796b17a91fe69214b5f4ad472
+  seed: 7
+  num_samples: 20
+  batch_size: 16
+  device: cpu
+  cpu_threads: 2
+  max_seconds: 3600
+fine_tuning:
+  learning_rate: 0.001
+  steps: 1000
+  batch_size: 32
+  micro_batch_size: 16
+  seed: 7
+  window_start: 0
+  checkpoint_every: 250
+  device: cuda
+  max_seconds: 1800
+  lora_rank: 0
+  lora_alpha: 8
+fine_tuning_options:
+  1-reference: {}
+  2-lower-lr:
+    learning_rate: 0.0001
+  3-fewer-steps:
+    steps: 300
+  4-recent-data:
+    window_start: 143136
+  5-lora:
+    lora_rank: 8

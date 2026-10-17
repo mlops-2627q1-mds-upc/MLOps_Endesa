@@ -2,8 +2,9 @@
 
 On 2026-10-05, all three methods completed the agreed validation comparison for
 [#12](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/12).
-The implementation and findings await peer reproduction and review in
-[PR #28](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28).
+The implementation and findings were reviewed in
+[PR #28](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28), merged
+on 2026-10-10 after Pablo's approval and Sindri's Windows re-review.
 
 ## Results
 
@@ -99,14 +100,17 @@ He reported identical mean MASE, per-state errors, worst-origin shares and row
 count. Matching the DVC data version required forcing LF checkout; the target hash
 still differed because CSV serialization used Windows CRLF. The 2026-10-08
 follow-up enforces LF checkout and target serialization, preserving the original
-LF target hash above. Sindri did not rerun Chronos; native Windows verification
-of the corrections remains pending.
+LF target hash above. Sindri's [2026-10-08 re-review at `89da830`](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28#pullrequestreview-5455692753)
+verified a fresh Windows clone with default Git settings, clean DVC status and
+tests, PowerShell data retrieval, and a lag-336 run matching the target hash,
+data version and MASE above. He approved the corrections; Chronos was not rerun.
 
 ## Limits and retained attempts
 
 Final test targets were not loaded for prediction or scoring. Holiday and day-after-holiday
-breakdowns await verified civil timestamps in
-[#6](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/6).
+breakdowns await a separately reviewed calendar mapping; the
+[dataset card](../DATASET_CARD.md#source-meaning-units-and-clock-limits)
+records the positional-only limits accepted in #6 / PR #40.
 The [upstream pretraining disclosure](../evaluation.md#interpretation-and-limitations)
 lists Australian Electricity as a zero-shot evaluation dataset; this remains
 disclosure rather than an independent audit of pretraining exposure. These

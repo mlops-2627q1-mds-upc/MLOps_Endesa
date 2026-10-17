@@ -29,10 +29,12 @@ Other useful commands:
 | `uv add --group dev <package>` | Add a development-only dependency |
 | `uv run ruff check` / `uv run ruff format` | Lint and format the code |
 | `uv run pylint src tests` | Static analysis and quality score (see below) |
+| `make coverage` / `uv run pytest --cov --cov-report=term-missing` | Test statement and branch coverage for `src/` |
 | `uv run python -m src.dataset` | Run a module inside the environment |
 
 Commit `pyproject.toml` and `uv.lock` together whenever dependencies change.
-`make` targets (`make test`, `make lint`) are available on systems with GNU Make.
+`make` targets (`make test`, `make lint`, `make coverage`) are available on systems
+with GNU Make.
 
 ## Static analysis with Ruff and Pylint
 
@@ -80,19 +82,27 @@ That is why errors are gated separately with `fail-on`.
 
 The [CI workflow](../.github/workflows/ci.yml) runs on pull requests to `main`
 and pushes to `main`. It uses Ubuntu 24.04 and Python 3.11, installs from the
-committed lockfile, then runs `make lint` and `make test` in separate jobs. Run
+committed lockfile, then runs `make lint` and `make coverage` in separate jobs. Run
 the same checks locally:
 
 ```sh
 uv sync --locked --dev
 make lint
-make test
+make coverage
 ```
 
+Coverage measures all modules under `src/`, including branches and modules that
+the default suite does not import. The test job prints the per-module report and
+publishes it in the GitHub Actions job summary. The baseline is diagnostic:
+there is no minimum coverage threshold yet. Data-dependent tests skip when DVC
+data has not been retrieved, so the CI report describes the default suite rather
+than the separate real-data validation run. Tracked in
+[issue #32](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/32).
+
 If a job fails, open its GitHub Actions log and run the failing command locally.
-The pytest suite checks package imports, checked-in directories, the presence of
-raw-data DVC metadata, and the split and forecast-origin rules on synthetic series;
-model and API tests belong with their future implementations.
+The pytest suite checks package imports, checked-in directories, raw-data DVC
+metadata, archive ingestion with offline ZIP/TSF fixtures, and the split and
+forecast-origin rules on synthetic series.
 CI does not download datasets or model weights or run training. Requiring these
 checks before merge is tracked separately in [issue #20](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/20).
 
@@ -112,30 +122,63 @@ If `uv` is not recognised after `pip install uv`, the Python `Scripts` folder is
 `PATH`; use `py -m uv sync` and `py -m uv run pytest`, or install uv with the
 [official installer](https://docs.astral.sh/uv/getting-started/installation/).
 
+## Source archive verification
+
+[EDN-007](edn/0007-source-archive-integrity.md) records the decision, review and
+implementation evidence for this safeguard.
+
+The [downloader](../src/dataset.py) verifies the ZIP's SHA-256 before opening it,
+then requires T1-T5 exactly once before writing any Parquet files. A checksum
+mismatch or missing, duplicate, or unknown ID raises an error before the output
+directory is created or existing outputs are changed. Values remain `float32`,
+with the existing state mapping and positional `timestep` index.
+
+The expected ZIP SHA-256 is
+`b1439c28a631766bd05ee327f1f430a887b9f53b38a8cd5c0769ded1fd4aaf5a`,
+matching the [dataset card](DATASET_CARD.md#dataset-structure-and-provenance).
+To download, verify, and inspect the source using an ignored scratch directory:
+
+```sh
+uv run python -m src.dataset --output-dir temporary/archive-check/raw
+```
+
+This command accesses Zenodo and writes to the specified scratch directory.
+The offline ingestion tests use synthetic ZIP/TSF fixtures, require no network or
+credentials, and check both new and existing output directories:
+
+```sh
+uv run pytest tests/test_dataset.py -q
+```
+
+The decision is recorded in [EDN-007 / PR #47](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/47);
+implementation and peer review are tracked in [#46](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/46).
+
 ## Directory layout
 
 ```text
 data/
   raw/            Original, immutable source data (DVC, issue #11)
-  interim/        Intermediate transformed data
   processed/      Train/validation/test blocks and forecast origins (DVC stage `split`)
-  external/       Third-party data
 models/           Model checkpoints and predictions (DVC / MLflow)
 notebooks/        Exploration notebooks, named like 1.0-tl-initial-eda.ipynb
-references/       Data dictionaries and explanatory material
 reports/figures/  Generated figures for the reports
 src/              Python package with the project code
   config.py       Project paths and configuration
   dataset.py      Data download and preparation
-  features.py     Feature engineering
-  modeling/       train.py (training) and predict.py (inference)
-  plots.py        Visualisation code
+  modeling/       Evaluation commands; training (#13) and later prediction (M4)
 tests/            Pytest suite
 docs/             Project documentation, cards and EDN
 pyproject.toml    Package metadata, dependencies and tool configuration
 uv.lock           Exact, locked dependency versions
 Makefile          Shortcuts for common tasks
 ```
+
+The EDA notebook creates `data/external/aus_elec/` on demand to cache pinned
+upstream AEMO files for source checks. The cache is ignored by Git and does not
+need a checked-in placeholder. `src/modeling/predict.py` is reserved for the M4
+prediction interface; it exits with an explicit error until implemented. The
+validation forecasting command is `python -m src.modeling.evaluate`, documented
+in [evaluation.md](evaluation.md).
 
 ## Adaptations from the CCDS template
 
@@ -149,3 +192,8 @@ Makefile          Shortcuts for common tasks
 | `.gitignore` excludes generated data and model files; `data/raw.dvc` tracks raw data | Checked-in placeholders retain the other layout directories. `data/raw/` is created when DVC data is pulled and is absent from a clean checkout. |
 | `.gitattributes` normalises line endings | The team works on Windows and Unix systems; avoids whole-file diffs caused by CRLF/LF |
 | Placeholder failing test replaced by smoke tests | Gives a working check from a clean checkout; real data and model tests come in M3 |
+| Removed `src/features.py` | Its example loop produced no features; the current forecasting protocol uses the demand sequence directly |
+| Removed `src/plots.py` | Its example loop produced no plot; project figures are generated in the EDA notebook |
+| Removed `data/interim/` placeholder and `INTERIM_DATA_DIR` | Splits are written directly from raw data to `data/processed/`; there is no interim artifact |
+| Removed `data/external/` placeholder and `EXTERNAL_DATA_DIR` | The notebook creates its ignored upstream cache only when needed; production modules do not use the constant |
+| Removed `references/` placeholder | Source references and data descriptions are maintained in the project documentation and notebook |

@@ -16,6 +16,12 @@ Two DVC stages handle validation:
 `reports/gx_configured.json`. `validate-data` depends on that stamp, so DVC
 always runs configure before validate.
 
+Repeating setup compares the saved suites with the current rules and retains
+equivalent resources and their identifiers. Changed parameters update the affected
+expectations; missing suites, assets, batches and validation definitions are
+recreated. Setup still reads the saved resources,
+so a stamp cannot conceal missing or malformed configuration.
+
 ## What is checked
 
 ### Great Expectations suites (9 tables)
@@ -23,7 +29,7 @@ always runs configure before validate.
 | Suite | File | Key expectations |
 |---|---|---|
 | `raw_NSW/VIC/QLD/SA/TAS` | `data/raw/<STATE>.parquet` | Row count matches dataset card; column exists; float32; no nulls; non-negative (all except TAS) |
-| `train` | `data/processed/train.parquet` | Row count; column order; no nulls; float32; values within training-block range (no leakage) |
+| `train` | `data/processed/train.parquet` | Row count; column order; no nulls; float32; values within training-block range |
 | `validation` | `data/processed/validation.parquet` | Row count; column order; no nulls; float32 |
 | `test` | `data/processed/test.parquet` | Row count; column order; no nulls; float32 |
 | `origins` | `data/processed/origins.parquet` | Row count; column order; no nulls; valid state and block values |
@@ -57,6 +63,11 @@ checks, context length, horizon, two block bounds, and two origin grids per stat
 
 The pipeline exits with code 1 and logs each failure if any check fails.
 
+The JSON summary above remains versioned evidence. GX's generated HTML pages and
+validation history are runtime output under `gx/uncommitted/data_docs/`, ignored
+by Git. Open `gx/uncommitted/data_docs/index.html` after running validation; the
+tracked suite JSON files define the rules independently of those pages.
+
 ## Running locally
 
 ```sh
@@ -76,6 +87,23 @@ uv run dvc repro validate-data
 DVC data. It is skipped automatically in CI where data is absent.
 
 `tests/test_validation_checks.py` tests the four Python check functions with
-synthetic in-memory fixtures. These always run in CI and cover the failure cases:
-infinity rejection, wrong TAS positions, index gaps, duplicate origins, and
-missing origin windows.
+small synthetic fixtures: infinity rejection, wrong TAS positions, index gaps,
+duplicate origins, and missing origin windows. It also calls the production
+`main()` with temporary Parquet files and deterministic GX results, checking the
+passing report and normal return (CLI exit 0), and the failed report, failure
+details, and `SystemExit(1)`. These tests run in ordinary CI without DVC data,
+credentials, or model downloads.
+
+```sh
+uv run --locked pytest tests/test_validation_checks.py -q
+```
+
+To verify the exit regression locally, temporarily remove `sys.exit(1)` from
+`main()` and run `test_validation_command_gx_failure_exits_1`. It must fail with
+`DID NOT RAISE`; restore the line before running the checks again.
+
+`tests/test_gx_configuration.py` checks that repeated setup preserves the saved
+configuration, a changed split updates row-count rules, missing resources are
+recreated, changed saved rules are corrected, and malformed JSON fails explicitly.
+It builds Data Docs in an isolated temporary context without loading datasets or
+contacting shared services.

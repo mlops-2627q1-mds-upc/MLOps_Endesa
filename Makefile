@@ -47,6 +47,11 @@ format:
 test:
 	uv run pytest
 
+## Run tests with source and branch coverage
+.PHONY: coverage
+coverage:
+	uv run pytest --cov --cov-report=term-missing
+
 
 ## Set up Python interpreter environment
 .PHONY: create_environment

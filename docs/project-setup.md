@@ -1,9 +1,7 @@
 # GitHub setup status
 
-Branch protection and merge settings verified through GitHub's API on
-**2026-10-11**, using `didicayu`. The Project and access notes below retain the
-initial **2026-09-22** snapshot; [issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2)
-tracks that separate setup work.
+Repository settings and Project configuration checked through GitHub's API on
+**2026-10-11**, using `didicayu`.
 The [working agreement](../CONTRIBUTING.md) explains the workflow and
 [reasons for each protection rule](../CONTRIBUTING.md#repository-enforcement).
 
@@ -19,7 +17,10 @@ The [working agreement](../CONTRIBUTING.md) explains the workflow and
 | Branch cleanup | Automatic deletion of merged branches enabled for this repository. |
 | Required CI checks | `CI / lint` and `CI / test`, both restricted to GitHub Actions (app ID `15368`). |
 | Base branch freshness | Strict checks enabled: the PR branch must be up to date with `main`. |
-| Initial labels and milestones | All 12 agreed labels and milestones M1-M6 created on 2026-09-22, without milestone due dates. |
+| Milestones | M1-M6 exist; milestone due dates are unset. |
+
+Repository and Project access evidence is maintained in
+[issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2).
 
 ## Required CI checks
 
@@ -93,7 +94,7 @@ deployment require their own evidence.
 The remote rule is effective. Issue #20 stays open until the documentation PR
 receives a teammate's review and is merged.
 
-## Initial Project snapshot (2026-09-22)
+## Project
 
 The [organization Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3)
 is natively linked to the repository. It has Backlog, Ready, In progress, In review,
@@ -102,29 +103,15 @@ through the week of 2026-12-15.
 
 | View | Configuration |
 | --- | --- |
-| Current week | Status board filtered by `iteration:@current`. |
+| Current week | Status board; currently no saved filter. |
 | Backlog | Open tasks sorted by Priority. |
 | Milestones | Table grouped by Milestone and sorted by Priority. |
 
-All six default Project workflows were removed. Issue creation, card transitions,
+No Project workflows are configured. Issue creation, card transitions,
 and completion checks are manual; PR closing keywords still close linked issues
 when merged. This avoids treating draft links or Not planned closures as Done.
 
-At initial setup, [documentation issue #1](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/1)
-was **In review**, P1, M, and linked to
-[PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4).
-[Setup issue #2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2) was
-**In progress**, P1, S, with `blocked` for the remaining access dependencies.
-Both were assigned to Week of 2026-09-22.
-
-## Initial access and review snapshot (2026-09-22)
-
-The Project was private. Repository Admin access did not grant permission to
-change Project visibility or collaborators; a Project administrator was needed to
-confirm team/lecturer access and arrange editing access for the contributors. Dídac,
-Pablo, and Sindri had repository Admin access. Invitations had been sent to Pau
-(`NIU1638529`) and Antoni (`toni646`); their access was Read until acceptance.
-Issue #2 tracks the follow-up; these historical notes are not a current access audit.
-
-The original documentation subsequently merged in
-[PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4).
+The Project is private. Repository permissions alone do not verify contributor
+editing access or lecturer viewing access to it; confirmation remains tracked
+in #2. The working agreement and EDN-001 were approved by Toni and merged in
+[PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4) on 2026-09-27.

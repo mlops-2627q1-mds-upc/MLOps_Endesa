@@ -1,8 +1,8 @@
-"""Record comparable seasonal-naive and pinned Chronos validation runs."""
+"""Record comparable seasonal-naive and Chronos runs on a held-out block."""
 
 from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 import hashlib
 import json
 import os
@@ -26,10 +26,13 @@ from src.evaluation import (
     sample_median,
     seasonal_forecast,
 )
-from src.splits import PARAMS_PATH, SplitConfig
+from src.modeling.checkpoints import describe_checkpoint
+from src.splits import HELD_OUT_BLOCKS, PARAMS_PATH, SplitConfig
 from src.tracking import tracked_run
 
 METHODS = ("seasonal_lag48", "seasonal_lag336", "chronos")
+# The raw data and the split stage that produces the evaluated blocks.
+DATA_DVC_TARGETS = ("data/raw.dvc", "dvc.yaml")
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
@@ -58,9 +61,15 @@ class EvaluationConfig:
 
 
 def data_version() -> str:
-    """Require the on-disk DVC artifacts to match their committed references."""
+    """Require the on-disk DVC data to match its committed references.
+
+    Only the raw data and the split stage are checked, so a DVC-tracked model that has
+    not been pulled does not block an evaluation.
+    """
     status = json.loads(
-        subprocess.check_output(["dvc", "status", "--json"], cwd=PROJ_ROOT, text=True)
+        subprocess.check_output(
+            ["dvc", "status", "--json", *DATA_DVC_TARGETS], cwd=PROJ_ROOT, text=True
+        )
     )
     if status:
         raise ValueError("DVC inputs have changed or are missing; restore them before evaluation")
@@ -69,14 +78,41 @@ def data_version() -> str:
     return f"raw:{raw};split-lock-sha256:{split}"
 
 
+def _cuda_hardware() -> dict:
+    """Record the GPU and the CUDA build that produced GPU forecasts."""
+    try:
+        import torch  # pylint: disable=import-outside-toplevel
+    except ImportError as error:
+        raise RuntimeError(
+            "Install forecasting dependencies with uv sync --extra forecast"
+        ) from error
+
+    if not torch.cuda.is_available():
+        raise RuntimeError("CUDA is not available; install the CUDA build of PyTorch")
+    return {
+        "gpu": torch.cuda.get_device_name(0),
+        "cuda": torch.version.cuda,
+        "torch": torch.__version__,
+    }
+
+
 def chronos_forecast(
     contexts: np.ndarray,
     horizon: int,
     cfg: EvaluationConfig,
     deadline: float,
     measure: Callable[[], AbstractContextManager[None]] = nullcontext,
+    checkpoint: Path | None = None,
+    *,
+    reset_seed_per_context: bool = False,
 ) -> tuple[np.ndarray, dict[str, float]]:
-    """Forecast every context; `measure` wraps the forecast loop but not model loading."""
+    """Forecast every context; `measure` wraps the forecast loop but not model loading.
+
+    A local `checkpoint` replaces the pinned Hub model, for example a fine-tuned one.
+    Paired behaviour checks can reset sampling for each single-history context.
+    """
+    if reset_seed_per_context and cfg.batch_size != 1:
+        raise ValueError("Matched-seed comparisons require batch_size=1")
     # Optional imports keep baseline reproduction and CI free of model dependencies.
     try:
         from chronos import ChronosPipeline  # pylint: disable=import-outside-toplevel
@@ -89,12 +125,11 @@ def chronos_forecast(
     torch.set_num_threads(cfg.cpu_threads)
     torch.manual_seed(cfg.seed)
     start = time.perf_counter()
+    source = {"pretrained_model_name_or_path": str(checkpoint)}
+    if checkpoint is None:
+        source = {"pretrained_model_name_or_path": cfg.model_id, "revision": cfg.model_revision}
     pipeline = ChronosPipeline.from_pretrained(
-        cfg.model_id,
-        revision=cfg.model_revision,
-        device_map=cfg.device,
-        torch_dtype=torch.float32,
-        token=False,
+        **source, device_map=cfg.device, torch_dtype=torch.float32, token=False
     )
     pipeline.model.model.eval()
     load_seconds = time.perf_counter() - start
@@ -107,6 +142,8 @@ def chronos_forecast(
             batch = torch.as_tensor(
                 contexts[offset : offset + cfg.batch_size].copy(), dtype=torch.float32
             )
+            if reset_seed_per_context:
+                torch.manual_seed(cfg.seed)
             samples = (
                 pipeline.predict(
                     batch,
@@ -138,18 +175,36 @@ def evaluate(
     output_dir: Path = REPORTS_DIR / "evaluation",
     method: str = "all",
     tracking_uri: str | None = None,
+    checkpoint: Path | None = None,
+    device: str | None = None,
+    block: str = "validation",
 ) -> dict:
-    """Evaluate the full validation block and give each invocation its own output directory."""
+    """Evaluate a full held-out block and give each invocation its own output directory.
+
+    `checkpoint` scores a local Chronos checkpoint instead of the pinned Hub model, and
+    `device` overrides the configured device for this invocation only. The test block is
+    for the final comparison only; select models on validation.
+    """
     if method not in (*METHODS, "all"):
         raise ValueError(f"Unknown method {method!r}; choose all or one of {METHODS}")
+    if block not in HELD_OUT_BLOCKS:
+        raise ValueError(f"Choose a held-out block: {HELD_OUT_BLOCKS}")
+    if checkpoint is not None and method != "chronos":
+        raise ValueError("A checkpoint is scored with method chronos only")
     if processed_dir.resolve() != (PROJ_ROOT / "data/processed").resolve():
         raise ValueError("Use this checkout's DVC-tracked data/processed directory")
     cfg = SplitConfig.from_params(params_path)
     settings = EvaluationConfig.from_params(params_path)
+    if device is not None:
+        settings = replace(settings, device=device)
+    checkpoint_record = None
+    if checkpoint is not None:
+        checkpoint = checkpoint.resolve()
+        checkpoint_record = describe_checkpoint(checkpoint)
     if cfg.context_length < max(BASELINE_LAGS):
         raise ValueError("The agreed seasonal baselines need at least 336 context observations")
     version = data_version()
-    data = ValidationData.load(processed_dir, cfg)
+    data = ValidationData.load(processed_dir, cfg, block)
     group_id = uuid4().hex
     directory = output_dir / group_id
     directory.mkdir(parents=True, exist_ok=False)
@@ -162,7 +217,7 @@ def evaluate(
     ).hexdigest()
     common = {
         "evaluation_group": group_id,
-        "block": "validation",
+        "block": block,
         "protocol": params,
         "mase_lag": MASE_LAG,
         "point_statistic": "median",
@@ -174,7 +229,9 @@ def evaluate(
             "platform": platform.platform(),
             "machine": platform.machine(),
             "logical_cpus": os.cpu_count(),
+            **(_cuda_hardware() if settings.device == "cuda" else {}),
         },
+        "checkpoint": checkpoint_record,
         "holiday_stratification": "unavailable: civil timestamps remain unverified in #6",
     }
     results = {}
@@ -183,6 +240,8 @@ def evaluate(
     for name in methods:
         lag = None if name == "chronos" else int(name.removeprefix("seasonal_lag"))
         revision = settings.model_revision if lag is None else f"seasonal-naive-v1:lag-{lag}"
+        if checkpoint_record is not None:
+            revision = f"local-sha256:{checkpoint_record['sha256']}"
         config = {
             **common,
             "method": name,
@@ -192,7 +251,7 @@ def evaluate(
         output = directory / name
         output.mkdir()
         with tracked_run(
-            name=f"validation-{name}",
+            name=f"{block}-{name}" + ("-checkpoint" if checkpoint_record else ""),
             config=config,
             data_version=version,
             model_revision=revision,
@@ -200,7 +259,12 @@ def evaluate(
         ) as run:
             if lag is None:
                 predictions, timing = chronos_forecast(
-                    data.contexts, cfg.horizon, settings, deadline, measure=run.measure_energy
+                    data.contexts,
+                    cfg.horizon,
+                    settings,
+                    deadline,
+                    measure=run.measure_energy,
+                    checkpoint=checkpoint,
                 )
             else:
                 with run.measure_energy():
@@ -230,17 +294,19 @@ def evaluate(
         results[name] = {"run_id": run.run_id, "metrics": metrics}
         logger.info(f"{name}: mean MASE={metrics['mean.mase']:.6f}; run={run.run_id}")
     baselines = [name for name in results if name != "chronos"]
+    # The primary baseline is chosen on validation only, never on test scores.
     primary = (
         min(baselines, key=lambda name: (results[name]["metrics"]["mean.mase"], name))
-        if len(baselines) == len(BASELINE_LAGS)
+        if len(baselines) == len(BASELINE_LAGS) and block == "validation"
         else None
     )
     comparison = {
         "evaluation_group": group_id,
-        "block": "validation",
+        "block": block,
         "data_version": version,
         "targets_sha256": target_hash,
         "settings": asdict(settings),
+        "checkpoint": checkpoint_record,
         "primary_baseline_on_validation": primary,
         "results": results,
         "holiday_stratification": common["holiday_stratification"],
@@ -259,14 +325,24 @@ def main(
     processed_dir: Path = PROCESSED_DATA_DIR,
     output_dir: Path = REPORTS_DIR / "evaluation",
     tracking_uri: str | None = None,
+    checkpoint: Path | None = None,
+    device: str | None = None,
+    block: str = "validation",
 ) -> None:
-    """Evaluate all validation origins; all creates two baseline runs and one Chronos run."""
+    """Evaluate all origins of a held-out block; all creates two baseline runs and one Chronos run.
+
+    Use --method chronos --checkpoint <directory> to score a local checkpoint, --device
+    cuda to forecast on the GPU, and --block test only for the final comparison.
+    """
     result = evaluate(
         method=method,
         params_path=params_path,
         processed_dir=processed_dir,
         output_dir=output_dir,
         tracking_uri=tracking_uri,
+        checkpoint=checkpoint,
+        device=device,
+        block=block,
     )
     typer.echo(json.dumps(result, indent=2, allow_nan=False))
 

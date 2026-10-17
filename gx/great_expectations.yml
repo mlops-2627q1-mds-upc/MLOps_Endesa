@@ -78,7 +78,7 @@ data_docs_sites:
       class_name: DefaultSiteIndexBuilder
     store_backend:
       class_name: TupleFilesystemStoreBackend
-      base_directory: data_docs
+      base_directory: uncommitted/data_docs
 fluent_datasources:
   pandas:
     type: pandas

@@ -3,8 +3,8 @@
 - **Date:** 2026-10-05.
 - **Milestone:** M2 - Reproducibility.
 - **Activity / Topic:** Real experiment records for #12.
-- **Decision Participants:** Dídac Cayuela.
-- **Status:** Sindri's assessment recorded; Windows corrections implemented; current-head peer review pending.
+- **Decision Participants:** Dídac Cayuela (task owner and review of the split implementation); Sindri Másson (reproduction and interpretation review); Pablo Pérez Cano (implementation review).
+- **Status:** Windows corrections verified by Sindri; Pablo and Sindri approved `89da830`; merged in PR #28 on 2026-10-10.
 
 ## Decision
 
@@ -35,10 +35,11 @@ corrections, added regression checks and updated the reproduction documentation.
 
 ## Response to AI
 
-Accepted to proceed with #12 after Dídac reported his approval of #17. This is
-authorization for the task. The CPU/batch/budget choices are the agent's initial
-implementation choices, not a separately recorded team agreement.
-Dídac authorized addressing Sindri's Windows findings on 2026-10-08.
+Accepted with modifications. Dídac reviewed and approved the split work in #17
+before directing the validation comparison to proceed under #12. The split,
+horizon and metrics came from the existing team protocol; Codex selected the
+initial CPU, batch and execution-budget settings. Dídac then requested the
+corrections to Sindri's Windows findings on 2026-10-08.
 
 ## Assessment of the AI Contribution
 
@@ -54,9 +55,13 @@ He agreed with the scoped validation interpretation: untuned Chronos scored belo
 both seasonal baselines. He did not rerun Chronos and retained the single-seed,
 validation-only and upstream pretraining-disclosure limitations.
 
-The 2026-10-08 corrections enforce LF checkout and CSV hashing. Regression checks
-simulate Windows settings; a native Windows recheck of this revision and
-current-head peer approval remain pending.
+The 2026-10-08 corrections enforce LF checkout and CSV hashing. In his
+[native Windows re-review of `89da830`](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/28#pullrequestreview-5455692753),
+Sindri verified default Git checkout, DVC status, tests, PowerShell retrieval,
+and matching lag-336 target hash, data version and MASE. He approved the fixes;
+Pablo also approved that revision. PR #28 merged as `d623220` on 2026-10-10,
+and [CI on the merged source](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/actions/runs/38055732311)
+passed. Chronos was not independently rerun in the Windows review.
 
 ## Other Evidence
 

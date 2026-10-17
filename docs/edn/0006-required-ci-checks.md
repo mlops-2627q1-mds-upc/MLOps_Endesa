@@ -2,8 +2,8 @@
 
 - **Date:** 2026-10-11
 - **Milestone:** M5 - Model packaging
-- **Decision Participants:** Dídac Cayuela (task owner; authorized implementation); Pablo Pérez Cano (configuration and documentation review on 2026-10-16).
-- **Status:** Implemented in GitHub; Pablo verified the live configuration on 2026-10-16 and requested documentation corrections; updated PR review and merge pending.
+- **Decision Participants:** Dídac Cayuela (task owner for required CI checks); Pablo Pérez Cano (configuration and documentation review on 2026-10-16).
+- **Status:** Required checks verified by Pablo; documentation approved and merged in PR #43 on 2026-10-17.
 
 ## Decision
 
@@ -38,10 +38,12 @@ and recovery on a temporary organization PR; and drafted the evidence and PR.
 
 ## Response to AI
 
-Dídac authorized implementation of [#20](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/20)
-and a review-ready PR. Pablo subsequently verified the configured rule and
-requested documentation corrections. No separate team agreement on the strict
-gate or a 2026-10-13 meeting has been recorded in this entry.
+Dídac directed [#20](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/20)
+to require the proven CI jobs, verify failure and recovery, and preserve the
+existing peer-review rules. The task waited for the repaired `main` checks to
+pass before enforcement. Codex proposed the strict up-to-date option and
+implemented the gate; Pablo checked the resulting configuration and requested
+documentation corrections.
 
 ## Assessment of the AI Contribution
 
@@ -49,13 +51,15 @@ In his [2026-10-16 review comment](https://github.com/mlops-2627q1-mds-upc/MLOps
 Pablo described the failure/recovery verification as thorough and independently
 confirmed the required check source, strict mode, peer approval and administrator
 enforcement. He requested clearer gate scope and participant records before
-approval. This is the recorded peer assessment; Dídac's separate assessment of
-the AI contribution and team consensus have not been recorded.
+approval. That review provides the recorded assessment of the configured gate.
 
 ## Other Evidence
 
+- [Issue #20: enforcement scope and readiness check](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/20#issuecomment-6013452979).
 - [Verified configuration and failure/recovery results](../project-setup.md#required-ci-checks).
 - [Temporary verification PR #42](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/42).
 - [Working agreement](../../CONTRIBUTING.md#repository-enforcement) and
   [original workflow decision](0001-team-workflow.md).
 - [GitHub's strict and loose status-check semantics](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging).
+
+On 2026-10-17, Pablo Pérez Cano approved `223b469` in [PR #43](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/43).

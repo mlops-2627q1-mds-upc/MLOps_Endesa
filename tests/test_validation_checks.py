@@ -1,15 +1,18 @@
 """Regression tests for the custom validation checks in src/validate_data.py.
 
-These tests use synthetic in-memory fixtures and do not require DVC data or
+These tests use small synthetic fixtures and do not require DVC data or
 credentials, so they always run in CI. They cover the failure cases that GX
 cannot express directly: infinity rejection, exact TAS positions, complete block
-index sequences, and the full forecast origin grid.
+index sequences, and the full forecast origin grid, plus the command's report
+and failure exit.
 """
 
 import json
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from src.splits import SplitConfig, forecast_origins
 import src.validate_data as vd
@@ -220,13 +223,19 @@ class _FakeValidationResult:  # pylint: disable=too-few-public-methods
 
     suite_name = "raw_NSW"
 
+    def __init__(self, success=False):
+        self.success = success
+
     def __getitem__(self, key):
-        """Return statistics or results for the fake failing validation."""
+        """Return statistics or results for the fake validation."""
         data = {
-            "statistics": {"evaluated_expectations": 4, "unsuccessful_expectations": 1},
+            "statistics": {
+                "evaluated_expectations": 4,
+                "unsuccessful_expectations": int(not self.success),
+            },
             "results": [
                 {
-                    "success": False,
+                    "success": self.success,
                     "expectation_config": {
                         "type": "expect_table_row_count_to_equal",
                         "kwargs": {"value": 100},
@@ -238,12 +247,15 @@ class _FakeValidationResult:  # pylint: disable=too-few-public-methods
 
 
 class _FakeCheckpointResult:  # pylint: disable=too-few-public-methods
-    """Minimal stand-in for a GX CheckpointResult with one failing suite."""
+    """Minimal stand-in for a GX CheckpointResult with one suite."""
+
+    def __init__(self, success=False):
+        self.success = success
 
     @property
     def run_results(self):
-        """Return a single failing validation result."""
-        return {"key": _FakeValidationResult()}
+        """Return a single validation result."""
+        return {"key": _FakeValidationResult(self.success)}
 
 
 def test_collect_gx_failures_uses_suite_name():
@@ -259,48 +271,73 @@ def test_collect_gx_failures_uses_suite_name():
 
 def test_collect_gx_no_failures():
     """A passing checkpoint returns zero failures and an empty list."""
-
-    class _PassResult:  # pylint: disable=too-few-public-methods
-        """Fake passing ValidationResult."""
-
-        suite_name = "raw_VIC"
-
-        def __getitem__(self, key):
-            """Return statistics or results for the fake passing validation."""
-            return {
-                "statistics": {"evaluated_expectations": 3, "unsuccessful_expectations": 0},
-                "results": [],
-            }[key]
-
-    class _PassCheckpoint:  # pylint: disable=too-few-public-methods
-        """Fake passing CheckpointResult."""
-
-        @property
-        def run_results(self):
-            """Return a single passing validation result."""
-            return {"k": _PassResult()}
-
-    evaluated, failed, failures = _collect_gx_failures(_PassCheckpoint())
-    assert evaluated == 3
+    evaluated, failed, failures = _collect_gx_failures(_FakeCheckpointResult(success=True))
+    assert evaluated == 4
     assert failed == 0
     assert not failures
 
 
-def test_gx_failure_report_written_and_exit_1(tmp_path):
-    """Failures from _collect_gx_failures are written to the report with success=false."""
-    report_path = tmp_path / "validation.json"
-    evaluated, failed, failures = _collect_gx_failures(_FakeCheckpointResult())
-    success = failed == 0
-    report = {
-        "success": success,
-        "evaluated_expectations": evaluated,
-        "failed_expectations": failed,
-        "failures": failures,
-    }
-    report_path.write_text(json.dumps(report, indent=2))
+# ---------------------------------------------------------------------------
+# Production command
+# ---------------------------------------------------------------------------
 
-    assert success is False
-    loaded = json.loads(report_path.read_text())
-    assert loaded["success"] is False
-    assert loaded["failed_expectations"] == 1
-    assert loaded["failures"][0]["suite"] == "raw_NSW"
+
+@pytest.fixture
+def validation_command(tmp_path, monkeypatch):
+    """Provide tiny valid Parquet inputs and a deterministic GX checkpoint."""
+    raw_dir = tmp_path / "raw"
+    processed_dir = tmp_path / "processed"
+    raw_dir.mkdir()
+    processed_dir.mkdir()
+    pd.DataFrame({"NSW": np.ones(_CFG.common_length, dtype="float32")}).to_parquet(
+        raw_dir / "NSW.parquet"
+    )
+    _make_tas_df(_FAKE_TAS_POSITIONS).to_parquet(raw_dir / "TAS.parquet")
+    _write_blocks(processed_dir, _CFG)
+    _write_origins(processed_dir, _make_origins_df(_CFG))
+
+    report_path = tmp_path / "validation.json"
+    monkeypatch.setattr(vd, "RAW_DATA_DIR", raw_dir)
+    monkeypatch.setattr(vd, "PROCESSED_DATA_DIR", processed_dir)
+    monkeypatch.setattr(vd, "TAS_NEGATIVE_POSITIONS", _FAKE_TAS_POSITIONS)
+    monkeypatch.setattr(vd, "VALIDATION_REPORT", report_path)
+    monkeypatch.setattr(vd.SplitConfig, "from_params", lambda: _CFG)
+    get_context = Mock()
+    monkeypatch.setattr(vd.gx, "get_context", get_context)
+    checkpoint = get_context.return_value.checkpoints.get.return_value
+    return checkpoint, report_path
+
+
+def test_validation_command_passes(validation_command):
+    """A passing command returns normally (CLI exit 0) and writes its report."""
+    checkpoint, report_path = validation_command
+    checkpoint.run.return_value = _FakeCheckpointResult(success=True)
+
+    assert vd.main() is None
+
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["success"] is True
+    assert report["evaluated_expectations"] > 0
+    assert report["failed_expectations"] == 0
+    assert report["failures"] == []
+
+
+def test_validation_command_gx_failure_exits_1(validation_command):
+    """A failed GX expectation writes its details before exiting with code 1."""
+    checkpoint, report_path = validation_command
+    checkpoint.run.return_value = _FakeCheckpointResult()
+
+    with pytest.raises(SystemExit) as exc_info:
+        vd.main()
+
+    assert exc_info.value.code == 1
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["success"] is False
+    assert report["failed_expectations"] == 1
+    assert report["failures"] == [
+        {
+            "suite": "raw_NSW",
+            "expectation": "expect_table_row_count_to_equal",
+            "column": "table-level",
+        }
+    ]

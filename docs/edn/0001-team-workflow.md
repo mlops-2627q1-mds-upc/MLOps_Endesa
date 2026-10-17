@@ -3,7 +3,7 @@
 - **Date:** 2026-09-22
 - **Milestone:** M1 - Project Inception; related to M2 and M5
 - **Decision Participants:** All team members
-- **Status:** Accepted by all five team members; documentation PR review pending in [PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4)
+- **Status:** Accepted by all five team members; documentation approved by Toni and merged on 2026-09-27 in [PR #4](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/4).
 
 ## Decision
 
@@ -37,7 +37,8 @@ The [enforcement settings](../../CONTRIBUTING.md#repository-enforcement) put thi
 review policy into practice. Protection covers administrators, and new reviewable
 commits invalidate earlier approvals. Project transitions remain manual so draft
 PRs and Not planned closures cannot automatically count as completed work.
-Required CI checks will follow working CI jobs.
+Required CI checks and their verification are tracked in
+[#20](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/20).
 
 ## AI Involvement
 

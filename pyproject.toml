@@ -41,21 +41,32 @@ requires-python = "~=3.11.0"
 [project.optional-dependencies]
 forecast = [
     "chronos-forecasting>=2.3.2,<3",
+    "peft>=0.21.2,<1",
     "torch>=2.2,<3",
 ]
 
 [tool.uv.sources]
-torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+# Linux (CI) stays on CPU builds; Windows gets CUDA builds for GPU fine-tuning (#13).
+torch = [
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
+    { index = "pytorch-cu130", marker = "sys_platform == 'win32'" },
+]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
 [dependency-groups]
 dev = [
     "pylint>=4.1.2",
     "pytest",
+    "pytest-cov>=7.1.0",
     "ruff",
 ]
 
@@ -74,6 +85,14 @@ force-sort-within-sections = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["model: opt-in tests that load and run a real forecasting checkpoint"]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
 
 [tool.pylint.main]
 # Quality gate: CI fails if the global score drops below this value.

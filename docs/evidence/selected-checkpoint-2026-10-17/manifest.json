@@ -1,0 +1,18 @@
+{
+  "source_commit": "81c5b82893ba1bb5c44409b48fe85908919a3931",
+  "tracked_and_untracked_status": "",
+  "checkpoint_path": "/Users/dcayuela/orca/workspaces/MLOps_Endesa/submission-integration-15/models/chronos-t5-small-fine-tuned",
+  "weights_sha256": "746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+  "threads": {
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "2",
+    "MKL_NUM_THREADS": "2",
+    "VECLIB_MAXIMUM_THREADS": "2",
+    "NUMEXPR_NUM_THREADS": "2"
+  },
+  "offline": {
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1"
+  },
+  "python": "/Users/dcayuela/orca/workspaces/MLOps_Endesa/submission-integration-15/.venv/bin/python"
+}

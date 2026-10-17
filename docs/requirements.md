@@ -38,7 +38,7 @@ Sources:
 The system builds, evaluates, serves, and monitors one ML component: given past
 half-hourly demand for one of five Australian states, it forecasts the next 48
 steps. The immediate users are the team and course reviewers. It is not intended
-for operational grid scheduling ([model card](MODEL_CARD.md#model-details-and-intended-use)).
+for operational grid scheduling ([model card](MODEL_CARD.md#intended-use-and-inputs)).
 
 ## Functional requirements
 
@@ -100,7 +100,7 @@ for operational grid scheduling ([model card](MODEL_CARD.md#model-details-and-in
   and lag 336, each by more than option 1's validation seed spread (0.0091).
   Otherwise serve untuned Chronos. **Outcome:** the rule is met (0.5571 against
   0.8175, 0.9885 and 0.9617, as reported in PR #53), so the fine-tuned checkpoint
-  `models/chronos-t5-small-fine-tuned` is served.
+  `models/chronos-t5-small-fine-tuned` is selected for later serving. The API is not deployed.
   *Source:* Agreed (#5) selection; promotion rule and decision Agreed (#30); Course M2/M5.
   *Verify:* DVC record of the checkpoint; the serving code loads it.
 
@@ -133,7 +133,7 @@ for operational grid scheduling ([model card](MODEL_CARD.md#model-details-and-in
 
 ### Model testing
 
-- **FR-16 Behavioural model tests.** Test the served model's behaviour on synthetic
+- **FR-16 Behavioural model tests.** Test the selected model's behaviour on synthetic
   series with limits declared before inference: minimum functionality (constant,
   zero and repeating demand), directional expectations and invariance.
   *Source:* Course M3; proposed in PRs
@@ -226,12 +226,12 @@ for operational grid scheduling ([model card](MODEL_CARD.md#model-details-and-in
   evaluation or training results are reported.
   *Source:* Course M3; implemented in #37. *Verify:* `reports/validation.json` shows
   `success: true`.
-- **NFR-15 Accuracy.** *ISO 25059: functional correctness. Scope: model.* The served
+- **NFR-15 Accuracy.** *ISO 25059: functional correctness. Scope: model.* The selected
   model has a lower test mean MASE than untuned Chronos and both seasonal baselines,
   by more than the validation seed spread (FR-10). Met by the fine-tuned checkpoint:
   0.5571, which is 31.9% below untuned Chronos and 43.6% below lag 48.
   *Source:* Agreed (#30). *Verify:* the single test evaluation (PR #53).
-- **NFR-16 Robustness.** *ISO 25059: robustness. Scope: model.* The served model is
+- **NFR-16 Robustness.** *ISO 25059: robustness. Scope: model.* The selected model is
   better than each baseline in every state, not only on average. Met on test in all
   five states. Its error is more concentrated in the worst origins than the
   control's (worst-5% share 0.183 against 0.147), which is reported, not hidden.
