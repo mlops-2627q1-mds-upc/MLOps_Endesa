@@ -44,11 +44,16 @@ always runs configure before validate.
 ```json
 {
   "success": true,
-  "evaluated_expectations": 116,
+  "evaluated_expectations": 118,
   "failed_expectations": 0,
   "failures": []
 }
 ```
+
+On the current valid data, the total is 118: 74 GX expectations and 44 Python
+checks (20 finite-value, one TAS-position, three block-index, and 20 origin-window
+checks). The origin-window count includes three integer checks, three non-negative
+checks, context length, horizon, two block bounds, and two origin grids per state.
 
 The pipeline exits with code 1 and logs each failure if any check fails.
 
