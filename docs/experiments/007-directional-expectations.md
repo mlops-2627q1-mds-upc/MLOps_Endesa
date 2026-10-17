@@ -5,7 +5,10 @@ asks whether sustained changes in recent demand move the next forecast's average
 level in the expected direction. These are controlled hypotheses for the pinned
 untuned checkpoint, not a requirement that Chronos always responds monotonically.
 [EDN-011](../edn/0011-directional-expectations.md) records the proposed acceptance
-rules. Peer review is pending.
+rules. Pau approved the original
+[PR #58](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/58) on
+2026-10-17. The combined integration and selected-checkpoint extension require
+a new peer review.
 
 ## Protocol declared before inference
 
@@ -102,7 +105,6 @@ source commit [`57236a624eed310c694c7840c5f6ce96f948f136`](https://github.com/ml
 The protocol and comparison rules were committed before inference. No cases or
 margins were changed after observing the results. The unchanged control's maximum
 absolute difference was **0.0**. No counterexamples were observed in this run.
-Teammate review of the proposed hypotheses and findings remains pending.
 
 The [complete evidence report](../evidence/issue-56-directional-expectations.json)
 retains the base history, case definitions, input hashes, all 14 median forecasts,
@@ -139,11 +141,15 @@ settings declared above.
 The real pytest reproduction command above returned **13 passed, 27 deselected**.
 The separate `make test` run returned **98 passed, 22 skipped**: nine checks need
 the absent DVC data and the 13 real-checkpoint assertions are opt-in. `make lint`
-passed Ruff and the Pylint gate at 9.50/10. These results do not substitute for the
-pending teammate review.
+passed Ruff and the Pylint gate at 9.50/10. These are the original component's
+checks, separate from the final combined checks.
 
 One pattern, one phase and one seed test a narrow persistence hypothesis. Even
 passing all cases would not establish forecast accuracy, causal demand effects,
 universal monotonicity, weather/calendar sensitivity or behavior of the fine-tuned
 checkpoint. There are no forecast targets in this experiment and no model
 selection or promotion decision.
+
+The selected-checkpoint run is recorded separately in
+[Experiment 008](008-selected-checkpoint-behaviour.md). Review of that extension
+and the combined change remains pending.

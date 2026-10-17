@@ -9,7 +9,10 @@ On 2026-10-14, all 70 paired checks passed their declared thresholds. Each pair
 compared the complete 48-step median forecasts. The
 [complete report](../evidence/issue-55-forecast-invariance.json) retains the
 140 forecasts, input-window hashes, versions, settings and every case outcome.
-No counterexamples were observed in this run. Peer review is pending.
+No counterexamples were observed in this run. Pau approved the original
+[PR #59](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/59) on
+2026-10-17. The combined integration and selected-checkpoint extension require
+a new peer review.
 
 ## Observed changes
 
@@ -94,6 +97,7 @@ run above provides the model-behaviour evidence.
 
 This is one checkpoint, seed, noise direction and window per state/block.
 It neither measures quantile robustness nor predicts behaviour after fine-tuning.
-Use the same declared protocol with an accepted checkpoint from #13 to compare
-outcomes. A teammate still needs to review the protocol, thresholds and findings
-before this evidence is treated as reviewed M3 work.
+The same declared cases and thresholds were used for the selected checkpoint in
+[Experiment 008](008-selected-checkpoint-behaviour.md), with its execution
+conditions recorded separately. Review of that extension and the combined
+change remains pending.

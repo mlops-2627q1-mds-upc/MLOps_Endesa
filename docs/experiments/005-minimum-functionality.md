@@ -2,8 +2,10 @@
 
 On 2026-10-14, all ten real-model cases passed the limits declared in
 [the protocol](../minimum-functionality.md) before inference. No limits were
-changed after seeing the results. Human review of the limits and evidence is
-pending in [issue #54](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/54).
+changed after seeing the results. Pau approved the original
+[PR #57](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/57) on
+2026-10-17. The combined integration and selected-checkpoint extension require
+a new peer review.
 
 ## Recorded conditions
 
@@ -81,6 +83,7 @@ coverage, robustness to noise or missing values, or performance after fine-tunin
 No training, final-test evaluation, DVC data access or shared MLflow write occurred.
 Bitwise equality across devices and dependency versions has not been checked.
 
-A teammate still needs to review the cases, tolerance rationale and observed
-results before merging. Keep the same limits when assessing a later accepted
-fine-tuned checkpoint; record its version and outcomes separately.
+Keep the same limits when assessing a fine-tuned checkpoint; record its version
+and outcomes separately. The selected-checkpoint run is recorded in
+[Experiment 008](008-selected-checkpoint-behaviour.md); review of that extension
+and the combined change remains pending.
