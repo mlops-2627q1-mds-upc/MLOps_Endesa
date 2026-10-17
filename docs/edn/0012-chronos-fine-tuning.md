@@ -40,8 +40,11 @@ limit and the cached GPU memory that slowed the round's evaluations and drafted
 Experiment 004 and this entry.
 On 2026-10-17, Codex integrated the branches, repaired checkpoint lineage and DVC
 discovery, and extended the existing behaviour runners to local checkpoints, with
-regression tests. Dídac requested the submission fixes; teammate assessment of
-these new changes is pending.
+regression tests. It executed the fixed selected-checkpoint checks, independently
+recalculated their recorded metrics and prepared
+[Experiment 008](../experiments/008-selected-checkpoint-behaviour.md), retaining
+the interrupted resource adjustment. Dídac requested the submission fixes;
+teammate assessment of these new changes and outcomes is pending.
 
 ## Response to AI
 
@@ -63,5 +66,6 @@ test results is pending.
 
 - [Issue #13 and Pablo's proposal and review](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/13).
 - [Experiment 004: results, costs, retained attempts and the test plan](../experiments/004-chronos-fine-tuning.md).
+- [Selected-checkpoint behaviour: actual outcomes and retained interruption](../experiments/008-selected-checkpoint-behaviour.md).
 - [Fine-tuning commands](../evaluation.md#fine-tuning).
 - Source: `src/modeling/train.py`, `src/modeling/fine_tune_round.py`, `src/modeling/evaluate.py`, `src/evaluation.py`; tests: `tests/test_train.py`, `tests/test_fine_tune_round.py`, `tests/test_evaluation.py`.

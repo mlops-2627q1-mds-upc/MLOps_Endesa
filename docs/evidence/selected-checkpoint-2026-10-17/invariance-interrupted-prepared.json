@@ -1,0 +1,225 @@
+{
+  "protocol_version": 1,
+  "started_at_utc": "2026-10-17T12:31:22.680203+00:00",
+  "status": "prepared",
+  "settings": {
+    "model_id": "amazon/chronos-t5-small",
+    "model_revision": "a971ba21945c4f1796b17a91fe69214b5f4ad472",
+    "seed": 7,
+    "num_samples": 20,
+    "batch_size": 1,
+    "device": "cpu",
+    "cpu_threads": 4,
+    "max_seconds": 300
+  },
+  "model": {
+    "source": "local",
+    "path": "/Users/dcayuela/orca/workspaces/MLOps_Endesa/submission-integration-15/models/chronos-t5-small-fine-tuned",
+    "sha256": "746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+    "training_run_id": "639eba4cc7e74de08ffab64beee715db",
+    "training_metadata": [
+      "/Users/dcayuela/orca/workspaces/MLOps_Endesa/submission-integration-15/models/chronos-t5-small-fine-tuned.provenance.json"
+    ]
+  },
+  "split_config": {
+    "states": [
+      "NSW",
+      "VIC",
+      "QLD",
+      "SA",
+      "TAS"
+    ],
+    "common_length": 230736,
+    "train_end": 195696,
+    "validation_end": 213216,
+    "context_length": 512,
+    "horizon": 48,
+    "origin_stride": 48
+  },
+  "context_length": 512,
+  "horizon": 48,
+  "sampling": {
+    "temperature": 1.0,
+    "top_k": 50,
+    "top_p": 1.0
+  },
+  "point_statistic": "median",
+  "dtype": "float32",
+  "reset_seed_before_each_history": true,
+  "noise_seed": 7,
+  "transformations": [
+    {
+      "kind": "scale",
+      "amount": 0.5,
+      "mean_tolerance": 1e-05,
+      "max_tolerance": 0.0001,
+      "name": "scale-0.5"
+    },
+    {
+      "kind": "scale",
+      "amount": 2.0,
+      "mean_tolerance": 1e-05,
+      "max_tolerance": 0.0001,
+      "name": "scale-2"
+    },
+    {
+      "kind": "scale",
+      "amount": 10.0,
+      "mean_tolerance": 1e-05,
+      "max_tolerance": 0.0001,
+      "name": "scale-10"
+    },
+    {
+      "kind": "noise",
+      "amount": 0.001,
+      "mean_tolerance": 0.05,
+      "max_tolerance": 0.15,
+      "name": "noise-0.001"
+    },
+    {
+      "kind": "noise",
+      "amount": 0.01,
+      "mean_tolerance": 0.05,
+      "max_tolerance": 0.15,
+      "name": "noise-0.01"
+    }
+  ],
+  "histories": [
+    {
+      "name": "constant",
+      "block": "synthetic",
+      "origin": null,
+      "context_start": null,
+      "mean_absolute_value": 1000.0,
+      "sha256_float32_le": "e2ba11acc7b2628d864fe27b8d9aa9f5374b9d15068015c57326a7c26623f2b9"
+    },
+    {
+      "name": "seasonal",
+      "block": "synthetic",
+      "origin": null,
+      "context_start": null,
+      "mean_absolute_value": 1004.6389875411987,
+      "sha256_float32_le": "6a7cfd7bcb3b293ee16e682ef020672808fb9e37aa592eb5b7885e49475d31ab"
+    },
+    {
+      "name": "trend",
+      "block": "synthetic",
+      "origin": null,
+      "context_start": null,
+      "mean_absolute_value": 1002.3194923400879,
+      "sha256_float32_le": "e9dc2bc32890ff680589a3bbe13a535cfee21fe52ff1c5831c8953d99ae5711a"
+    },
+    {
+      "name": "signed",
+      "block": "synthetic",
+      "origin": null,
+      "context_start": null,
+      "mean_absolute_value": 126.71067848615348,
+      "sha256_float32_le": "a934f74179daa3f762f4102c5405044bbddcbc4868748a00c27509c6f8cd8604"
+    },
+    {
+      "name": "NSW-train",
+      "block": "train",
+      "origin": 195648,
+      "context_start": 195136,
+      "mean_absolute_value": 6802.499315261841,
+      "sha256_float32_le": "1845326962d521839a66c34c63b9b9769db3619727245a430b27085c36793494"
+    },
+    {
+      "name": "VIC-train",
+      "block": "train",
+      "origin": 195648,
+      "context_start": 195136,
+      "mean_absolute_value": 5235.646543502808,
+      "sha256_float32_le": "48bce762c0d1ed8941c1a6f7b81c4d0f0adc1a7227ff13249a9ffe31e4914f34"
+    },
+    {
+      "name": "QLD-train",
+      "block": "train",
+      "origin": 195648,
+      "context_start": 195136,
+      "mean_absolute_value": 4418.731459617615,
+      "sha256_float32_le": "7679d5c8c2668a877934a05a0cf3a6e82087362079075129f65a57d54eec24b1"
+    },
+    {
+      "name": "SA-train",
+      "block": "train",
+      "origin": 195648,
+      "context_start": 195136,
+      "mean_absolute_value": 1520.713054060936,
+      "sha256_float32_le": "9eb82a2e9fae58dc47408f43e985607566b4ce27c8f2c420c6a59c6a4466282e"
+    },
+    {
+      "name": "TAS-train",
+      "block": "train",
+      "origin": 195648,
+      "context_start": 195136,
+      "mean_absolute_value": 447.55561035871506,
+      "sha256_float32_le": "98c6d7bd709d119df3c0cccf46f740de092a33b0aa0aefe250ef87731a539589"
+    },
+    {
+      "name": "NSW-validation",
+      "block": "validation",
+      "origin": 204432,
+      "context_start": 203920,
+      "mean_absolute_value": 6666.862003326416,
+      "sha256_float32_le": "f47b8d4ed7ad20e3cc7bf31a8e7d52d9d187be565db0faff12def70b619fba6b"
+    },
+    {
+      "name": "VIC-validation",
+      "block": "validation",
+      "origin": 204432,
+      "context_start": 203920,
+      "mean_absolute_value": 4902.3344893455505,
+      "sha256_float32_le": "63ea730af16406c25398374bda5fed9229719b258f56128cee3ed277ad102702"
+    },
+    {
+      "name": "QLD-validation",
+      "block": "validation",
+      "origin": 204432,
+      "context_start": 203920,
+      "mean_absolute_value": 3845.734422683716,
+      "sha256_float32_le": "fbd28cb924f213bf104951d2cc82bf0e2e45daa07c43119d3343e0ceb95aa4a0"
+    },
+    {
+      "name": "SA-validation",
+      "block": "validation",
+      "origin": 204432,
+      "context_start": 203920,
+      "mean_absolute_value": 1311.6858335733414,
+      "sha256_float32_le": "071bf57805eeb68df341f28c5f3bb3ba6d22f6d1ced00e2facb5e678dfc413e5"
+    },
+    {
+      "name": "TAS-validation",
+      "block": "validation",
+      "origin": 204432,
+      "context_start": 203920,
+      "mean_absolute_value": 567.0902517437935,
+      "sha256_float32_le": "60821ace2a71234f936e6c39ac411e5e682069b8a7c88088881809934fa39944"
+    }
+  ],
+  "versions": {
+    "git_commit": "81c5b82893ba1bb5c44409b48fe85908919a3931",
+    "git_dirty": false,
+    "file_sha256": {
+      "params.yaml": "a470aba4cedc7940052139315e4e03e5db5b26899d57d508ecfc693c6d79343c",
+      "uv.lock": "d0feb38ce5f804dcb47241715ac5f284b1a4fa8eb75f51a97092edd3e79e92b3",
+      "dvc.lock": "04a8327ace779221e98315c7aa441956dd8f385431954517356f52f6abe98e5a",
+      "data/raw.dvc": "566c008e052116dc161c1ade274e8f520a6577c5cc76058cb3e17147b45abb66"
+    },
+    "python": "3.11.15",
+    "platform": "macOS-26.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "packages": {
+      "chronos-forecasting": "2.3.2",
+      "torch": "2.14.1",
+      "numpy": "2.4.6",
+      "transformers": "5.18.0"
+    }
+  },
+  "data_inputs": {
+    "data/processed/train.parquet": "76fc8921b85ad9d35e98b9b2451c1c09",
+    "data/processed/validation.parquet": "7d3a853328e8e21438ef90a4a17fcf03"
+  },
+  "results": []
+}

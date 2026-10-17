@@ -68,9 +68,16 @@ The pinned base checkpoint passed the declared [minimum functionality](experimen
 [invariance](experiments/006-forecast-invariance.md), and
 [directional](experiments/007-directional-expectations.md) cases: 10, 70 and
 12 paired cases plus an unchanged control respectively. These results concern
-the base checkpoint. The same runners accept an explicit local checkpoint and
-record its weights hash; selected-model outcomes must be reported separately.
-A passing synthetic case does not establish behaviour on arbitrary demand.
+the base checkpoint.
+
+The selected local artifact was checked separately on 17 October 2026:
+[Experiment 008](experiments/008-selected-checkpoint-behaviour.md) records
+10/10 minimum-functionality cases, 70/70 invariance pairs and 12/12 directional
+cases plus the unchanged control passing the same declared limits. Invariance
+used two CPU threads through an ignored configuration copy, after retaining an
+interrupted four-thread attempt. Reports identify the actual weights hash;
+current-version peer review is pending. These bounded checks do not establish
+behaviour on arbitrary demand or add demand-test accuracy or energy measurements.
 
 On test, the selected model's mean worst-5%-of-origins error share is 0.183,
 against 0.147 for the control. Its remaining errors are more concentrated in
