@@ -68,6 +68,19 @@ The command prints each result and the report path under
 failed control, timeout or error. Each invocation gets a new directory. No data
 retrieval, training, MLflow upload or final-test access occurs.
 
+Use an available local checkpoint without changing the declared protocol:
+
+```sh
+uv run --locked --extra forecast python -m src.modeling.directional \
+  --checkpoint models/selected-chronos-small --max-seconds 180
+```
+
+The opt-in pytest route accepts `--model-checkpoint <directory>`. The plan's `model`
+field records the executed Hub revision or resolved local path and SHA-256 of
+`model.safetensors`, which the worker verifies before inference. `settings` retains
+the base configuration; its model fields do not identify local executed weights.
+Each run keeps its own results with the same cases, ordering, limits and sampling.
+
 The same checks are available as parameterized pytest cases. Their session fixture
 runs the real checkpoint once and shares its report across all 13 assertions:
 
@@ -78,9 +91,9 @@ uv run --extra forecast pytest tests/test_directional.py --run-directional -k re
 Ordinary `make test` skips these 13 checks. It validates case construction, the
 comparison rule, control drift, retained failures, timeout handling and matched
 seeding with small test doubles. Those checks validate the implementation; only
-the opt-in run is evidence about the real model. Cases and comparison functions
-can be reused when a checkpoint from #13 is accepted; the unmerged PRs #52 and #53
-are not dependencies of this implementation.
+the opt-in run is evidence about the real model. A local checkpoint can use the
+same cases and comparison rules through the explicit route above; its measured
+results must be recorded separately.
 
 ## Results and limitations
 

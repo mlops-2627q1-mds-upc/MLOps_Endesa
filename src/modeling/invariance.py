@@ -25,6 +25,7 @@ from src.invariance import (
     stored_histories,
     synthetic_histories,
 )
+from src.modeling.behaviour_source import checkpoint_for_model, describe_model
 from src.modeling.evaluate import EvaluationConfig, chronos_forecast
 from src.splits import PARAMS_PATH, SplitConfig
 
@@ -65,6 +66,7 @@ def run_checks(
     output_dir: Path = REPORTS_DIR / "invariance",
     max_seconds: int = 300,
     synthetic_only: bool = False,
+    checkpoint: Path | None = None,
 ) -> dict:
     """Save the protocol before inference and retain every completed pair, including failures."""
     start = time.monotonic()
@@ -74,6 +76,7 @@ def run_checks(
     settings = replace(
         EvaluationConfig.from_params(params_path), batch_size=1, max_seconds=max_seconds
     )
+    model = describe_model(settings, checkpoint)
     histories = synthetic_histories()
     if not synthetic_only:
         histories += stored_histories(processed_dir, cfg, PROJ_ROOT / "dvc.lock")
@@ -85,6 +88,7 @@ def run_checks(
         "started_at_utc": datetime.now(UTC).isoformat(),
         "status": "prepared",
         "settings": asdict(settings),
+        "model": model,
         "split_config": asdict(cfg) | {"states": list(cfg.states)},
         "context_length": CONTEXT_LENGTH,
         "horizon": HORIZON,
@@ -106,6 +110,7 @@ def run_checks(
     }
     _write_report(path, report)
     try:
+        checkpoint = checkpoint_for_model(model)
         predictions, timing = chronos_forecast(
             np.stack(
                 [
@@ -118,6 +123,7 @@ def run_checks(
             settings,
             start + max_seconds,
             reset_seed_per_context=True,
+            **({"checkpoint": checkpoint} if checkpoint is not None else {}),
         )
         if time.monotonic() - start >= max_seconds:
             raise TimeoutError("Invariance checks exceeded max_seconds")
@@ -147,6 +153,7 @@ def main(
     output_dir: Path = REPORTS_DIR / "invariance",
     max_seconds: int = 300,
     synthetic_only: bool = False,
+    checkpoint: Path | None = None,
 ) -> None:
     """Run declared checks; exit 1 after saving all results if any threshold is exceeded."""
     report = run_checks(
@@ -154,6 +161,7 @@ def main(
         output_dir=output_dir,
         max_seconds=max_seconds,
         synthetic_only=synthetic_only,
+        checkpoint=checkpoint,
     )
     typer.echo(f"{len(report['results'])} pairs; {len(report['counterexamples'])} counterexamples")
     if report["counterexamples"]:

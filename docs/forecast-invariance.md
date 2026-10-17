@@ -84,6 +84,20 @@ marked failed and must not be interpreted as a complete comparison.
    uv run --extra forecast python -m src.modeling.invariance --max-seconds 300
    ```
 
+Run an available local checkpoint with the unchanged protocol:
+
+```sh
+uv run --locked --extra forecast python -m src.modeling.invariance \
+  --checkpoint models/selected-chronos-small --max-seconds 300
+```
+
+The opt-in pytest route also accepts `--model-checkpoint <directory>`. The report's
+`model` field records the executed Hub revision or the resolved local checkpoint
+path and SHA-256 of `model.safetensors`; the worker verifies that hash before
+inference. `settings` retains the base configuration, so its model fields describe
+the default rather than local executed weights. A local run produces separate
+evidence and uses the existing cases, order, thresholds and sampling settings.
+
 Each invocation creates a new ignored `reports/invariance/<id>/report.json`.
 Exit status 1 means at least one declared threshold was exceeded; all completed
 outcomes are saved before that exit. `--synthetic-only` explicitly limits a run

@@ -17,6 +17,7 @@ import typer
 import yaml
 
 from src.config import PROJ_ROOT, REPORTS_DIR
+from src.modeling.behaviour_source import describe_model
 from src.modeling.evaluate import EvaluationConfig
 from src.splits import PARAMS_PATH
 
@@ -115,7 +116,11 @@ def _provenance() -> dict:
 
 
 def run_model_tests(
-    *, output_path: Path, params_path: Path = PARAMS_PATH, max_seconds: int = MAX_SECONDS
+    *,
+    output_path: Path,
+    params_path: Path = PARAMS_PATH,
+    max_seconds: int = MAX_SECONDS,
+    checkpoint: Path | None = None,
 ) -> int:
     """Run every real-model pytest case in one process, including a hard timeout."""
     if not 0 < max_seconds <= MAX_SECONDS:
@@ -150,6 +155,7 @@ def run_model_tests(
             json.dumps(protocol, sort_keys=True, allow_nan=False).encode()
         ).hexdigest(),
         "settings": asdict(settings),
+        "model": describe_model(settings, checkpoint),
         "dtype": "float32",
         "point_statistic": "median of sampled trajectories",
         "sampling": {"temperature": 1.0, "top_k": 50, "top_p": 1.0},
@@ -204,11 +210,15 @@ def main(
     output_path: Path | None = None,
     params_path: Path = PARAMS_PATH,
     max_seconds: int = typer.Option(MAX_SECONDS, min=1, max=MAX_SECONDS),
+    checkpoint: Path | None = None,
 ) -> None:
     """Check the real checkpoint once; save every result and return nonzero on failure."""
     output_path = output_path or REPORTS_DIR / "minimum-functionality" / f"{uuid4().hex}.json"
     exit_code = run_model_tests(
-        output_path=output_path, params_path=params_path, max_seconds=max_seconds
+        output_path=output_path,
+        params_path=params_path,
+        max_seconds=max_seconds,
+        checkpoint=checkpoint,
     )
     typer.echo(f"Model-test report: {output_path.resolve()}")
     raise typer.Exit(exit_code)

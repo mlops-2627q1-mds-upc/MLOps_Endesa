@@ -241,11 +241,11 @@ def test_matched_sampling_rejects_multi_history_batches():
 
 
 @pytest.fixture(scope="module")
-def real_results(request):
+def real_results(request, model_checkpoint):
     """One optional real run serves every parametrized assertion and saves all outcomes."""
     if not request.config.getoption("--run-forecast-invariance"):
         pytest.skip("Real checkpoint checks require --run-forecast-invariance")
-    report = runner.run_checks()
+    report = runner.run_checks(checkpoint=model_checkpoint)
     return {result["case_id"]: result for result in report["results"]}
 
 

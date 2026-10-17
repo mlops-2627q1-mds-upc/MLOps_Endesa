@@ -83,7 +83,17 @@ Fast tests check case construction, scoring, invalid outputs, and report/timeout
 handling using controlled values. They validate the test harness only. Do not
 present them as evidence that Chronos meets the behavioural limits.
 
-Case generation and scoring are independent of model loading, so an accepted
-fine-tuned checkpoint can use the same cases and limits later. Its model version
-and results must be recorded separately. This work adds no training or test-set
-tuning and does not depend on the unmerged inference interface in PR #52.
+Use a local checkpoint with the same cases, ordering and limits:
+
+```sh
+uv run --locked --extra forecast python -m src.modeling.minimum_functionality \
+  --checkpoint models/selected-chronos-small
+```
+
+The report's `model` field identifies the executed source: a Hub ID and revision
+for the default, or a resolved local path and SHA-256 of `model.safetensors`.
+`settings` retains the default configuration, including its base-model fields;
+those fields do not identify the executed weights when `model.source` is `local`.
+The worker verifies the prepared weights hash before loading. Results for each
+checkpoint must be recorded separately. This route adds no training or final-test
+access.

@@ -24,6 +24,17 @@ def pytest_addoption(parser):
         help="Run the 300-second paired Chronos checks, loading the checkpoint once",
     )
 
+    parser.addoption(
+        "--model-checkpoint", help="Local Chronos checkpoint for opt-in real behaviour checks"
+    )
+
+
+@pytest.fixture(scope="session")
+def model_checkpoint(request):
+    """Select a local checkpoint explicitly; default real checks keep the pinned base."""
+    value = request.config.getoption("--model-checkpoint")
+    return Path(value) if value else None
+
 
 class FakeEmissionsTracker:
     """Stands in for CodeCarbon so tests never probe hardware or measure energy."""

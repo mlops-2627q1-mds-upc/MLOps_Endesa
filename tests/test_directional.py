@@ -112,7 +112,7 @@ def test_bounded_runner_saves_plan_and_preserves_failed_outcomes(tmp_path, monke
         max_seconds=180,
     )
     plan = directional._plan(settings)  # pylint: disable=protected-access
-    monkeypatch.setattr(directional, "_plan", lambda _: plan)
+    monkeypatch.setattr(directional, "_plan", lambda *_: plan)
 
     def worker(command, *, cwd, check, timeout):
         directory = Path(command[-1])
@@ -217,11 +217,11 @@ def test_adapter_loads_once_and_resets_seed_before_each_context(monkeypatch):
 
 
 @pytest.fixture(scope="session")
-def real_report(request):
+def real_report(request, model_checkpoint):
     """Share one bounded real-checkpoint run across all parameterized expectations."""
     if not request.config.getoption("--run-directional"):
         pytest.skip("Use --run-directional with the forecast extra for the real checkpoint")
-    path, report = directional.run_bounded()
+    path, report = directional.run_bounded(checkpoint=model_checkpoint)
     print(f"\nReal directional report: {path}")
     assert report["status"] == "completed", report.get("error", report["status"])
     return report

@@ -7,6 +7,7 @@ import time
 import numpy as np
 import pytest
 
+from src.modeling.behaviour_source import checkpoint_for_model
 from src.modeling.evaluate import EvaluationConfig, chronos_forecast
 from src.modeling.minimum_functionality import CASES, HORIZON, score_case, write_report
 
@@ -26,9 +27,14 @@ def model_results(request):
     path = Path(report_path)
     report = json.loads(path.read_text(encoding="utf-8"))
     settings = EvaluationConfig(**report["settings"])
+    checkpoint = checkpoint_for_model(report["model"])
     contexts = np.stack([case.series()[0] for case in CASES])
     predictions, timing = chronos_forecast(
-        contexts, HORIZON, settings, deadline=time.monotonic() + settings.max_seconds
+        contexts,
+        HORIZON,
+        settings,
+        deadline=time.monotonic() + settings.max_seconds,
+        **({"checkpoint": checkpoint} if checkpoint is not None else {}),
     )
     results = [
         score_case(case, prediction) for case, prediction in zip(CASES, predictions, strict=True)

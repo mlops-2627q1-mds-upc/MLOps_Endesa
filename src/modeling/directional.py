@@ -19,6 +19,7 @@ import numpy as np
 import typer
 
 from src.config import PROJ_ROOT, REPORTS_DIR
+from src.modeling.behaviour_source import checkpoint_for_model, describe_model
 from src.modeling.evaluate import EvaluationConfig, chronos_forecast
 from src.splits import PARAMS_PATH
 
@@ -101,7 +102,7 @@ def _write_json(path: Path, value: dict) -> None:
         handle.write("\n")
 
 
-def _plan(settings: EvaluationConfig) -> dict:
+def _plan(settings: EvaluationConfig, checkpoint: Path | None = None) -> dict:
     def git(*args: str) -> str:
         return subprocess.check_output(["git", *args], cwd=PROJ_ROOT, text=True).strip()
 
@@ -118,6 +119,7 @@ def _plan(settings: EvaluationConfig) -> dict:
         "git_dirty": bool(git("status", "--porcelain")),
         "uv_lock_sha256": hashlib.sha256((PROJ_ROOT / "uv.lock").read_bytes()).hexdigest(),
         "settings": asdict(settings),
+        "model": describe_model(settings, checkpoint),
         "sampling": {"temperature": 1.0, "top_k": 50, "top_p": 1.0},
         "reset_seed_per_context": True,
         "dtype": "float32",
@@ -143,6 +145,7 @@ def _plan(settings: EvaluationConfig) -> dict:
 def execute_plan(plan: dict) -> dict:
     """Run one checkpoint load for the reference, unchanged control and all cases."""
     settings = EvaluationConfig(**plan["settings"])
+    checkpoint = checkpoint_for_model(plan["model"])
     cases = [DirectionalCase(**values) for values in plan["cases"]]
     original = np.asarray(plan["original_history"], dtype=np.float32)
     histories = [original, original.copy()]
@@ -157,6 +160,7 @@ def execute_plan(plan: dict) -> dict:
         settings,
         time.monotonic() + settings.max_seconds,
         reset_seed_per_context=True,
+        **({"checkpoint": checkpoint} if checkpoint is not None else {}),
     )
     if predictions.shape != (len(histories), HORIZON) or not np.isfinite(predictions).all():
         raise ValueError("Expected a finite 48-step forecast for every history")
@@ -192,6 +196,7 @@ def run_bounded(
     params_path: Path = PARAMS_PATH,
     output_dir: Path = REPORTS_DIR / "directional",
     max_seconds: int = MAX_SECONDS,
+    checkpoint: Path | None = None,
 ) -> tuple[Path, dict]:
     """Save the protocol before inference and enforce a wall-clock limit on the worker."""
     started = time.monotonic()
@@ -201,7 +206,7 @@ def run_bounded(
         cpu_threads=2,
         max_seconds=max_seconds,
     )
-    plan = _plan(settings)
+    plan = _plan(settings, checkpoint)
     directory = output_dir.resolve() / uuid4().hex
     directory.mkdir(parents=True, exist_ok=False)
     _write_json(directory / "plan.json", plan)
@@ -237,6 +242,7 @@ def main(
     params_path: Path = PARAMS_PATH,
     output_dir: Path = REPORTS_DIR / "directional",
     max_seconds: int = MAX_SECONDS,
+    checkpoint: Path | None = None,
     worker_dir: Annotated[Path | None, typer.Option(hidden=True)] = None,
 ) -> None:
     """Check all declared cases; failures remain in the report and return exit code 1."""
@@ -249,7 +255,10 @@ def main(
         _write_json(worker_dir / "report.json", report)
         raise typer.Exit(0 if report["success"] else 1)
     path, report = run_bounded(
-        params_path=params_path, output_dir=output_dir, max_seconds=max_seconds
+        params_path=params_path,
+        output_dir=output_dir,
+        max_seconds=max_seconds,
+        checkpoint=checkpoint,
     )
     for result in [report.get("control"), *report.get("cases", [])]:
         if result is not None:
