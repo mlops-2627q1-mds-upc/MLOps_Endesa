@@ -99,5 +99,6 @@ This is one checkpoint, seed, noise direction and window per state/block.
 It neither measures quantile robustness nor predicts behaviour after fine-tuning.
 The same declared cases and thresholds were used for the selected checkpoint in
 [Experiment 008](008-selected-checkpoint-behaviour.md), with its execution
-conditions recorded separately. Review of that extension and the combined
-change remains pending.
+conditions recorded separately. That extension and its evidence were included
+in approved and merged
+[PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69).

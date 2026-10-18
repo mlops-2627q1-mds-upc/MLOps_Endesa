@@ -4,7 +4,7 @@
 - **Milestone:** M2; planned in #13 as a model-building experiment.
 - **Activity / Topic:** Fine-tuning experiment for #13.
 - **Decision Participants:** Sindri Másson; Pablo Pérez Cano proposed the options and reviewed the validation results.
-- **Status:** Validation results and test path reviewed by Pablo; test run completed and meets the decision rule; PR review pending.
+- **Status:** Validation results and test path reviewed by Pablo; test run completed and meets the decision rule. Implementation, recorded results and provenance repair were included in approved and merged [PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69) on 2026-10-17.
 
 ## Decision
 
@@ -43,8 +43,7 @@ discovery, and extended the existing behaviour runners to local checkpoints, wit
 regression tests. It executed the fixed selected-checkpoint checks, independently
 recalculated their recorded metrics and prepared
 [Experiment 008](../experiments/008-selected-checkpoint-behaviour.md), retaining
-the interrupted resource adjustment. Dídac requested the submission fixes;
-teammate assessment of these new changes and outcomes is pending.
+the interrupted resource adjustment. Dídac requested the submission fixes.
 
 ## Response to AI
 
@@ -59,8 +58,15 @@ commits, the shared target hash, the link from each evaluation to its training r
 that training reads only the training block. Pablo agreed with selecting option 1, with
 skipping AdaLoRA, and with scoring seed 8 once on test, and approved the test path before
 the test run. On test, option 1 with seed 8 scored a mean MASE of 0.5571, against 0.8175
-for the control and 0.9885 for lag 48, which meets the decision rule. The review of the
-test results is pending.
+for the control and 0.9885 for lag 48, which meets the decision rule.
+
+The test results, provenance repair and selected-checkpoint checks were included
+in [PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69), approved by
+Toni and merged on 2026-10-17. His
+[review](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69#pullrequestreview-5559556788)
+reports 235 passing routine tests, clean Ruff, Pylint 9.63 and 83% coverage.
+The recorded model results retain their original executions in Experiments 004
+and 008.
 
 ## Other Evidence
 

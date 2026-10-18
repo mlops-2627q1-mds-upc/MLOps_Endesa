@@ -151,5 +151,6 @@ checkpoint. There are no forecast targets in this experiment and no model
 selection or promotion decision.
 
 The selected-checkpoint run is recorded separately in
-[Experiment 008](008-selected-checkpoint-behaviour.md). Review of that extension
-and the combined change remains pending.
+[Experiment 008](008-selected-checkpoint-behaviour.md). That extension and its
+evidence were included in approved and merged
+[PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69).

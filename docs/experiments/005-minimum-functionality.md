@@ -74,7 +74,7 @@ fast tests exercise case construction, known continuation, scoring, invalid
 outputs, failure preservation and timeout handling. Those controlled forecasts
 validate the harness, rather than Chronos itself.
 
-## Interpretation and pending review
+## Interpretation and review
 
 This is one untuned checkpoint, one seed, ten synthetic series and one CPU
 software environment. The cases establish only the stated behaviours within
@@ -85,5 +85,6 @@ Bitwise equality across devices and dependency versions has not been checked.
 
 Keep the same limits when assessing a fine-tuned checkpoint; record its version
 and outcomes separately. The selected-checkpoint run is recorded in
-[Experiment 008](008-selected-checkpoint-behaviour.md); review of that extension
-and the combined change remains pending.
+[Experiment 008](008-selected-checkpoint-behaviour.md). That extension and its
+evidence were included in approved and merged
+[PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69).

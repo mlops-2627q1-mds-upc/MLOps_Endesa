@@ -4,7 +4,7 @@
 - **Milestone:** M3 - Quality assurance.
 - **Activity / Topic:** Controlled model expectations for #56.
 - **Decision Participants:** Dídac Cayuela (test scope and implementation constraints); Pau Adal (protocol and implementation review).
-- **Status:** Base-checkpoint protocol and implementation approved in PR #58; local-checkpoint extension awaits current-version review.
+- **Status:** Base-checkpoint protocol and implementation approved in PR #58; local-checkpoint extension included in approved and merged [PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69) on 2026-10-17.
 
 ## Decision
 

@@ -4,7 +4,7 @@
 - **Milestone:** M3 - Quality assurance.
 - **Activity / Topic:** Implementation of issue #36 (data validation before training).
 - **Decision Participants:** Pau Adal implemented the stage. Dídac Cayuela reviewed the PR.
-- **Status:** Sindri approved final revision `9e9b230`; PR #37 merged on 2026-10-14.
+- **Status:** Sindri approved final revision `9e9b230`; PR #37 merged on 2026-10-14. The repeatable-setup amendment was included in approved and merged [PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69) on 2026-10-17.
 
 ## Decision
 
@@ -101,7 +101,9 @@ a changed split, missing/altered resources and the runtime-output boundary.
 **AI involvement:** Codex diagnosed the forced-reproduction diff, identified GX's
 write-on-add behavior, implemented resource reuse and wrote the regression tests.
 **Human response:** Dídac requested preparation of the first delivery and fixes
-for remaining gaps. No teammate assessment of this repair has been recorded.
-**Assessment/status:** implementation and local checks are available for review;
-human peer review remains pending. The original Pau implementation and review
-attribution above are unchanged.
+for remaining gaps.
+**Assessment/status:** the repair and its evidence were included in
+[PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69), approved by
+Toni and merged on 2026-10-17. His review records the routine suite and lint checks;
+the forced DVC reproductions retain their original execution records. The original
+Pau implementation and review attribution above are unchanged.

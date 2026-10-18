@@ -4,7 +4,7 @@
 - **Milestone:** M3 - Quality assurance; related to M2 reproducibility.
 - **Activity / Topic:** Source integrity and ingestion validation.
 - **Decision Participants:** Dídac Cayuela (decision owner); Sindri Másson (planning-record review); Pablo Pérez Cano (rationale and documentation review).
-- **Status:** Decision record approved in PR #47 and implementation in PR #51; the combined conflict resolution awaits current-version review.
+- **Status:** Decision record approved in PR #47 and implementation in PR #51; the combined conflict resolution was approved and merged in [PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69) on 2026-10-17.
 
 ## Decision
 

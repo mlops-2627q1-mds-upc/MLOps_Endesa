@@ -3,7 +3,7 @@
 - **Date:** 2026-10-14.
 - **Milestone:** M3.
 - **Decision Participants:** Dídac Cayuela (decision owner); Pau Adal (protocol and implementation review).
-- **Status:** Base-checkpoint protocol and implementation approved in PR #59; local-checkpoint extension awaits current-version review.
+- **Status:** Base-checkpoint protocol and implementation approved in PR #59; local-checkpoint extension included in approved and merged [PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69) on 2026-10-17.
 
 ## Decision
 

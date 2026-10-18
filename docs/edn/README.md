@@ -11,12 +11,12 @@ part, and how AI contributed where applicable.
 | [EDN-004: Dataset source limits](0004-dataset-source-limits.md) | 2026-10-10 | M1/M2 | Source-scale and positional limits accepted in PR #40 |
 | [EDN-005: Forecast energy measurement](0005-energy-measurement.md) | 2026-10-11 | M3 | Implementation reviewed and merged in PR #41 |
 | [EDN-006: Required CI checks](0006-required-ci-checks.md) | 2026-10-11 | M5 | Controls verified; documentation merged in PR #43 on 2026-10-17 |
-| [EDN-007: Source archive integrity](0007-source-archive-integrity.md) | 2026-10-11 | M3/M2 | Decision and implementation reviewed in PRs #47/#51; combined conflict resolution awaits review |
-| [EDN-008: Data validation](0008-data-validation-design.md) | 2026-10-13 | M3 | GX implementation reviewed and merged in PR #37 |
-| [EDN-009: Minimum functionality](0009-minimum-functionality.md) | 2026-10-14 | M3 | Base-model cases reviewed in PR #57; local-checkpoint extension under review |
-| [EDN-010: Forecast invariance](0010-forecast-invariance.md) | 2026-10-14 | M3 | Base-model cases reviewed in PR #59; local-checkpoint extension under review |
-| [EDN-011: Directional expectations](0011-directional-expectations.md) | 2026-10-14 | M3 | Base-model cases reviewed in PR #58; local-checkpoint extension under review |
-| [EDN-012: Bounded fine-tuning](0012-chronos-fine-tuning.md) | 2026-10-12 | M2/M3 | Experiment recorded; integration and provenance repair await current-version peer review |
+| [EDN-007: Source archive integrity](0007-source-archive-integrity.md) | 2026-10-11 | M3/M2 | Decision and implementation reviewed in PRs #47/#51; combined conflict resolution approved and merged in PR #69 |
+| [EDN-008: Data validation](0008-data-validation-design.md) | 2026-10-13 | M3 | GX implementation reviewed and merged in PR #37; repeatable-setup amendment included in approved and merged PR #69 |
+| [EDN-009: Minimum functionality](0009-minimum-functionality.md) | 2026-10-14 | M3 | Base-model cases reviewed in PR #57; local-checkpoint extension included in approved and merged PR #69 |
+| [EDN-010: Forecast invariance](0010-forecast-invariance.md) | 2026-10-14 | M3 | Base-model cases reviewed in PR #59; local-checkpoint extension included in approved and merged PR #69 |
+| [EDN-011: Directional expectations](0011-directional-expectations.md) | 2026-10-14 | M3 | Base-model cases reviewed in PR #58; local-checkpoint extension included in approved and merged PR #69 |
+| [EDN-012: Bounded fine-tuning](0012-chronos-fine-tuning.md) | 2026-10-12 | M2/M3 | Experiment records, integration and provenance repair included in approved and merged PR #69 |
 
 ## Adding an entry
 
