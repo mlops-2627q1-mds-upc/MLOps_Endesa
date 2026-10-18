@@ -8,7 +8,9 @@ on Australian electricity data.
 
 The [first real-model run](experiments/005-minimum-functionality.md) records all
 ten outcomes and the exact executed revision. Sindri and Pau approved `a970d0f`
-on 2026-10-15; this scope clarification awaits review.
+on 2026-10-15. Pau approved the scope clarification on 2026-10-17 in
+[PR #57](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/57), which merged
+with the first-delivery integration.
 
 ## Cases and limits declared before inference
 

@@ -2,8 +2,9 @@
 
 This extends the [upstream Chronos-T5-small card](https://huggingface.co/amazon/chronos-t5-small/tree/a971ba21945c4f1796b17a91fe69214b5f4ad472)
 with the Endesa experiment and its limits. The fine-tuning implementation,
-checkpoint-lineage repair and first-delivery integration await current-version
-peer review. Recorded experiment results are separate from deployment evidence.
+checkpoint-lineage repair and first-delivery integration were approved by Toni
+and merged in [PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69)
+on 17 October 2026. Recorded experiment results are separate from deployment evidence.
 
 ## Intended use and inputs
 
@@ -75,9 +76,9 @@ The selected local artifact was checked separately on 17 October 2026:
 10/10 minimum-functionality cases, 70/70 invariance pairs and 12/12 directional
 cases plus the unchanged control passing the same declared limits. Invariance
 used two CPU threads through an ignored configuration copy, after retaining an
-interrupted four-thread attempt. Reports identify the actual weights hash;
-current-version peer review is pending. These bounded checks do not establish
-behaviour on arbitrary demand or add demand-test accuracy or energy measurements.
+interrupted four-thread attempt. Reports identify the actual weights hash.
+These bounded checks do not establish behaviour on arbitrary demand or add
+demand-test accuracy or energy measurements.
 
 On test, the selected model's mean worst-5%-of-origins error share is 0.183,
 against 0.147 for the control. Its remaining errors are more concentrated in

@@ -123,5 +123,7 @@ The module fixture runs the model once and saves the entire report before the
 70 assertions. Counterexamples fail those assertions; they are not skipped or
 marked as expected failures. These optional checks stay outside ordinary CI.
 The [experiment record](experiments/006-forecast-invariance.md) links the
-observed results; peer review is pending. One checkpoint, seed and perturbation
+observed results. Pau approved the protocol and implementation in
+[PR #59](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/59) on 2026-10-17;
+it merged with the first-delivery integration. One checkpoint, seed and perturbation
 direction cannot establish general robustness, accuracy or behaviour after fine-tuning.

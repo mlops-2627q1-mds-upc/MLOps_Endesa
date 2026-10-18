@@ -6,7 +6,10 @@ and thresholds were retained from the pinned-base protocols in
 [Experiment 005](005-minimum-functionality.md),
 [Experiment 006](006-forecast-invariance.md) and
 [Experiment 007](007-directional-expectations.md). These results concern the
-selected artifact; peer review of the extension and outcomes is pending.
+selected artifact. The extension and these records were included in
+[PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69), approved by
+Toni and merged on 17 October 2026. His review records routine checks; the model
+executions below retain their original source and settings.
 
 ## Artifact and execution
 
