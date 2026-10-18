@@ -1,12 +1,12 @@
 # Course evidence
 
-Updated 17 October 2026 for the M1-M3 integration candidate. This register
-separates earlier merged work from the combined changes awaiting peer review.
+This register links the M1-M3 practices to implementation and verification
+evidence, with the remaining work recorded for each practice.
 The points below are course rubric weights, not awarded marks.
 
 | Milestone / practice | Points | Evidence and verification | Remaining work |
 | --- | ---: | --- | --- |
-| M1: Problem and requirements | 6 | [Problem and protocol](problem-definition.md), [requirements](requirements.md), [dataset card](DATASET_CARD.md) and [model card](MODEL_CARD.md). Initial cards were reviewed in PR #8; source limits accepted in PR #40; requirements approved and merged in PR #30. | Current-version review of the trained-model card; calendar, interval coverage and deployment thresholds remain explicit open items. |
+| M1: Problem and requirements | 6 | [Problem and protocol](problem-definition.md), [requirements](requirements.md), [dataset card](DATASET_CARD.md) and [model card](MODEL_CARD.md). Initial cards were reviewed in PR #8; source limits accepted in PR #40; requirements approved and merged in PR #30. The trained-model card was included in [PR #69](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/69), approved by Toni and merged on 17 October 2026. | Physical-unit and civil-clock limits remain documented; interval coverage and deployment thresholds remain open items. |
 | M1: Coordination | 4 | [Working agreement](../CONTRIBUTING.md), [Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3), [EDN](edn/README.md), issue-linked branches and peer reviews. PR #4 is merged. [Repository controls](project-setup.md) require both CI jobs and a peer approval, including for administrators. | [#2](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/2) still needs linked confirmation of Project access for all contributors and lecturers. Delivery contribution consensus/CATME is a human team assessment. |
 | M2: Project structure | 5 | [Setup](setup.md) explains the CCDS adaptations, locked uv environment and Windows limitation. Sindri's clean-checkout check and correction were reviewed in PR #14. Unused template modules/placeholders are removed in the integration for #33; the notebook's optional external cache is preserved. | Review of the final template cleanup and combined setup. |
 | M2: Code and data versioning | 15 | GitHub Flow with merge commits; raw DVC data from PR #16; chronological blocks and origins from PR #27. [Data versions](DATASET_CARD.md#current-dvc-version-and-storage); [selected checkpoint reference](../models/chronos-t5-small-fine-tuned.dvc) and [weight-bound lineage](../models/chronos-t5-small-fine-tuned.provenance.json). [Replication guide](replication.md) identifies artifact checks and expected deterministic baseline results. | Pin the final reviewed submission commit in the report and verify that reviewers can retrieve private artifacts under their own accounts. |
