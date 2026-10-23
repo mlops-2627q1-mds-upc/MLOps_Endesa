@@ -81,6 +81,62 @@ Each successful response contains these fields:
 | `context_length`, `horizon` | `512`, `48`. |
 | `settings` | Executed sample count, seed, device, CPU threads, dtype, sampling parameters, quantile method and point statistic. |
 
+A complete response from the smoke test below, with quantiles rounded to three
+decimal places for readability:
+
+```json
+{
+  "state": "TAS",
+  "p10": [
+    -2.478, -3.593, -4.348, -4.955, -4.955, -4.832, -4.336, -3.593,
+    -2.366, -0.867, 0.756, 2.614, 4.658, 6.876, 9.366, 11.98,
+    14.606, 17.232, 19.735, 21.99, 24.443, 26.301, 27.515, 28.345,
+    29.856, 30.686, 31.516, 32.123, 31.826, 30.872, 30.067, 29.435,
+    28.258, 27.317, 26.734, 25.396, 24.133, 21.94, 19.574, 16.861,
+    14.371, 11.967, 9.762, 7.284, 4.931, 2.837, 0.731, -0.88
+  ],
+  "p50": [
+    -2.354, -3.469, -4.336, -4.832, -4.955, -4.832, -4.336, -3.469,
+    -2.354, -0.867, 0.867, 2.849, 4.955, 7.309, 9.787, 12.389,
+    14.99, 17.592, 20.069, 22.671, 24.901, 26.759, 28.122, 29.732,
+    31.281, 32.458, 33.325, 34.316, 34.75, 34.812, 34.316, 33.635,
+    32.644, 31.9, 30.724, 29.113, 27.131, 25.025, 22.547, 20.069,
+    17.468, 14.866, 12.389, 9.787, 7.309, 4.955, 2.849, 0.867
+  ],
+  "p90": [
+    -2.218, -3.469, -4.336, -4.832, -4.955, -4.819, -4.212, -3.456,
+    -2.23, -0.867, 0.991, 2.849, 4.955, 7.309, 9.787, 12.512,
+    15.003, 17.716, 20.206, 22.671, 25.025, 26.908, 28.865, 30.513,
+    32.0, 32.966, 33.845, 34.812, 34.936, 35.06, 34.688, 34.068,
+    33.449, 32.334, 30.86, 29.299, 27.564, 25.595, 22.944, 20.255,
+    17.778, 15.188, 12.686, 10.444, 9.552, 7.185, 4.732, 2.18
+  ],
+  "model_id": "chronos-t5-small-fine-tuned",
+  "model_revision": "local-sha256:746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+  "checkpoint": {
+    "sha256": "746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+    "training_run_id": "639eba4cc7e74de08ffab64beee715db"
+  },
+  "value_scale": "source",
+  "context_length": 512,
+  "horizon": 48,
+  "settings": {
+    "num_samples": 20,
+    "seed": 7,
+    "device": "cpu",
+    "cpu_threads": 2,
+    "dtype": "float32",
+    "sampling": {
+      "temperature": 1.0,
+      "top_k": 50,
+      "top_p": 1.0
+    },
+    "quantile_method": "linear",
+    "point_statistic": "median"
+  }
+}
+```
+
 The API validates the predictor's output and returns only these public fields.
 It does not substitute a configured name for the loaded artifact's identity.
 Forecast positions 1 through 48 follow the last history observation; no
@@ -131,6 +187,49 @@ network. They cover validation, output identity and quantile checks, lifecycle
 reuse, fail-fast startup, controlled failures and probes during active inference.
 The test factory is an explicit Python argument; deployment settings cannot
 enable it.
+
+### Selected-model HTTP smoke, 2026-10-23
+
+Clean source `a80daf7e0728ee3d68b3d0afd06bca61b28831d1` was tested with one
+Uvicorn process, offline model loading, two CPU threads and two requests using
+the synthetic TAS history above. `/health` and `/ready` returned 200; both
+forecasts returned identical finite, ordered 48-element arrays and the full
+executed settings. The server was stopped after the check.
+
+The actual weights SHA-256 was
+`746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9`,
+verified against the selected provenance; training run
+`639eba4cc7e74de08ffab64beee715db`. Settings were 20 samples, seed 7,
+CPU float32, two threads, temperature 1, top-k 50, top-p 1, linear quantiles
+and median p50.
+
+On an Apple M4 with macOS 26.2 and Python 3.11.15, startup to process health was
+3.487 s; the first request took 0.646 s and the second, warm request 0.633 s.
+Versions were FastAPI 0.142.2, Uvicorn 0.54.0, Pydantic 2.13.5, Torch 2.14.1,
+Chronos Forecasting 2.3.2 and Transformers 5.18.0. These two observations check
+the local interface; they do not establish a latency target, load capacity,
+forecast accuracy or deployment readiness.
+
+To repeat the bounded requests after starting the server and generating the
+example JSON above:
+
+```sh
+for attempt in 1 2; do
+  curl --fail-with-body --silent --show-error http://127.0.0.1:8000/forecast \
+    -H 'Content-Type: application/json' \
+    --data-binary @reports/inference/api-request.json \
+    -o "reports/inference/api-response-$attempt.json" \
+    -w 'request_seconds=%{time_total}\n'
+done
+cmp reports/inference/api-response-1.json reports/inference/api-response-2.json
+```
+
+The smoke used `FORECAST_CHECKPOINT` to read the existing selected artifact from
+another local checkout, without copying or changing it. A separate Uvicorn check
+with missing selected weights exited with status 3 before serving requests.
+Local test results were 85 API cases passed; full coverage ran 391 tests with
+102 skipped, 86% total coverage and 100% API coverage. Lint passed. Required CI
+checks and human peer review remain separate gates.
 
 Implementation references: [FastAPI lifespan](https://fastapi.tiangolo.com/advanced/events/),
 [synchronous path operations](https://fastapi.tiangolo.com/async/#path-operation-functions),
