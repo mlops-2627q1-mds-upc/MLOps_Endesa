@@ -1,0 +1,28 @@
+{
+  "source_commit": "81c5b82893ba1bb5c44409b48fe85908919a3931",
+  "tracked_and_untracked_status": "",
+  "checkpoint_path": "/Users/dcayuela/orca/workspaces/MLOps_Endesa/submission-integration-15/models/chronos-t5-small-fine-tuned",
+  "weights_sha256": "746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+  "threads": {
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "2",
+    "MKL_NUM_THREADS": "2",
+    "VECLIB_MAXIMUM_THREADS": "2",
+    "NUMEXPR_NUM_THREADS": "2"
+  },
+  "offline": {
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1"
+  },
+  "python": "/Users/dcayuela/orca/workspaces/MLOps_Endesa/submission-integration-15/.venv/bin/python",
+  "original_params_sha256": "a470aba4cedc7940052139315e4e03e5db5b26899d57d508ecfc693c6d79343c",
+  "run_params_sha256": "40deb953aa41e46927c9d1f19dbe65679992e5ce4148c4f86107c703d0c9bcf3",
+  "run_params_path": "/Users/dcayuela/orca/workspaces/MLOps_Endesa/submission-integration-15/temporary/selected-checkpoint-behaviour-2026-10-17-81c5b828/invariance-cpu2/params-cpu2.yaml",
+  "resource_override": {
+    "evaluation.cpu_threads": {
+      "original": 4,
+      "effective": 2
+    }
+  },
+  "previous_attempt": "/Users/dcayuela/orca/workspaces/MLOps_Endesa/submission-integration-15/temporary/selected-checkpoint-behaviour-2026-10-17-81c5b828/invariance-execution.json"
+}

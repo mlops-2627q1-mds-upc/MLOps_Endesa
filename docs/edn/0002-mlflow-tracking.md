@@ -3,8 +3,8 @@
 - **Date:** 2026-10-02.
 - **Milestone:** M2 - Reproducibility.
 - **Activity / Topic:** Experiment tracking for #12.
-- **Decision Participants:** Dídac Cayuela.
-- **Status:** Tracking implementation approved by Pablo Pérez Cano and merged in PR #26; AI contribution assessment remains pending.
+- **Decision Participants:** Dídac Cayuela (task scope and implementation constraints); Pablo Pérez Cano (implementation review).
+- **Status:** Tracking implementation approved by Pablo Pérez Cano and merged in PR #26.
 
 ## Decision
 
@@ -33,17 +33,21 @@ plan, and implemented the helper, smoke command, tests, and documentation.
 
 ## Response to AI
 
-Accepted with modifications. Dídac authorized the implementation, chose to take
-over the existing #12, and clarified that #5 stays open as the cards evolve.
-That clarification is retained in the task scope. Pablo approved the resulting
+Accepted with modifications. Dídac took ownership of #12 and required a small,
+maintainable implementation without unnecessary abstractions. He kept tracking
+work separate from the evolving cards in #5. Codex developed the explicit-client
+design and implementation within that scope. Pablo approved the resulting
 implementation on 2026-10-03; [PR #26](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/26)
 was merged on 2026-10-05.
 
 ## Assessment of the AI Contribution
 
-Dídac requested simple, maintainable code without unnecessary abstractions.
-His assessment of the implementation is pending; authorization to implement is
-not recorded as a peer approval or a claim about the results.
+Dídac required maintainable code without unnecessary abstractions. The resulting
+helper provides the logging interface used by scripts and notebooks. Local tests
+and the shared smoke run verified parameter, metric and artifact round trips; these checks establish
+tracking behavior, not forecast quality. Pablo's
+[review](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/26#pullrequestreview-5401489108)
+records acceptance of the implementation.
 
 ## Other Evidence
 

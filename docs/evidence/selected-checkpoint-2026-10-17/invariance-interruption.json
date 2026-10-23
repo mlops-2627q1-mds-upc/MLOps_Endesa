@@ -1,0 +1,24 @@
+{
+  "suite": "invariance",
+  "command": [
+    "/Users/dcayuela/orca/workspaces/MLOps_Endesa/submission-integration-15/.venv/bin/python",
+    "-m",
+    "src.modeling.invariance",
+    "--checkpoint",
+    "/Users/dcayuela/orca/workspaces/MLOps_Endesa/submission-integration-15/models/chronos-t5-small-fine-tuned",
+    "--max-seconds",
+    "300",
+    "--output-dir",
+    "/Users/dcayuela/orca/workspaces/MLOps_Endesa/submission-integration-15/temporary/selected-checkpoint-behaviour-2026-10-17-81c5b828/invariance"
+  ],
+  "declared_cap_seconds": 300,
+  "external_process_group_cap_seconds": 330,
+  "external_timeout": false,
+  "pid": 81267,
+  "exit_code": -15,
+  "wall_seconds": 54.62387066707015,
+  "source_commit_after": "81c5b82893ba1bb5c44409b48fe85908919a3931",
+  "git_status_after": "",
+  "interruption_reason": "Stopped by operator when prepared plan revealed torch cpu_threads=4, exceeding requested cap2; no scored outcomes completed.",
+  "last_logged_origin": 88
+}

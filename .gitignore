@@ -6,8 +6,12 @@ temporary/
 !/data/*/.gitkeep
 
 # Model weights and checkpoints (versioned with DVC / MLflow)
-/models/*
+# Require a child name so DVC can traverse models/ to discover its .dvc files.
+/models/?*
 !/models/.gitkeep
+# DVC references to selected models; their weights stay ignored
+!/models/*.dvc
+!/models/*.provenance.json
 
 # Secrets and local configuration
 .env
@@ -18,6 +22,9 @@ temporary/
 .venv/
 venv/
 
+# Legacy GX runtime output; new Data Docs live in ignored gx/uncommitted/data_docs/.
+/gx/data_docs/
+
 # Experiment tracking and energy logs produced locally
 mlruns/
 mlartifacts/
@@ -26,6 +33,10 @@ mlflow.db-*
 emissions.csv
 /reports/evaluation/
 /reports/inference/
+/reports/minimum-functionality/
+/reports/directional/
+/reports/invariance/
+/reports/fine-tuning/
 
 # Python caches and build outputs
 __pycache__/

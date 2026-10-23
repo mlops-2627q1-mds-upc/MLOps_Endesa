@@ -1,16 +1,16 @@
 # Australian electricity demand: extension of the Monash dataset card
 
-**Status:** Updated 2026-10-10 for [issue #6](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/6). This extends the [Monash dataset card](https://huggingface.co/datasets/Monash-University/monash_tsf/tree/58aafbe2712ff481c014f562e42723f2820fd5d4) with source evidence, explicit unit/clock limits, and the current DVC version. Peer acceptance of these limits is pending; the evaluation protocol was agreed in #5 and implemented in #17.
+**Status:** Source checks dated 2026-10-10 for [issue #6](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/6); limits accepted by Pau and merged in [PR #40](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/40) on 2026-10-11. This extends the [Monash dataset card](https://huggingface.co/datasets/Monash-University/monash_tsf/tree/58aafbe2712ff481c014f562e42723f2820fd5d4) with source evidence, explicit unit/clock limits, and the current DVC version. The evaluation protocol was agreed in #5 and implemented in #17.
 
 ## Dataset summary and intended use
 
-The project selects `australian_electricity_demand` from the [Monash Time Series Forecasting Repository](https://huggingface.co/datasets/Monash-University/monash_tsf). Its five half-hourly series cover New South Wales (`NSW`), Victoria (`VIC`), Queensland (`QUN` in TSF, `QLD` in project storage), South Australia (`SA`), and Tasmania (`TAS`). The source field is operational demand excluding a separately reported industrial load. We use past targets to compare seasonal baselines, pretrained Chronos-T5-small, and a later fine-tuned version. This is a historical research benchmark, not a live feed.
+The project selects `australian_electricity_demand` from the [Monash Time Series Forecasting Repository](https://huggingface.co/datasets/Monash-University/monash_tsf). Its five half-hourly series cover New South Wales (`NSW`), Victoria (`VIC`), Queensland (`QUN` in TSF, `QLD` in project storage), South Australia (`SA`), and Tasmania (`TAS`). The source field is operational demand excluding a separately reported industrial load. We use past targets to compare seasonal baselines, pretrained Chronos-T5-small, and the [selected fine-tuned checkpoint](MODEL_CARD.md). This is a historical research benchmark, not a live feed.
 
 The upstream card covers the entire Monash collection. For this configuration it
 records five series, a half-hourly frequency, a 60-step prediction length, and
 time-based validation/test splits. It describes the collection as intended for
 research. Our extension records the exact selected archive, what we inspected in
-it, and how this team plans to use it. The upstream splits and horizon do not
+it, and how this team uses it. The upstream splits and horizon do not
 define our final evaluation protocol.
 
 ## Dataset structure and provenance
@@ -55,7 +55,8 @@ in the source files does not independently verify every held-out TSF value.
 
 ## Current DVC version and storage
 
-At Git base [`d623220b6eeda1eaf0c9d1fe5d236e96183a1ec3`](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/commit/d623220b6eeda1eaf0c9d1fe5d236e96183a1ec3), the current versions are:
+The versions below match the first-delivery integration at
+[`d0190c8`](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/commit/d0190c80663af2990f569a2f0df0ff7a6fbeda29).
 
 | Artifact | Version or representation |
 | --- | --- |
@@ -73,10 +74,15 @@ For the project's versioned data, follow the [clean-checkout setup](setup.md#set
 
 ```sh
 uv sync --locked --dev
-uv run dvc pull -r origin
+uv run dvc pull -r origin data/raw.dvc \
+  data/processed/train.parquet data/processed/validation.parquet \
+  data/processed/test.parquet data/processed/origins.parquet
 ```
 
-This restores raw and processed artifacts. It does not train or evaluate a model.
+This restores only the raw and processed data. An unrestricted
+`uv run dvc pull -r origin` also retrieves the selected checkpoint (about 176 MiB).
+Neither command trains or evaluates a model. The [replication guide](replication.md)
+includes validation and checkpoint verification steps.
 
 Download the pinned archive **outside the repository** and compare its SHA-256 with the value above:
 
@@ -105,9 +111,10 @@ configurations on validation, and keep final test targets out of model selection
 - Tasmania has 22 negative values. Pablo's upstream inspection shows operational demand falling below the subtracted industrial load during a March 2005 episode; the cause is unverified. Preserve the values. Percentage errors are difficult to interpret around zero or negative targets; the agreed metrics are MAE and MASE.
 - Historical demand may not represent current grid conditions. The base model's possible exposure to these public series also needs investigation before claims of unseen-data generalization.
 
-Peer review of [EDN-004](edn/0004-dataset-source-limits.md) must explicitly accept
-source-scale, positional-only use with the limits above before #6 is complete.
-This update changes documentation; raw data and DVC references remain unchanged.
+Pau's [review of EDN-004 and the card](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/40#pullrequestreview-5481087502)
+accepted source-scale, positional-only use with the limits above; #6 is complete.
+Physical-unit and civil-clock limits remain unresolved. Raw data and DVC
+references are unchanged.
 
 ## License, citation, and update path
 

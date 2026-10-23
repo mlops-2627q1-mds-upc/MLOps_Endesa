@@ -1,0 +1,17 @@
+{
+  "source_commit": "81c5b82893ba1bb5c44409b48fe85908919a3931",
+  "sha256": {
+    "minimum-functionality.json": "0bd050efc49f03525a58c33b29bb7f73d56255a34b030ae1159d1e50a6323ad1",
+    "directional.json": "2303a3bfa2f832987a7518b0f2c61fcca49b7da076e821f5d7fa2e9e513d49bc",
+    "invariance.json": "00223617deb2da1048403b066a7cbc7b948256f1451ae994bad95ff81c56328d",
+    "manifest.json": "a02658613aaec38b308a11c1bee59c27d655147152e2ac7fdb7cb824eab11398",
+    "invariance-resource-manifest.json": "31fe73839efc992cbe5e61a0be59fc8862675ef3239275f97c3cb212b263c3f3",
+    "params-cpu2.yaml": "40deb953aa41e46927c9d1f19dbe65679992e5ce4148c4f86107c703d0c9bcf3",
+    "invariance-interrupted-prepared.json": "482781697c3f31f3537f5fd3dfb3b7adf0da0178a590010c6f310902e33a64fb",
+    "invariance-interruption.json": "33160d40df8496ce61fd1ec7c387be10e8646386b94199702ef60419a5c54f10",
+    "minimum-functionality-execution.json": "11530d91000a48eb171397a7470cb4bbb917ed0ca2d22886b2c8e661212bfd65",
+    "directional-execution.json": "056ec95f0bec55e0b60279f450f293a5eee60173717eb28197a54a7c9ab50bf5",
+    "invariance-execution.json": "27d967b17a9f4de7b618aebb8503b6088e8b7b7c08ee2ba805ecda1da8b76d17",
+    "final-state.json": "371a5aadd30cc44076cbd8ec3abdeb0d2aadf5d08df796d3edb3658de31ef505"
+  }
+}

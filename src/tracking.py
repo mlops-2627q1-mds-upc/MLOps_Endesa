@@ -361,7 +361,7 @@ def tracked_run(
     model_revision: str,
     experiment_name: str | None = None,
     tracking_uri: str | None = None,
-    purpose: Literal["evaluation", "smoke"] = "evaluation",
+    purpose: Literal["evaluation", "training", "smoke"] = "evaluation",
 ) -> Iterator[TrackedRun]:
     """Record configuration and versions once; propagate failures to the caller.
 

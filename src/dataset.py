@@ -1,3 +1,5 @@
+from collections import Counter
+import hashlib
 import io
 from pathlib import Path
 import zipfile
@@ -14,6 +16,7 @@ app = typer.Typer()
 
 # Original source — Zenodo record pinned by DATASET_CARD.md SHA-256
 ZENODO_URL = "https://zenodo.org/records/4659727/files/australian_electricity_demand_dataset.zip"
+ZENODO_SHA256 = "b1439c28a631766bd05ee327f1f430a887b9f53b38a8cd5c0769ded1fd4aaf5a"
 
 # Mapping from TSF series IDs to state codes.
 # Order and IDs derived from the source archive; QUN renamed to QLD.
@@ -27,7 +30,7 @@ TSF_ID_TO_STATE = {
 
 
 def _parse_tsf(content: bytes) -> tuple[list[str], list[np.ndarray]]:
-    """Parse raw .tsf bytes; return (tsf_ids, value_arrays)."""
+    """Parse raw .tsf bytes and require each expected series ID exactly once."""
     col_names, col_types = [], []
     tsf_ids, series_list = [], []
     found_data = False
@@ -54,6 +57,17 @@ def _parse_tsf(content: bytes) -> tuple[list[str], list[np.ndarray]]:
             )
             series_list.append(values)
 
+    counts = Counter(tsf_ids)
+    missing = sorted(TSF_ID_TO_STATE.keys() - counts.keys())
+    unknown = sorted(counts.keys() - TSF_ID_TO_STATE.keys())
+    duplicate = sorted(tsf_id for tsf_id, count in counts.items() if count > 1)
+    errors = []
+    for label, ids in (("missing", missing), ("unknown", unknown), ("duplicate", duplicate)):
+        if ids:
+            errors.append(f"{label}: {', '.join(ids)}")
+    if errors:
+        raise ValueError(f"Invalid TSF series IDs ({'; '.join(errors)})")
+
     return tsf_ids, series_list
 
 
@@ -65,6 +79,12 @@ def main(
     resp = requests.get(ZENODO_URL, timeout=120)
     resp.raise_for_status()
 
+    actual_sha256 = hashlib.sha256(resp.content).hexdigest()
+    if actual_sha256 != ZENODO_SHA256:
+        raise ValueError(
+            f"Archive SHA-256 mismatch: expected {ZENODO_SHA256}, got {actual_sha256}"
+        )
+
     with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
         tsf_name = next(n for n in zf.namelist() if n.endswith(".tsf"))
         tsf_bytes = zf.read(tsf_name)
@@ -72,7 +92,7 @@ def main(
     tsf_ids, series_list = _parse_tsf(tsf_bytes)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    for tsf_id, values in zip(tsf_ids, series_list):
+    for tsf_id, values in zip(tsf_ids, series_list, strict=True):
         state = TSF_ID_TO_STATE[tsf_id]
         # Positional index: timestamps from the source are unverified
         # for timezone and DST — use step index to avoid misleading callers.

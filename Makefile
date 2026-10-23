@@ -31,6 +31,8 @@ clean:
 lint:
 	uv run ruff format --check
 	uv run ruff check
+	uv run ruff check --isolated --select E4,E7,E9,F notebooks/1.0-pp-demand-eda.ipynb
+	uv run pylint src tests
 
 ## Format source code with ruff
 .PHONY: format
@@ -44,6 +46,11 @@ format:
 .PHONY: test
 test:
 	uv run pytest
+
+## Run tests with source and branch coverage
+.PHONY: coverage
+coverage:
+	uv run pytest --cov --cov-report=term-missing
 
 
 ## Set up Python interpreter environment

@@ -23,3 +23,26 @@ evaluation:
   device: cpu
   cpu_threads: 4
   max_seconds: 3600
+
+# Bounded fine-tuning for #13, starting from the evaluation checkpoint above. Option 1 of
+# the proposal in #13: the Chronos paper's fine-tuning schedule (Ansari et al., 2024, 5.5).
+fine_tuning:
+  learning_rate: 0.001  # decayed linearly to 0 over `steps`
+  steps: 1000
+  batch_size: 32
+  micro_batch_size: 16  # gradients accumulated over batch_size / micro_batch_size; fits 8 GB
+  seed: 7
+  window_start: 0  # first training position a window may use; windows end before train_end
+  checkpoint_every: 250
+  device: cuda
+  max_seconds: 1800
+  lora_rank: 0  # 0 trains every weight; a positive rank trains LoRA adapters instead
+  lora_alpha: 8  # peft's default; scales the adapters by lora_alpha / lora_rank
+
+# Options proposed in #13; each changes one setting of `fine_tuning`. Seeds are set per run.
+fine_tuning_options:
+  1-reference: {}
+  2-lower-lr: {learning_rate: 0.0001}
+  3-fewer-steps: {steps: 300}
+  4-recent-data: {window_start: 143136}  # the last three years of the training block
+  5-lora: {lora_rank: 8}  # adapters on the attention projections; base weights frozen
