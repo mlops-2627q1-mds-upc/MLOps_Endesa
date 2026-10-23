@@ -1,5 +1,6 @@
 """Check the image source boundary and HTTP harness without weights or Docker."""
 
+from http.client import RemoteDisconnected
 import os
 from pathlib import Path
 import shlex
@@ -7,10 +8,96 @@ import shutil
 import socket
 import subprocess
 import sys
+from unittest.mock import Mock, call
 
+import pytest
+
+from tests.container import smoke
+from tests.container.fixture_app import FixturePredictor
 from tests.container.smoke import run_smoke
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.mark.parametrize("failure", [ConnectionResetError, RemoteDisconnected])
+def test_startup_retries_transient_disconnect_then_checks_every_endpoint(monkeypatch, failure):
+    payload = {"state": "TAS", "history": [-3, 0, 2.5, 4] * 128}
+    forecast = {**FixturePredictor().predict(payload["history"]), "state": "TAS"}
+    transport = Mock(
+        side_effect=[
+            failure("Port exposed before server startup"),
+            (200, {"status": "ok"}),
+            (200, {"status": "ready"}),
+            (200, forecast),
+            (422, {"detail": [{"type": "too_short"}]}),
+        ]
+    )
+    sleep = Mock()
+    monkeypatch.setattr(smoke, "request", transport)
+    monkeypatch.setattr(smoke.time, "monotonic", Mock(side_effect=[0.0, 0.1]))
+    monkeypatch.setattr(smoke.time, "sleep", sleep)
+
+    report = run_smoke("http://fixture", timeout=1)
+
+    assert report["forecast"] == 200 and report["invalid_request"] == 422
+    assert transport.call_args_list == [
+        call("http://fixture", "/health"),
+        call("http://fixture", "/health"),
+        call("http://fixture", "/ready"),
+        call("http://fixture", "/forecast", payload),
+        call("http://fixture", "/forecast", {**payload, "history": [1]}),
+    ]
+    sleep.assert_called_once_with(0.1)
+
+
+def test_persistent_startup_reset_fails_at_deadline_without_further_checks(monkeypatch):
+    transport = Mock(side_effect=ConnectionResetError(104, "Connection reset by peer"))
+    sleep = Mock()
+    monkeypatch.setattr(smoke, "request", transport)
+    monkeypatch.setattr(smoke.time, "monotonic", Mock(side_effect=[10.0, 10.5, 11.0]))
+    monkeypatch.setattr(smoke.time, "sleep", sleep)
+
+    with pytest.raises(RuntimeError, match="did not start within the smoke deadline"):
+        run_smoke("http://fixture", timeout=1)
+
+    assert transport.call_args_list == [call("http://fixture", "/health")] * 2
+    sleep.assert_called_once_with(0.1)
+
+
+def test_startup_http_error_is_not_retried_or_treated_as_healthy(monkeypatch):
+    transport = Mock(return_value=(503, {"detail": "Unavailable"}))
+    sleep = Mock()
+    monkeypatch.setattr(smoke, "request", transport)
+    monkeypatch.setattr(smoke.time, "sleep", sleep)
+
+    with pytest.raises(AssertionError):
+        run_smoke("http://fixture")
+
+    transport.assert_called_once_with("http://fixture", "/health")
+    sleep.assert_not_called()
+
+
+def test_forecast_connection_reset_is_not_retried_after_startup(monkeypatch):
+    transport = Mock(
+        side_effect=[
+            (200, {"status": "ok"}),
+            (200, {"status": "ready"}),
+            ConnectionResetError(104, "Connection reset by peer"),
+        ]
+    )
+    sleep = Mock()
+    monkeypatch.setattr(smoke, "request", transport)
+    monkeypatch.setattr(smoke.time, "sleep", sleep)
+
+    with pytest.raises(ConnectionResetError):
+        run_smoke("http://fixture")
+
+    assert [args.args[1] for args in transport.call_args_list] == [
+        "/health",
+        "/ready",
+        "/forecast",
+    ]
+    sleep.assert_not_called()
 
 
 def _stage_runtime(directory):

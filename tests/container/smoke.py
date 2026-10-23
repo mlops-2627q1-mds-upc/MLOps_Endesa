@@ -26,7 +26,7 @@ def run_smoke(base_url: str, timeout: float = 30) -> dict:
         try:
             health = request(base_url, "/health")
             break
-        except (URLError, TimeoutError):
+        except (URLError, TimeoutError, ConnectionError):
             if time.monotonic() >= deadline:
                 raise RuntimeError(
                     "Fixture server did not start within the smoke deadline"
