@@ -77,3 +77,50 @@ def test_conflicting_metadata_cannot_silently_choose_a_run(tmp_path):
     sidecar.write_text(json.dumps({**metadata, "training_run_id": "b" * 32}))
     with pytest.raises(ValueError, match="Conflicting training run IDs"):
         describe_checkpoint(checkpoint)
+
+
+def test_required_provenance_verifies_selected_weights_after_relocation(tmp_path):
+    checkpoint = tmp_path / "relocated"
+    checkpoint.mkdir()
+    (checkpoint / "model.safetensors").write_bytes(b"selected weights")
+    metadata = write_training_metadata(checkpoint, RUN_ID)
+    tracked = tmp_path / "selected.provenance.json"
+    (checkpoint / METADATA_FILENAME).rename(tracked)
+    recorded = describe_checkpoint(checkpoint, provenance=tracked)
+    assert recorded["training_run_id"] == RUN_ID
+    assert recorded["sha256"] == metadata["model_safetensors_sha256"]
+    assert recorded["training_metadata"] == [str(tracked)]
+    (checkpoint / "model.safetensors").write_bytes(b"replacement weights")
+    write_training_metadata(checkpoint, RUN_ID)
+    with pytest.raises(ValueError, match="does not match checkpoint weights"):
+        describe_checkpoint(checkpoint, provenance=tracked)
+
+
+def test_required_provenance_cannot_be_missing_even_with_internal_metadata(tmp_path):
+    (tmp_path / "model.safetensors").write_bytes(b"weights")
+    write_training_metadata(tmp_path, RUN_ID)
+    with pytest.raises(ValueError, match="Missing required checkpoint provenance"):
+        describe_checkpoint(tmp_path, provenance=tmp_path / "absent.json")
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        None,
+        [],
+        {},
+        {"schema_version": True},
+        {"schema_version": 1.0},
+        {"schema_version": 2},
+        {"training_run_id": "invalid"},
+    ],
+)
+def test_malformed_training_metadata_is_rejected(tmp_path, metadata):
+    (tmp_path / "model.safetensors").write_bytes(b"weights")
+    valid = write_training_metadata(tmp_path, RUN_ID)
+    payload = {**valid, **metadata} if isinstance(metadata, dict) else metadata
+    if metadata == {}:
+        payload = {}
+    (tmp_path / METADATA_FILENAME).write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="Invalid training metadata"):
+        describe_checkpoint(tmp_path)
