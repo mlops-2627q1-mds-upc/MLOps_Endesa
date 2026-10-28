@@ -183,6 +183,18 @@ def test_conflicting_report_identity_is_suppressed(report_file):
         assert _value(client, "report_valid") == 0
 
 
+@pytest.mark.parametrize("horizon", ["arbitrary-private-horizon", "all", 1])
+def test_state_summary_cannot_declare_a_horizon_label(report_file, horizon):
+    report = json.loads(report_file.read_text())
+    report["by_state"][0]["horizon"] = horizon
+    report_file.write_text(json.dumps(report))
+    with TestClient(create_app(report_file)) as client:
+        assert _value(client, "report_available") == 0
+        assert _value(client, "report_valid") == 0
+        assert not any(sample.labels for sample in _samples(client))
+        assert "arbitrary-private-horizon" not in client.get("/metrics").text
+
+
 def test_future_report_time_is_not_fresh(report_file):
     future = time.time() + 60
     os.utime(report_file, (future, future))

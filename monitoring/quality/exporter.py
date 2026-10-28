@@ -113,6 +113,8 @@ def _validate_report(report):
         expected = {(state, str(horizon)) for state in states for horizon in horizons}
         observed = set()
         for group in report[collection]:
+            if collection == "by_state" and "horizon" in group:
+                raise ValueError("State summaries must not declare a horizon")
             key = (
                 group["state"],
                 str(group["horizon"]) if collection == "by_state_horizon" else "all",
