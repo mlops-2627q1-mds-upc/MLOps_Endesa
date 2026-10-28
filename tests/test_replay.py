@@ -258,7 +258,31 @@ def test_interrupted_inflight_attempt_consumes_budget_and_can_resume(setup_repla
         replay.run()
     with Replay(case.path, case.source, case.config, client=case.client) as replay:
         counts = replay.run()
-        assert counts.failed_attempts == 1 and counts.forecast_steps == 48
+        assert counts.failed_attempts == 0 and counts.unfinished_attempts == 1
+        assert counts.forecast_steps == 48
+
+
+def test_active_request_is_unfinished_until_its_result_is_committed(setup_replay):
+    case = setup_replay
+
+    def handler(request):
+        with JournalReader(case.path) as reader:
+            counts = reader.counts()
+            assert counts.failed_attempts == 0
+            assert counts.unfinished_attempts == 1
+            assert counts.completed_forecasts == 0
+        body = json.loads(request.content)
+        return httpx.Response(
+            200, json={**case.prediction(body["history"]), "state": body["state"]}
+        )
+
+    with (
+        httpx.Client(transport=httpx.MockTransport(handler)) as client,
+        Replay(case.path, case.source, case.config, client=client) as replay,
+    ):
+        counts = replay.run()
+        assert counts.failed_attempts == counts.unfinished_attempts == 0
+        assert counts.completed_forecasts == 1
 
 
 @pytest.mark.parametrize("status", [301, 400, 401, 404, 422])

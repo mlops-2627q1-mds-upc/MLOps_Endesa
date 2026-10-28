@@ -162,7 +162,7 @@ class JournalReader:
         )
 
     def counts(self) -> ReplayCounts:
-        """Count unique committed records; attempts without a commit count as failed."""
+        """Count committed records, recorded failures and calls with unknown outcomes."""
         with self.snapshot():
             config = json.loads(self.run_info().config_json)
             progress = self.connection.execute(
@@ -174,7 +174,10 @@ class JournalReader:
             steps = self.connection.execute("SELECT count(*) FROM steps").fetchone()[0]
             matched = self.connection.execute("SELECT count(*) FROM matches").fetchone()[0]
             failed = self.connection.execute(
-                "SELECT count(*) FROM attempts WHERE outcome != 'succeeded'"
+                "SELECT count(*) FROM attempts WHERE outcome NOT IN ('started', 'succeeded')"
+            ).fetchone()[0]
+            unfinished = self.connection.execute(
+                "SELECT count(*) FROM attempts WHERE outcome = 'started'"
             ).fetchone()[0]
             next_index = progress["next_index"]
             next_origin = (
@@ -190,6 +193,7 @@ class JournalReader:
                 progress["clock_position"],
                 next_origin,
                 completed == expected and steps == matched,
+                unfinished,
             )
 
     def _step_rows(self, after_id: int, limit: int, matched: bool):
