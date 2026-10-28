@@ -175,5 +175,19 @@ join, delayed and partial release, overlapping origins, retry exhaustion across
 restarts, interrupted attempts, transactional rollback, schema/identity refusal,
 source/config mismatch, snapshot consistency and a real local HTTP lifecycle with
 a declared test predictor. They require no model weights or training. These are
-source/interface checks; real selected-model replay and Virtech end-to-end
-verification remain pending. No frozen final-test data is evaluated.
+source/interface checks. No frozen final-test data is evaluated.
+
+On 28 October, a [bounded selected-model replay](../monitoring/replay/validation-smoke.json)
+also passed on native macOS at commit `a021c3a`: the first 30 validation origins
+`[195696, 197136)` across all five states produced 150 forecasts and 7,200 matched
+steps, with delay 4 and zero final pending steps or failures. The first origin
+was partially released before closing and reopening the writer; repeating the
+completed invocation left counts unchanged. The API used one worker and two CPU
+threads and was stopped afterward. The recorded 160.18 seconds covers startup
+and the whole replay; it is not a request-latency benchmark or target-capacity
+measurement. This subset does not establish full-validation interval calibration.
+
+To reproduce that range with the CLI above, use `--origin-stop 197136`, all five
+states, `--max-forecasts 150 --max-seconds 300 --release-through 197140` and a new
+journal. Keep delay 4 and the recorded artifact/settings. Container execution,
+Windows lock checks and Virtech end-to-end verification remain pending.
