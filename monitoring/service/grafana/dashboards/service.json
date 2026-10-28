@@ -1,0 +1,434 @@
+{
+  "uid": "endesa-service",
+  "title": "Endesa service monitoring",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "timezone": "browser",
+  "refresh": "15s",
+  "tags": [
+    "endesa",
+    "service"
+  ],
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "Scope and interpretation",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "One API process, one worker. CPU is consumed cores; RSS is process resident bytes, not host/container usage or limits. Zero forecast rate means no completed forecasts; missing telemetry stays missing. Latency needs completed requests. Capacity thresholds await #76. [Prometheus alerts](http://127.0.0.1:9090/alerts) have no notification receiver configured."
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "API scrape reachable (1/0)",
+      "description": "0 means a failed scrape; no value means no target data.",
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{job=\"forecast-api\"}",
+          "legendFormat": "{{instance}}",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "No telemetry",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Model ready (1/0)",
+      "description": "A loaded predictor does not guarantee that every forecast succeeds.",
+      "gridPos": {
+        "x": 6,
+        "y": 3,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_model_ready{job=\"forecast-api\"} and on(job, instance) (up{job=\"forecast-api\"} == 1)",
+          "legendFormat": "{{instance}}",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "No telemetry",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Forecasts executing",
+      "description": "Executing predictor calls and output validation; not a queue or an admission limit.",
+      "gridPos": {
+        "x": 12,
+        "y": 3,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_forecasts_in_flight{job=\"forecast-api\"} and on(job, instance) (up{job=\"forecast-api\"} == 1)",
+          "legendFormat": "{{instance}}",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "No telemetry",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Process CPU/RSS available (1/0)",
+      "description": "0 is expected on macOS; unsupported CPU/RSS samples remain absent.",
+      "gridPos": {
+        "x": 18,
+        "y": 3,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_process_metrics_available{job=\"forecast-api\"} and on(job, instance) (up{job=\"forecast-api\"} == 1)",
+          "legendFormat": "{{instance}}",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "No telemetry",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Completed forecasts per second",
+      "description": "Includes validation and inference/output failures. Initial zero is observable before the first forecast.",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (status_class) (rate(endesa_http_requests_total{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval])) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "legendFormat": "{{status_class}}",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "noValue": "No telemetry",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Forecast HTTP latency",
+      "description": "Histogram estimates through response completion, including validation and failures. No completed requests means no estimate. Buckets are not a serving SLO.",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval])) > 0) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "legendFormat": "p50",
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval])) > 0) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "No telemetry",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "All HTTP errors per second",
+      "description": "4xx includes rejected inputs and unknown routes; 5xx includes unavailable inference and malformed output. Scrapes are excluded.",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (status_class) (rate(endesa_http_errors_total{job=\"forecast-api\"}[$__rate_interval])) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "legendFormat": "{{status_class}}",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "noValue": "No telemetry",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "API process CPU (cores)",
+      "description": "CPU seconds per wall second for this API process and its native threads; not host load or a percentage of container allocation.",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(process_cpu_seconds_total{job=\"forecast-api\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1)",
+          "legendFormat": "{{instance}}",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "No telemetry",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "API process RSS",
+      "description": "API process resident memory; excludes other processes and is not a cgroup working set or memory limit.",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "process_resident_memory_bytes{job=\"forecast-api\"} and on(job, instance) (up{job=\"forecast-api\"} == 1)",
+          "legendFormat": "{{instance}}",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "noValue": "No telemetry",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Seconds since latest scrape result",
+      "description": "Failed scrapes also produce fresh results. Read alongside reachability; absent samples stay absent.",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "time() - timestamp(up{job=\"forecast-api\"})",
+          "legendFormat": "{{instance}}",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "No telemetry",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    }
+  ]
+}

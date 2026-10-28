@@ -1,0 +1,62 @@
+name: Container smoke
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Container / smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      IMAGE: endesa-forecast:${{ github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build locked CPU runtime
+        run: docker build --build-arg GIT_SHA="$GITHUB_SHA" --tag "$IMAGE" .
+      - name: Inspect runtime and CPU dependencies
+        run: |
+          test "$(docker image inspect "$IMAGE" --format '{{.Config.User}}')" = '10001:10001'
+          test "$(docker image inspect "$IMAGE" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "$GITHUB_SHA"
+          docker image inspect "$IMAGE" --format 'image_id={{.Id}} revision={{index .Config.Labels "org.opencontainers.image.revision"}}'
+          docker run --rm --network none --entrypoint python "$IMAGE" -c '
+          import importlib.util, os, torch
+          from chronos import ChronosPipeline
+          assert os.getuid() == 10001
+          assert torch.version.cuda is None
+          assert all(importlib.util.find_spec(name) is None for name in ("mlflow", "dvc", "notebook", "jupyterlab", "pytest", "peft"))
+          assert not os.path.exists("/app/tests")
+          assert not os.path.exists("/app/src/modeling/train.py")
+          print("CPU runtime imports passed; training and test tools excluded")'
+      - name: Production entry point rejects absent weights
+        run: |
+          set +e
+          timeout 60 docker run --name missing-checkpoint --network none --cpus 2 "$IMAGE" > missing-checkpoint.log 2>&1
+          status=$?
+          set -e
+          cat missing-checkpoint.log
+          test "$status" -eq 3
+          grep -q 'Could not verify local checkpoint' missing-checkpoint.log
+          grep -q 'Application startup failed' missing-checkpoint.log
+      - name: Exercise HTTP through a mounted fixture harness
+        run: |
+          docker run --detach --name fixture-api --cpus 2 --memory 2g \
+            --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --publish 127.0.0.1:8000:8000 \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/tests/container,dst=/smoke,readonly" \
+            --env PYTHONPATH=/app:/smoke "$IMAGE" \
+            uvicorn fixture_app:create_app --factory --host 0.0.0.0 --port 8000 --workers 1
+          python3 tests/container/smoke.py http://127.0.0.1:8000 --require-process-metrics
+      - name: Logs and cleanup
+        if: always()
+        run: |
+          docker logs fixture-api 2>&1 || true
+          docker rm --force fixture-api missing-checkpoint 2>/dev/null || true

@@ -1,0 +1,767 @@
+{
+  "uid": "endesa-quality",
+  "title": "Endesa forecast quality",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "timezone": "browser",
+  "refresh": "15s",
+  "tags": [
+    "endesa",
+    "historical-replay",
+    "forecast-quality"
+  ],
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "state",
+        "label": "Horizon table state",
+        "type": "custom",
+        "query": "NSW,VIC,QLD,SA,TAS",
+        "current": {
+          "text": "NSW",
+          "value": "NSW"
+        },
+        "options": [
+          {
+            "text": "NSW",
+            "value": "NSW",
+            "selected": true
+          },
+          {
+            "text": "VIC",
+            "value": "VIC",
+            "selected": false
+          },
+          {
+            "text": "QLD",
+            "value": "QLD",
+            "selected": false
+          },
+          {
+            "text": "SA",
+            "value": "SA",
+            "selected": false
+          },
+          {
+            "text": "TAS",
+            "value": "TAS",
+            "selected": false
+          }
+        ],
+        "multi": false,
+        "includeAll": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "Historical replay scope and sample meaning",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "Selected p50 and lag48 use identical released rows. Source-scale errors; MASE uses training lag336. Coverage is descriptive, with no calibration SLO. Each group needs its report-declared sample minimum. Overlapping forecast errors are correlated; unique targets are separate counts. Report age measures refresh time, not new observations. Exact origin interval, model/settings, source and config identities remain in report.json. Status: 0 no forecasts, 1 pending observations, 2 insufficient samples, 3 sufficient."
+      }
+    },
+    {
+      "id": 2,
+      "title": "Exporter scrape reachable (1/0)",
+      "type": "stat",
+      "description": "A failed scrape is 0; absent target data stays absent.",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{job=\"forecast-quality\"}",
+          "legendFormat": "{{instance}}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Valid fresh report available (1/0)",
+      "type": "stat",
+      "description": "0 covers missing, invalid or stale reports. Quality panels omit these measurements.",
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_report_available{job=\"forecast-quality\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{instance}}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Report refresh age",
+      "type": "stat",
+      "description": "Age of report publication, not observation age or replay progress.",
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_report_age_seconds{job=\"forecast-quality\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{instance}}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "State MAE on identical matched rows",
+      "type": "timeseries",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_mae{job=\"forecast-quality\",horizon=\"all\",model_role=\"selected\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{state}} selected",
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "expr": "endesa_quality_mae{job=\"forecast-quality\",horizon=\"all\",model_role=\"seasonal_lag48\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{state}} seasonal_lag48",
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "State empirical p10-p90 coverage",
+      "type": "timeseries",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_empirical_coverage{job=\"forecast-quality\",horizon=\"all\",model_role=\"selected\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{state}}",
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "State MASE using training lag336",
+      "type": "timeseries",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_mase{job=\"forecast-quality\",horizon=\"all\",model_role=\"selected\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{state}} selected",
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "expr": "endesa_quality_mase{job=\"forecast-quality\",horizon=\"all\",model_role=\"seasonal_lag48\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{state}} seasonal_lag48",
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "State mean p10-p90 width",
+      "type": "timeseries",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 15,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_mean_interval_width{job=\"forecast-quality\",horizon=\"all\",model_role=\"selected\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{state}}",
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Matched and pending steps by state",
+      "type": "timeseries",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_matched_steps{job=\"forecast-quality\",horizon=\"all\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{state}} matched_steps",
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "expr": "endesa_quality_pending_steps{job=\"forecast-quality\",horizon=\"all\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{state}} pending_steps",
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Matched forecasts and unique targets by state",
+      "type": "timeseries",
+      "description": "Forecast errors may share targets; these are distinct counts, not independent-sample claims.",
+      "gridPos": {
+        "x": 12,
+        "y": 22,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_matched_forecast_count{job=\"forecast-quality\",horizon=\"all\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{state}} matched_forecast_count",
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "expr": "endesa_quality_unique_matched_targets{job=\"forecast-quality\",horizon=\"all\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{state}} unique_matched_targets",
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Horizon empirical coverage",
+      "type": "table",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_empirical_coverage{job=\"forecast-quality\",state=\"$state\",horizon!=\"all\",model_role=\"selected\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{horizon}}",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "horizon",
+                "destinationType": "number"
+              }
+            ]
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "horizon",
+                "desc": false
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "job": true,
+              "instance": true,
+              "state": true,
+              "model_role": true,
+              "__name__": true
+            },
+            "renameByName": {
+              "horizon": "Horizon",
+              "Value": "Horizon empirical coverage"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Horizon mean interval width",
+      "type": "table",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 29,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_mean_interval_width{job=\"forecast-quality\",state=\"$state\",horizon!=\"all\",model_role=\"selected\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{horizon}}",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "horizon",
+                "destinationType": "number"
+              }
+            ]
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "horizon",
+                "desc": false
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "job": true,
+              "instance": true,
+              "state": true,
+              "model_role": true,
+              "__name__": true
+            },
+            "renameByName": {
+              "horizon": "Horizon",
+              "Value": "Horizon mean interval width"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Horizon matched sample count",
+      "type": "table",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_matched_steps{job=\"forecast-quality\",state=\"$state\",horizon!=\"all\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{horizon}}",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "horizon",
+                "destinationType": "number"
+              }
+            ]
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "horizon",
+                "desc": false
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "job": true,
+              "instance": true,
+              "state": true,
+              "model_role": true,
+              "__name__": true
+            },
+            "renameByName": {
+              "horizon": "Horizon",
+              "Value": "Horizon matched sample count"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Horizon sample status",
+      "type": "table",
+      "description": "",
+      "gridPos": {
+        "x": 12,
+        "y": 39,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "No current evidence",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_sample_status{job=\"forecast-quality\",state=\"$state\",horizon!=\"all\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{horizon}}",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "horizon",
+                "destinationType": "number"
+              }
+            ]
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "horizon",
+                "desc": false
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "job": true,
+              "instance": true,
+              "state": true,
+              "model_role": true,
+              "__name__": true
+            },
+            "renameByName": {
+              "horizon": "Horizon",
+              "Value": "Horizon sample status"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
