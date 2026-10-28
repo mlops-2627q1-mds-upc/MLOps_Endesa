@@ -8,6 +8,7 @@ from io import BytesIO
 import json
 import math
 from pathlib import Path
+import sqlite3
 import sys
 
 import numpy as np
@@ -374,7 +375,7 @@ def main(argv: list[str] | None = None) -> int:
         with JournalReader(args.journal) as reader:
             report = quality_report(reader, args.data_dir, args.params, policy)
         print(json.dumps(report, sort_keys=True, allow_nan=False))
-    except (OSError, ValueError, KeyError, TypeError, OverflowError) as exc:
+    except (OSError, ValueError, KeyError, TypeError, OverflowError, sqlite3.Error) as exc:
         print(f"Forecast quality report failed: {exc}", file=sys.stderr)
         return 1
     return 0

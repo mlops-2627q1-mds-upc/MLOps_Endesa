@@ -5,7 +5,9 @@ from dataclasses import replace
 import json
 from types import SimpleNamespace
 
+from fastapi.testclient import TestClient
 import httpx
+from monitoring.quality.exporter import create_app as create_quality_exporter
 import numpy as np
 import pandas as pd
 import pytest
@@ -377,9 +379,39 @@ def test_cli_reports_valid_json_and_fails_without_partial_output(quality_case, c
     output = capsys.readouterr()
     assert json.loads(output.out)["replay_counts"]["matched_steps"] == 192
     assert output.err == ""
+    report_path = case.directory / "report.json"
+    report_path.write_text(output.out)
+    with TestClient(create_quality_exporter(report_path)) as client:
+        response = client.get("/metrics")
+        assert response.status_code == 200
+        assert "endesa_quality_report_available 1.0" in response.text
+        assert (
+            'endesa_quality_mae{horizon="all",model_role="selected",state="NSW"} 3.0'
+            in response.text
+        )
     assert main([*args, "--max-steps", "1"]) == 1
     output = capsys.readouterr()
     assert output.out == "" and "max_steps" in output.err
+
+
+def test_cli_missing_journal_fails_without_creating_it(quality_case, capsys):
+    case = quality_case
+    assert (
+        main(
+            [
+                "--journal",
+                str(case.path),
+                "--data-dir",
+                str(case.directory),
+                "--params",
+                str(case.params),
+            ]
+        )
+        == 1
+    )
+    output = capsys.readouterr()
+    assert output.out == "" and "failed" in output.err
+    assert not case.path.exists()
 
 
 @pytest.mark.parametrize(
