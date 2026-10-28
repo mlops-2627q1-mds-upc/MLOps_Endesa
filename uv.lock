@@ -3409,6 +3409,7 @@ dependencies = [
     { name = "codecarbon" },
     { name = "dvc" },
     { name = "dvc-http" },
+    { name = "fastapi" },
     { name = "great-expectations" },
     { name = "ipython" },
     { name = "jupyterlab" },
@@ -3420,11 +3421,13 @@ dependencies = [
     { name = "pandas" },
     { name = "pip" },
     { name = "pyarrow" },
+    { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
     { name = "scikit-learn" },
     { name = "tqdm" },
     { name = "typer" },
+    { name = "uvicorn" },
 ]
 
 [package.optional-dependencies]
@@ -3438,6 +3441,7 @@ forecast = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "httpx" },
     { name = "pylint" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -3450,6 +3454,7 @@ requires-dist = [
     { name = "codecarbon", specifier = ">=3.3.1" },
     { name = "dvc", specifier = ">=3.67.1" },
     { name = "dvc-http", specifier = ">=2.32.0" },
+    { name = "fastapi", specifier = ">=0.142.2,<1" },
     { name = "great-expectations", specifier = ">=1.24.0" },
     { name = "ipython" },
     { name = "jupyterlab" },
@@ -3462,6 +3467,7 @@ requires-dist = [
     { name = "peft", marker = "extra == 'forecast'", specifier = ">=0.21.2,<1" },
     { name = "pip" },
     { name = "pyarrow", specifier = ">=25.0.1" },
+    { name = "pydantic", specifier = ">=2.13.5,<3" },
     { name = "python-dotenv" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "scikit-learn" },
@@ -3470,11 +3476,13 @@ requires-dist = [
     { name = "torch", marker = "sys_platform == 'win32' and extra == 'forecast'", specifier = ">=2.2,<3", index = "https://download.pytorch.org/whl/cu130" },
     { name = "tqdm" },
     { name = "typer" },
+    { name = "uvicorn", specifier = ">=0.54.0,<1" },
 ]
 provides-extras = ["forecast"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "httpx", specifier = ">=0.28.1,<1" },
     { name = "pylint", specifier = ">=4.1.2" },
     { name = "pytest" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
