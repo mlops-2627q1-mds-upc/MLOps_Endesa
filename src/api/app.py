@@ -7,8 +7,10 @@ from typing import Protocol
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
+from src.api.metrics import MetricsMiddleware, ServiceMetrics
 from src.api.schemas import ForecastRequest, ForecastResponse
 from src.api.settings import Settings
 from src.modeling.predict import ChronosForecaster, ForecastConfig
@@ -54,6 +56,14 @@ def create_app(
 
     application = FastAPI(title="Endesa forecast API", lifespan=lifespan)
     application.state.predictor = None
+    metrics = ServiceMetrics(lambda: application.state.predictor is not None)
+    application.state.metrics = metrics
+    application.add_middleware(MetricsMiddleware, metrics=metrics)
+
+    @application.get("/metrics", include_in_schema=False)
+    async def prometheus_metrics():
+        """Expose this app's metrics; scrapes do not increment HTTP workload metrics."""
+        return Response(generate_latest(metrics.registry), media_type=CONTENT_TYPE_LATEST)
 
     @application.exception_handler(RequestValidationError)
     async def invalid_request(_request: Request, error: RequestValidationError):
@@ -86,15 +96,16 @@ def create_app(
         predictor = application.state.predictor
         if predictor is None:
             raise HTTPException(status_code=503, detail="Model unavailable")
-        try:
-            prediction = predictor.predict(payload.history)
-        except Exception as error:  # pylint: disable=broad-exception-caught
-            LOGGER.error("Forecast inference failed")
-            raise HTTPException(status_code=503, detail="Forecast unavailable") from error
-        try:
-            return ForecastResponse.model_validate({**prediction, "state": payload.state})
-        except (TypeError, ValueError) as error:
-            LOGGER.error("Forecast output validation failed")
-            raise HTTPException(status_code=500, detail="Invalid forecast output") from error
+        with metrics.in_flight.track_inprogress():
+            try:
+                prediction = predictor.predict(payload.history)
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                LOGGER.error("Forecast inference failed")
+                raise HTTPException(status_code=503, detail="Forecast unavailable") from error
+            try:
+                return ForecastResponse.model_validate({**prediction, "state": payload.state})
+            except (TypeError, ValueError) as error:
+                LOGGER.error("Forecast output validation failed")
+                raise HTTPException(status_code=500, detail="Invalid forecast output") from error
 
     return application

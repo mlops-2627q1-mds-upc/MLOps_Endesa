@@ -30,6 +30,7 @@ dependencies = [
     "numpy",
     "pandas",
     "pip",
+    "prometheus-client>=0.26.0,<1",
     "pyarrow>=25.0.1",
     "pydantic>=2.13.5,<3",
     "python-dotenv",
@@ -66,6 +67,21 @@ url = "https://download.pytorch.org/whl/cu130"
 explicit = true
 
 [dependency-groups]
+# Install with --only-group serving: keep the existing development/training layout.
+serving = [
+    "chronos-forecasting>=2.3.2,<3",
+    "fastapi>=0.142.2,<1",
+    "loguru",
+    "numpy",
+    "pandas",
+    "prometheus-client>=0.26.0,<1",
+    "pydantic>=2.13.5,<3",
+    "python-dotenv",
+    "pyyaml>=6.0.3",
+    "torch>=2.2,<3",
+    "typer",
+    "uvicorn>=0.54.0,<1",
+]
 dev = [
     "httpx>=0.28.1,<1",
     "pylint>=4.1.2",
