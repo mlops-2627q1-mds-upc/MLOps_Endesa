@@ -170,6 +170,7 @@ class ReplayCounts:
     clock_position: int
     next_origin: int | None
     complete: bool
+    unfinished_attempts: int = 0
 
 
 @dataclass(frozen=True)

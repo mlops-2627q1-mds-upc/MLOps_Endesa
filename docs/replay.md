@@ -112,7 +112,7 @@ reuse that cursor for another run.
 | Reader method | Record and meaning |
 | --- | --- |
 | `run_info()` | `RunInfo`: run ID, config/source SHA-256, canonical config/source manifest, `ModelIdentity`. |
-| `counts()` | `ReplayCounts`: expected/completed forecasts, step/matched/pending counts, failed attempts, clock, next origin and completion. |
+| `counts()` | `ReplayCounts`: expected/completed forecasts, step/matched/pending counts, failed/unfinished attempts, clock, next origin and completion. |
 | `forecast_steps(after_id=0, limit=1000)` | `ForecastStep`: stable step ID, forecast ID, state, origin, 1-based horizon, target position, p10/p50/p90, lag-48 baseline, model/source identity and input hash. Includes pending predictions without hidden labels. |
 | `matched_observations(after_id=0, limit=1000)` | `MatchedObservation`: the same forecast fields plus forecast step ID, observed value and scheduled release position. Its `id` is a separate monotonic **match** ID. |
 | `released_observations(after_id=0, limit=1000)` | `ReleasedObservation`: monotonic observation ID, state, position, value, scheduled release position, source reference and config hash. Unique per `(state, position)`, regardless of forecast overlap. |
@@ -132,8 +132,12 @@ unissued forecasts contribute no steps. Overlapping forecasts each receive their
 own join for a target; drift instead uses the deduplicated observation reader.
 `next_origin` becomes `None` when all requests finish, even if labels remain
 pending. `complete` requires all expected forecasts and all their released joins.
-Failed attempts count attempts without a committed forecast, including an
-interrupted request with unknown remote outcome.
+`failed_attempts` counts recorded transport, HTTP, schema or identity failures.
+`unfinished_attempts` counts calls started without a committed result: a request
+may still be running, or an interruption may have left its remote outcome unknown.
+Neither a running call nor an unknown outcome is reported as a confirmed failure.
+Both consume the durable attempt budget until the run ends; an unknown outcome
+stays visible even if a later attempt succeeds.
 
 ## Persistence, retries and retention
 
@@ -171,5 +175,19 @@ join, delayed and partial release, overlapping origins, retry exhaustion across
 restarts, interrupted attempts, transactional rollback, schema/identity refusal,
 source/config mismatch, snapshot consistency and a real local HTTP lifecycle with
 a declared test predictor. They require no model weights or training. These are
-source/interface checks; real selected-model replay and Virtech end-to-end
-verification remain pending. No frozen final-test data is evaluated.
+source/interface checks. No frozen final-test data is evaluated.
+
+On 28 October, a [bounded selected-model replay](../monitoring/replay/validation-smoke.json)
+also passed on native macOS at commit `a021c3a`: the first 30 validation origins
+`[195696, 197136)` across all five states produced 150 forecasts and 7,200 matched
+steps, with delay 4 and zero final pending steps or failures. The first origin
+was partially released before closing and reopening the writer; repeating the
+completed invocation left counts unchanged. The API used one worker and two CPU
+threads and was stopped afterward. The recorded 160.18 seconds covers startup
+and the whole replay; it is not a request-latency benchmark or target-capacity
+measurement. This subset does not establish full-validation interval calibration.
+
+To reproduce that range with the CLI above, use `--origin-stop 197136`, all five
+states, `--max-forecasts 150 --max-seconds 300 --release-through 197140` and a new
+journal. Keep delay 4 and the recorded artifact/settings. Container execution,
+Windows lock checks and Virtech end-to-end verification remain pending.
