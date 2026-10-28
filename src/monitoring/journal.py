@@ -268,12 +268,16 @@ class ReplayJournal(JournalReader):
         path.parent.mkdir(parents=True, exist_ok=True)
         try:
             self._resources.enter_context(_writer_lock(path.with_suffix(path.suffix + ".lock")))
-            existed = path.exists()
             self.connection = sqlite3.connect(path, isolation_level=None)
             self._resources.callback(self.connection.close)
             self.connection.row_factory = sqlite3.Row
             self.connection.execute("PRAGMA foreign_keys=ON")
-            if not existed:
+            # SQLite can leave an empty file after interrupted first initialization.
+            # Recover only a pristine database, without altering foreign schemas.
+            version = self.connection.execute("PRAGMA user_version").fetchone()[0]
+            application = self.connection.execute("PRAGMA application_id").fetchone()[0]
+            populated = self.connection.execute("SELECT 1 FROM sqlite_master LIMIT 1").fetchone()
+            if version == 0 and application == 0 and populated is None:
                 self.connection.executescript(SCHEMA)
             self._validate_schema()
             self.connection.execute("PRAGMA journal_mode=WAL")

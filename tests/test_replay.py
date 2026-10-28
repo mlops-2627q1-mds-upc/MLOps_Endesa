@@ -6,6 +6,8 @@ from dataclasses import asdict, replace
 import json
 import socket
 import sqlite3
+import subprocess
+import sys
 from threading import Thread
 import time
 from types import SimpleNamespace
@@ -564,6 +566,48 @@ def test_reader_refuses_unknown_schema_and_invalid_pages(tmp_path, setup_replay)
         for kwargs in ({"limit": 0}, {"limit": 10001}, {"after_id": -1}, {"after_id": True}):
             with pytest.raises(ValueError):
                 reader.matched_observations(**kwargs)
+
+
+@pytest.mark.parametrize("during_schema", [False, True])
+def test_writer_recovers_interrupted_initialization(setup_replay, during_schema):
+    case = setup_replay
+    script = """
+import os, sqlite3, sys
+connection = sqlite3.connect(sys.argv[1], isolation_level=None)
+if sys.argv[2] == "True":
+    connection.execute("BEGIN IMMEDIATE")
+    connection.execute("CREATE TABLE incomplete (id INTEGER)")
+os._exit(73)
+"""
+    child = subprocess.run(
+        [sys.executable, "-c", script, str(case.path), str(during_schema)],
+        check=False,
+        timeout=10,
+    )
+    assert child.returncode == 73
+    with Replay(case.path, case.source, case.config, client=case.client) as replay:
+        assert replay.journal.counts().completed_forecasts == 0
+        assert replay.run().completed_forecasts == 1
+        run_id = replay.journal.run_info().run_id
+    with Replay(case.path, case.source, case.config, client=case.client) as replay:
+        assert replay.journal.run_info().run_id == run_id
+        assert replay.run().completed_forecasts == 2
+    assert len(case.calls) == 2
+
+
+@pytest.mark.parametrize(
+    "foreign_schema",
+    ["CREATE TABLE unrelated (id INTEGER)", "PRAGMA user_version=99", "PRAGMA application_id=1"],
+)
+def test_writer_preserves_foreign_uninitialized_database(setup_replay, foreign_schema):
+    case = setup_replay
+    with sqlite3.connect(case.path) as connection:
+        connection.execute(foreign_schema)
+    before = case.path.read_bytes()
+    with pytest.raises(ValueError, match="schema"):
+        Replay(case.path, case.source, case.config, client=case.client)
+    assert case.path.read_bytes() == before
+    assert case.calls == []
 
 
 def test_journal_aliases_share_the_single_writer_lock(tmp_path, setup_replay):
