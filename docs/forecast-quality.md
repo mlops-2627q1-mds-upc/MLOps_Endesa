@@ -137,7 +137,7 @@ checks, with no external notification receiver or quality alert threshold.
 
 ## Bounded selected-model observation
 
-The coordinator supplied a real selected-model validation journal for the first
+The selected-model validation replay covers the first
 30 declared origins `[195696,197136)`, stride48, across all five states, with a
 four-position observation delay. Its exact source/model identities match the
 consumer's local train/validation verification. All 150 forecasts have 7,200
@@ -159,5 +159,5 @@ validation calibration, a coverage target, general model superiority, or target
 deployment performance. No threshold tuning, final-test scoring or additional
 model inference was performed by the consumer. The
 [versioned summary](../monitoring/quality/validation-subset.json) retains identities,
-counts and exact aggregate results; the coordinator retains the journal and full
-per-horizon JSON report separately from Git.
+counts and exact aggregate results. The journal and full per-horizon JSON report
+are retained outside Git.

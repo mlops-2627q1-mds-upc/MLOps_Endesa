@@ -151,7 +151,7 @@
       "stop": 195696
     }
   },
-  "metric_implementation_commit": "fdce951",
+  "metric_source_sha256": "dd4243000de733e787f79e246cbcbd45a8e95a73b3966a2cf7208caf025ce783",
   "per_horizon_evidence": {
     "NSW": {
       "empirical_coverage_max": 0.9,
@@ -214,6 +214,7 @@
       ]
     }
   },
+  "quality_source_commit": "395a72c8600ef27738516b852765960e956dc85b",
   "recorded_at": "2026-10-28",
   "replay_counts": {
     "clock_position": 197140,
@@ -228,5 +229,6 @@
     "unfinished_attempts": 0
   },
   "replay_implementation_commit": "a021c3a03298d5668dce0f4dcceed0c0e408d800",
+  "replay_reader_commit": "8985ed016714017128d964c49ff2013c8662dcfd",
   "scope": "First 30 validation origins across five states; historical positional replay"
 }
