@@ -91,6 +91,8 @@ therefore produce only `insufficient_data`, even if all its forecasts completed.
 The CLI saves completed tests and their input hashes atomically with the result.
 An identical retry reuses those results. Changed tested values, a changed
 campaign/reference/source, a corrupt checkpoint, or a backward clock fail closed.
+An existing empty or null report is rejected and preserved; only a missing report
+starts a new checkpoint.
 Incomplete windows can be retried before later complete windows for that state;
 an incomplete earlier slot remains reportable on subsequent polls. A file lock
 prevents concurrent CLI writers to one checkpoint. Retain the same output path

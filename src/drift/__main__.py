@@ -9,7 +9,7 @@ import tempfile
 import pandas as pd
 
 from src.drift.assessment import assess_controls, fixture_data
-from src.drift.core import build_reference
+from src.drift.core import build_reference, is_integer
 from src.drift.data import DEFAULT_CONFIG, ROOT, load_config, load_data
 from src.drift.replay import assess_replay
 
@@ -58,10 +58,22 @@ def _run_replay(args):
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(str(args.output) + ".lock", timeout=0):
-        previous = json.loads(args.output.read_text()) if args.output.exists() else None
-        checkpoint = previous["checkpoint"] if previous else None
+        previous = None
+        if args.output.exists():
+            previous = json.loads(args.output.read_text())
+            if (
+                not isinstance(previous, dict)
+                or not isinstance(previous.get("checkpoint"), dict)
+                or not is_integer(previous.get("snapshot_clock_position"))
+                or previous["snapshot_clock_position"] < 0
+            ):
+                raise ValueError("Existing drift report requires a valid checkpoint and clock")
+        checkpoint = previous["checkpoint"] if previous is not None else None
         with JournalReader(args.journal) as reader:
-            if previous and reader.counts().clock_position < previous["snapshot_clock_position"]:
+            if (
+                previous is not None
+                and reader.counts().clock_position < previous["snapshot_clock_position"]
+            ):
                 raise ValueError("replay clock moved backwards from the saved checkpoint")
             report = assess_replay(
                 reader,

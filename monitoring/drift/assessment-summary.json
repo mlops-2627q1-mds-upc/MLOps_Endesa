@@ -1,5 +1,7 @@
 {
   "assessment_repetition": "Initial PyArrow 26 reader failure was fixed with <26. The same declared assessment was repeated after explicit float64 intervention arithmetic and identity/schema fixes; every alert window and first delay matched the initial successful result. No settings search was performed.",
+  "assessment_source_commit": "3e81efad5b49d501f0cac52af27e988dcd6a1b03",
+  "implementation_hash_scope": "Source used for the recorded assessments. Later CLI checkpoint-recovery changes do not change the detector or these measurements.",
   "implementation_sha256": {
     "src/drift/__init__.py": "ea14c155f35323dc82123c9b2cc48c5478496524376afdd2f6e3876e800960ef",
     "src/drift/__main__.py": "53f130dced4159387f7eb929720aa1adc06ac9690e2cc9c7ebb8619ad093ac06",
