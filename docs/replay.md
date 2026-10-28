@@ -141,7 +141,9 @@ stays visible even if a later attempt succeeds.
 
 ## Persistence, retries and retention
 
-SQLite uses full synchronization, foreign keys and WAL. An OS advisory lock
+SQLite uses full synchronization, foreign keys and WAL. An empty database left by
+interrupted first initialization is initialized on retry; foreign or unsupported
+schemas are refused. An OS advisory lock
 admits one writer per journal and is released automatically on process exit;
 readers open the journal read-only. POSIX locking is tested locally; the Windows
 locking branch requires platform verification. A forecast's 48 records, successful
