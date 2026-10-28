@@ -1,5 +1,7 @@
 """Check the image source boundary and HTTP harness without weights or Docker."""
 
+from contextlib import nullcontext
+from email.message import Message
 from http.client import RemoteDisconnected
 import os
 from pathlib import Path
@@ -8,6 +10,7 @@ import shutil
 import socket
 import subprocess
 import sys
+from types import SimpleNamespace
 from unittest.mock import Mock, call
 
 import pytest
@@ -17,6 +20,37 @@ from tests.container.fixture_app import FixturePredictor
 from tests.container.smoke import run_smoke
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.mark.parametrize("case", ["complete-linux", "missing-rss", "unavailable"])
+def test_metrics_smoke_requires_linux_process_samples(monkeypatch, case):
+    samples = [
+        "endesa_model_ready 1",
+        "endesa_forecasts_in_flight 0",
+        'endesa_http_requests_total{method="POST",route="/forecast",status_class="2xx"} 1',
+        'endesa_http_requests_total{method="POST",route="/forecast",status_class="4xx"} 1',
+        'endesa_http_requests_total{method="POST",route="/forecast",status_class="5xx"} 0',
+        'endesa_http_request_duration_seconds_count{method="POST",route="/forecast"} 2',
+        f"endesa_process_metrics_available {int(case != 'unavailable')}",
+    ]
+    if case != "unavailable":
+        samples.append("process_cpu_seconds_total 0.1")
+    if case == "complete-linux":
+        samples.append("process_resident_memory_bytes 1024")
+    headers = Message()
+    headers["Content-Type"] = "text/plain; version=1.0.0; charset=utf-8"
+    response = SimpleNamespace(
+        status=200, headers=headers, read=lambda: "\n".join(samples).encode()
+    )
+    monkeypatch.setattr(smoke, "urlopen", lambda *_args, **_kwargs: nullcontext(response))
+    if case == "complete-linux":
+        assert smoke.check_metrics("http://fixture", require_process_metrics=True) == {
+            "ready": 1,
+            "process_metrics_available": 1,
+        }
+    else:
+        with pytest.raises((AssertionError, KeyError)):
+            smoke.check_metrics("http://fixture", require_process_metrics=True)
 
 
 @pytest.mark.parametrize("failure", [ConnectionResetError, RemoteDisconnected])
@@ -34,6 +68,8 @@ def test_startup_retries_transient_disconnect_then_checks_every_endpoint(monkeyp
     )
     sleep = Mock()
     monkeypatch.setattr(smoke, "request", transport)
+    metrics = Mock(return_value={"ready": 1, "process_metrics_available": 0})
+    monkeypatch.setattr(smoke, "check_metrics", metrics)
     monkeypatch.setattr(smoke.time, "monotonic", Mock(side_effect=[0.0, 0.1]))
     monkeypatch.setattr(smoke.time, "sleep", sleep)
 
@@ -48,6 +84,7 @@ def test_startup_retries_transient_disconnect_then_checks_every_endpoint(monkeyp
         call("http://fixture", "/forecast", {**payload, "history": [1]}),
     ]
     sleep.assert_called_once_with(0.1)
+    metrics.assert_called_once_with("http://fixture", False)
 
 
 def test_persistent_startup_reset_fails_at_deadline_without_further_checks(monkeypatch):

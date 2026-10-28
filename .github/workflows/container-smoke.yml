@@ -54,7 +54,7 @@ jobs:
             --mount "type=bind,src=$GITHUB_WORKSPACE/tests/container,dst=/smoke,readonly" \
             --env PYTHONPATH=/app:/smoke "$IMAGE" \
             uvicorn fixture_app:create_app --factory --host 0.0.0.0 --port 8000 --workers 1
-          python3 tests/container/smoke.py http://127.0.0.1:8000
+          python3 tests/container/smoke.py http://127.0.0.1:8000 --require-process-metrics
       - name: Logs and cleanup
         if: always()
         run: |

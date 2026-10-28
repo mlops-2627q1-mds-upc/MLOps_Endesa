@@ -12,6 +12,7 @@
 !src/splits.py
 !src/api/__init__.py
 !src/api/app.py
+!src/api/metrics.py
 !src/api/schemas.py
 !src/api/settings.py
 !src/modeling/__init__.py

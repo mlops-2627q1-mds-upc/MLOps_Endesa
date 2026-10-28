@@ -23,7 +23,7 @@ ENV PATH="/app/.venv/bin:${PATH}" \
 COPY --from=dependencies /app/.venv /app/.venv
 COPY params.yaml ./
 COPY src/__init__.py src/config.py src/evaluation.py src/splits.py ./src/
-COPY src/api/__init__.py src/api/app.py src/api/schemas.py src/api/settings.py ./src/api/
+COPY src/api/__init__.py src/api/app.py src/api/metrics.py src/api/schemas.py src/api/settings.py ./src/api/
 COPY src/modeling/__init__.py src/modeling/predict.py src/modeling/checkpoints.py ./src/modeling/
 COPY models/chronos-t5-small-fine-tuned.provenance.json ./models/
 USER 10001:10001
