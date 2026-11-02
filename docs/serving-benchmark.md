@@ -14,6 +14,9 @@ target latency requirement, resource recommendation or deployment success is
 established by the local fixture. Engineering-decision drafts are kept outside Git. This document describes the
 benchmark interface, execution protocol and evidence boundaries.
 
+The completed target observations are recorded in the
+[2 November experiment report](experiments/009-serving-benchmark.md).
+
 ## Declare the experiment before execution
 
 Retain a JSON plan before launch. The plan contains the complete request,
