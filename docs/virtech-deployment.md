@@ -26,8 +26,11 @@ merge acceptance, #75 peer review, performance or final-test accuracy.
    `sudo apt-get install --no-install-recommends docker.io git ca-certificates`.
    Do not run a distribution upgrade or change the kernel/cgroup mode for this task.
    Inspect `sudo docker info` for the actual cgroup version and driver.
-4. Use Python 3.11 for the deployment tools and independent client. They use only
-   its standard library. The serving dependencies remain inside the existing
+4. Use Python 3.11 for the deployment tools and independent client. The deployment
+   modules use its standard library; the existing `src` package bootstrap also
+   imports the locked `python-dotenv` and `loguru` packages. In the isolated
+   interpreter install these with `uv pip install --python "$PY" --no-deps
+   python-dotenv==1.2.3 loguru==0.7.3`. The serving dependencies remain inside the
    [CPU image](container.md). An installed uv can provide Python with
    `uv python install 3.11.15`. The verified uv image reference used by the
    Dockerfile is also usable for a temporary `docker create` / `docker cp /uv`

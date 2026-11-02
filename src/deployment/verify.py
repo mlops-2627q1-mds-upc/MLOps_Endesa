@@ -200,7 +200,7 @@ def verify(base_url: str, receipt: dict, payload: dict, *, timeout=30, stopped=F
 
 
 def main(argv=None):
-    """Run without installing serving/model dependencies on the client."""
+    """Run with project bootstrap packages; no serving/model dependencies on the client."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--receipt", required=True, type=Path)
