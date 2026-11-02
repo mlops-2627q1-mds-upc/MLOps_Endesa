@@ -160,10 +160,22 @@ an isolated probe with no weights, ports or network and the normal image entry
 point. Expected: model initialization diagnostic, exit 3, no OOM. The tooling
 stops/removes only that probe, including on a failed check.
 
-Run `restart`, retain its new receipt and repeat the separate-client checks. Run
-`stop`, then run the client with `--expect-stopped`; both probes must receive
-connection refusal rather than a timeout or response from another service.
-Run `start` again and repeat verification so the final deployment remains healthy.
+Run `restart`, retain its new receipt and repeat the Mac/client checks through
+SSH. Run `stop`, then verify refusal with a **separate target-local client** using
+the target's direct loopback URL (copy the same smoke request to the target first):
+
+```sh
+"$PY" -m src.deployment.verify --base-url "http://127.0.0.1:$PORT" \
+  --receipt "$WORK/evidence/restarted.json" --request "$WORK/request75.json" \
+  --lock-file "$WORK/compute.lock" --output "$WORK/evidence/http-stopped.json" \
+  --expect-stopped
+```
+
+Both direct target probes must receive TCP connection refusal. An SSH forwarding
+socket can stay open after the target service stops, so a forwarded disconnect is
+not this refusal check. Initial, restarted and final live HTTP checks run from the
+Mac through SSH; the stopped probe runs on the target. Run `start` again and repeat
+the Mac/client verification so the final deployment remains healthy.
 Use a new `--output` file for every operation; existing evidence is never replaced.
 `inspect` captures a fresh inspection. `remove` requires a matching stopped
 container; it does not delete images, checkpoints, volumes or other services.
