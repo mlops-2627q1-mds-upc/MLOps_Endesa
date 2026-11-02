@@ -47,6 +47,12 @@ mechanism. Both are optional for public remotes and required together otherwise.
 Credentials are passed to DVC in memory, never written to remote configuration or
 included in the report, and removed from the child environment for later checks.
 
+To establish retrieval independently of an existing model cache, start with an
+absent selected-model directory and an empty private DVC cache. Record those
+conditions before running `--pull`. Use an ignored `.dvc/config.local` to select
+the private `cache.dir`; preserve any existing configuration and verified weights.
+A successful run using a populated cache alone does not establish remote access.
+
 Omit `--pull` when artifacts are already present. Existing artifacts can also be
 read from another location without copying weights:
 
@@ -98,14 +104,76 @@ forecast environment and calls the same command with `--pull`. Its job cap is
 30 minutes, including setup and evidence upload. It has read-only repository
 permissions, serializes runs and does not cancel a running validation.
 
-The workflow references optional repository secrets `DVC_HTTP_USER` and
-`DVC_HTTP_PASSWORD`. Their availability and remote access must be verified before
-claiming that retrieval works in Actions. A local authenticated pull does not
-establish runner access. The workflow has not been remotely executed as part of
-this implementation.
+The workflow references repository secrets `DVC_HTTP_USER` and
+`DVC_HTTP_PASSWORD`. Both names were verified present on 2 November 2026; only
+the GitHub secret names were inspected. Their presence does not establish
+authentication or retrieval from Actions. On that date, this workflow was absent from `main`
+and GitHub's workflow registry, so no remote release-validation run was attempted.
+The remaining prerequisite is availability through the normal reviewed merge,
+including the upstream inference dependency in PR #52. That PR has Pau's approval
+on its current head but remains unmerged; PR #87 still requires human review.
+
+After the reviewed workflow reaches `main`, record its intended source SHA and
+dispatch it with the authorized GitHub account:
+
+```sh
+gh api repos/mlops-2627q1-mds-upc/MLOps_Endesa/commits/main --jq .sha
+gh workflow run release-validation.yml \
+  --repo mlops-2627q1-mds-upc/MLOps_Endesa --ref main
+gh run list --repo mlops-2627q1-mds-upc/MLOps_Endesa \
+  --workflow release-validation.yml --event workflow_dispatch --branch main \
+  --json databaseId,headSha,status,conclusion,url
+```
+
+Select the resulting run by its source SHA and invocation time. Use its actual
+run ID and attempt in the following commands; `RUN_ID` and `ATTEMPT` are
+placeholders:
+
+```sh
+gh run watch RUN_ID --repo mlops-2627q1-mds-upc/MLOps_Endesa --exit-status
+gh run view RUN_ID --repo mlops-2627q1-mds-upc/MLOps_Endesa \
+  --json headSha,attempt,status,conclusion,url
+gh run download RUN_ID --repo mlops-2627q1-mds-upc/MLOps_Endesa \
+  --name release-validation-RUN_ID-ATTEMPT \
+  --dir temporary/release-actions-RUN_ID-ATTEMPT
+```
+
+Confirm that `report.json` passed every step including `retrieve`. Check that
+`source.github` records the actual run's `GITHUB_SHA`, `GITHUB_RUN_ID` and
+`GITHUB_RUN_ATTEMPT`, and that the source, data and selected-model identities
+match the intended candidate. Retain failed-run evidence too. PR CI and local retrieval are separate
+evidence; neither substitutes for this authenticated Actions execution. GitHub's
+[manual workflow instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)
+require the workflow to exist on the default branch even when using `--ref`.
 
 An `always()` step uses [upload-artifact](https://github.com/actions/upload-artifact)
 to retain JSON reports, logs and executed parameters for 14 days, including failed
 runs. It excludes data, weights, source copies and credential files. A setup
 failure before the command starts may have only the Actions log. Existing PR
 workflow triggers, check names and credentials remain unchanged.
+
+## Local evidence on 2 November 2026
+
+Combined run `8dfb4336d29947c19c4177f8e8dd2edc` passed on clean source commit
+`66266e01f92dcf01e17901ad72bb6d99a4fd0fb1` in 56.76 seconds. Authenticated
+`--pull` used an initially empty private cache and an absent local model directory,
+retrieving all 15 DVC objects (198,693,558 bytes, including directory manifests)
+in 15.96 seconds. Verification matched the raw and selected-model directory hashes
+and all four processed-file hashes. This closes the previous local combined-pull
+gap; it is not an Actions run.
+
+The model directory identity was `0377ee21f89c25da36b95db59841c3d4.dir`, weights
+SHA-256 `746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9`,
+and training run `639eba4cc7e74de08ffab64beee715db`. All 118 data expectations,
+10 minimum-functionality cases, 12 directional cases and unchanged control passed.
+No training or final-test forecast evaluation ran. The shared compute lock covered
+the entire subprocess lifetime, and the existing Python 3.11 environment was
+reused with two CPU threads. Existing data hashes and the shared model's weights
+hash were unchanged. Temporary downloaded weights and the private cache were
+removed after retaining their identity receipts and reports.
+
+Fresh controlled runs retained a missing-checkpoint failure (exit 1) and a
+one-second-budget timeout (exit 124); neither reached model inference. The
+27 focused release tests passed. Reports, logs, retrieval-isolation receipts and
+commands are retained under this worktree's ignored
+`temporary/release-validation-2026-11-02/`; earlier run records remain intact.
