@@ -218,8 +218,8 @@ uv run python src/benchmark_runtime.py run \
 The standalone entrypoint bypasses the project package initializer, so it needs
 no `dotenv`, model or API dependencies. The repository tests still use the locked
 Python 3.11 development environment. Local Python 3.10/3.11 execution and Python
-3.8 syntax are checked; guest Python 3.8 execution remains a #75 compatibility
-gate until actually observed.
+3.8 syntax are checked; syntax compatibility is not an interpreter execution
+result. The completed target runs used verified Python 3.11.15.
 
 The first local module invocation (`python3 -m src.benchmark_runtime`) failed
 before launch because the existing package initializer imported missing `dotenv`.
