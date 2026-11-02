@@ -535,3 +535,35 @@ def test_config_selection_cli_verifies_bytes_and_refuses_output_overwrite(
     (Path(config.checkpoint) / "model.safetensors").write_bytes(b"different-fixture")
     assert select.main(argv) == 1
     assert not output.exists()
+
+
+@pytest.mark.parametrize(
+    "module", ["src.deployment", "src.deployment.select", "src.deployment.verify"]
+)
+def test_documented_entrypoints_use_only_declared_bootstrap_packages(module, tmp_path):
+    """No site/training environment: reproduce the clean-target import path with python -S."""
+    import importlib.util  # pylint: disable=import-outside-toplevel
+    import os  # pylint: disable=import-outside-toplevel
+    import shutil  # pylint: disable=import-outside-toplevel
+    import subprocess  # pylint: disable=import-outside-toplevel
+    import sys  # pylint: disable=import-outside-toplevel
+
+    bootstrap = tmp_path / "bootstrap"
+    bootstrap.mkdir()
+    for package in ("dotenv", "loguru"):
+        location = Path(importlib.util.find_spec(package).origin).parent
+        shutil.copytree(
+            location, bootstrap / package, ignore=shutil.ignore_patterns("__pycache__")
+        )
+    environment = {**os.environ, "PYTHONPATH": str(bootstrap), "PYTHONNOUSERSITE": "1"}
+    result = subprocess.run(
+        [sys.executable, "-S", "-m", module, "--help"],
+        cwd=configuration.ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "usage:" in result.stdout and "--output" in result.stdout
