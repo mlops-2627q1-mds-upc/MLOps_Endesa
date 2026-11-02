@@ -18,20 +18,11 @@ import time
 from urllib.parse import urlsplit
 from uuid import uuid4
 
-from src.serving_benchmark import (
-    Budget,
-    Observation,
-    StopRun,
-    confirm,
-    digest,
-    propose,
-    run_phase,
-    synthetic_request,
-    validate_forecast,
-    validate_plan,
-    validate_receipt,
-    write_json,
-)
+if __package__:
+    from . import serving_benchmark as benchmark
+else:
+    # Direct script execution puts this file's directory on sys.path.
+    import serving_benchmark as benchmark  # pylint: disable=import-error
 
 DEFAULT_LOCK = (
     "/Users/dcayuela/Desktop/UPC/MLOPS/MLOps_Endesa/temporary/"
@@ -124,14 +115,14 @@ def forecast_request(plan, budget, phase, concurrency, index, timeout):
             plan["base_url"], "POST", "/forecast", plan["request"], timeout
         )
         if status == 200:
-            outcome = "ok" if validate_forecast(body, plan) else "invalid_response"
+            outcome = "ok" if benchmark.validate_forecast(body, plan) else "invalid_response"
         else:
             outcome = "http_error"
     except TimeoutError:
         outcome = "timeout"
     except (OSError, http.client.HTTPException):
         outcome = "transport_error"
-    return Observation(
+    return benchmark.Observation(
         phase,
         concurrency,
         index,
@@ -144,7 +135,7 @@ def forecast_request(plan, budget, phase, concurrency, index, timeout):
 
 
 class MemoryMonitor:
-    """Sample Linux leader RSS/HWM or an isolated cgroup v2; never report client RSS."""
+    """Sample Linux leader RSS/HWM or an isolated cgroup; never report client RSS."""
 
     def __init__(self, plan, service, journal, started):
         self.plan, self.service, self.journal, self.started = plan, service, journal, started
@@ -154,24 +145,61 @@ class MemoryMonitor:
         self.samples = 0
         self.unavailable = 0
         self.armed = False
+        self.last_counters = None
+        self.container_limit = None
         self.thread = Thread(target=self._watch, daemon=True)
+
+    def _container_memory(self, resource):
+        directory = Path(resource["cgroup_path"])
+
+        def read_int(name):
+            return int((directory / name).read_text(encoding="utf-8"))
+
+        if resource["cgroup_version"] == 1:
+            counters = dict(
+                line.split()
+                for line in (directory / "memory.oom_control")
+                .read_text(encoding="utf-8")
+                .splitlines()
+            )
+            counters = {key: int(value) for key, value in counters.items()}
+            counters["failcnt"] = read_int("memory.failcnt")
+            if counters.get("under_oom", 0) or counters.get("oom_kill", 0):
+                self.reason = "container_oom_event"
+            elif counters["failcnt"]:
+                self.reason = "container_memory_limit_event"
+            current, peak = (
+                read_int("memory.usage_in_bytes"),
+                read_int("memory.max_usage_in_bytes"),
+            )
+            self.container_limit = read_int("memory.limit_in_bytes")
+        else:
+            counters = dict(
+                line.split()
+                for line in (directory / "memory.events").read_text(encoding="utf-8").splitlines()
+            )
+            counters = {key: int(value) for key, value in counters.items()}
+            if counters.get("oom", 0) or counters.get("oom_kill", 0):
+                self.reason = "container_oom_event"
+            elif counters.get("max", 0):
+                self.reason = "container_memory_limit_event"
+            current, peak = read_int("memory.current"), read_int("memory.peak")
+            limit = (directory / "memory.max").read_text(encoding="utf-8").strip()
+            self.container_limit = None if limit == "max" else int(limit)
+        self.last_counters = counters
+        if (
+            self.container_limit is not None
+            and self.plan["measurement"]["memory_limit_bytes"] >= self.container_limit
+        ):
+            self.reason = self.reason or "memory_stop_not_below_container_limit"
+        return current, peak
 
     def sample(self):
         """Read kernel high-water memory; container scope includes all cgroup processes."""
         resource = self.plan["resource"]
         try:
             if resource["scope"] == "container":
-                directory = Path(resource["cgroup_path"])
-                current = int((directory / "memory.current").read_text(encoding="utf-8"))
-                peak = int((directory / "memory.peak").read_text(encoding="utf-8"))
-                events = dict(
-                    line.split()
-                    for line in (directory / "memory.events")
-                    .read_text(encoding="utf-8")
-                    .splitlines()
-                )
-                if int(events.get("oom", 0)) or int(events.get("oom_kill", 0)):
-                    self.reason = "container_oom_event"
+                current, peak = self._container_memory(resource)
             else:
                 fields = dict(
                     line.split(":", 1)
@@ -196,6 +224,8 @@ class MemoryMonitor:
                 "scope": resource["scope"],
                 "current_bytes": current,
                 "peak_bytes": peak,
+                "cgroup_counters": self.last_counters,
+                "container_limit_bytes": self.container_limit,
             }
         )
         if self.peak >= self.plan["measurement"]["memory_limit_bytes"]:
@@ -214,9 +244,9 @@ class MemoryMonitor:
     def check(self):
         """Stop launching work if memory failed or real-target telemetry is absent."""
         if self.reason:
-            raise StopRun(self.reason)
+            raise benchmark.StopRun(self.reason)
         if not self.samples and self.plan["evidence_kind"] == "selected-target":
-            raise StopRun("memory_telemetry_unavailable")
+            raise benchmark.StopRun("memory_telemetry_unavailable")
 
     def report(self):
         """Explicitly qualify scope and missing observations."""
@@ -225,9 +255,17 @@ class MemoryMonitor:
             "peak_bytes": self.peak,
             "samples": self.samples,
             "unavailable_samples": self.unavailable,
-            "method": "cgroup v2 memory.current/memory.peak"
+            "method": (
+                "cgroup v1 memory.usage_in_bytes/memory.max_usage_in_bytes"
+                if self.plan["resource"].get("cgroup_version") == 1
+                else "cgroup v2 memory.current/memory.peak"
+            )
             if self.plan["resource"]["scope"] == "container"
             else "Linux /proc owned leader VmRSS/VmHWM; excludes child processes and host memory",
+            "cgroup_version": self.plan["resource"].get("cgroup_version"),
+            "cgroup_counters": self.last_counters,
+            "oom_kill_count": (self.last_counters or {}).get("oom_kill"),
+            "container_limit_bytes": self.container_limit,
             "host_memory": "unavailable",
             "sampling_interval_seconds": 0.1,
         }
@@ -342,9 +380,9 @@ def wait_ready(plan, budget, process, journal, memory):
     deadline = min(budget.deadline, budget.started + plan["measurement"]["startup_seconds"])
     while budget.clock() < deadline:
         if memory.reason:
-            raise StopRun(memory.reason)
+            raise benchmark.StopRun(memory.reason)
         if process.poll() is not None:
-            raise StopRun("service_exited_during_startup")
+            raise benchmark.StopRun("service_exited_during_startup")
         timeout = min(1, deadline - budget.clock())
         try:
             status, body, _ = http_json(plan["base_url"], "GET", "/ready", None, timeout)
@@ -358,19 +396,19 @@ def wait_ready(plan, budget, process, journal, memory):
                 {"type": "probe", "status": None, "at_seconds": budget.clock() - budget.started}
             )
         time.sleep(min(0.1, max(0, deadline - budget.clock())))
-    raise StopRun("startup_deadline")
+    raise benchmark.StopRun("startup_deadline")
 
 
 def execute(plan, output):
     """Worker: retain declarations, raw observations, partial phases and cleanup state."""
-    budget = Budget(plan["measurement"])
+    budget = benchmark.Budget(plan["measurement"])
     journal = Journal(output / "observations.jsonl")
     report = {
         "schema_version": 1,
         "run_id": str(uuid4()),
         "started_unix_seconds": time.time(),
         "plan": plan,
-        "plan_sha256": digest(plan),
+        "plan_sha256": benchmark.digest(plan),
         "status": "stopped",
         "stop_reason": None,
         "phases": {},
@@ -385,9 +423,16 @@ def execute(plan, output):
         assert_port_free(plan["base_url"])
         if (
             plan["resource"]["scope"] == "container"
-            and (Path(plan["resource"]["cgroup_path"]) / "memory.current").exists()
+            and (
+                Path(plan["resource"]["cgroup_path"])
+                / (
+                    "memory.usage_in_bytes"
+                    if plan["resource"]["cgroup_version"] == 1
+                    else "memory.current"
+                )
+            ).exists()
         ):
-            raise StopRun("container_cgroup_already_exists")
+            raise benchmark.StopRun("container_cgroup_already_exists")
         env = os.environ.copy()
         env.update(
             {
@@ -432,7 +477,7 @@ def execute(plan, output):
         def check():
             memory.check()
             if process.poll() is not None:
-                raise StopRun("service_exited")
+                raise benchmark.StopRun("service_exited")
 
         def request(phase, concurrency, index, timeout):
             return forecast_request(plan, budget, phase, concurrency, index, timeout)
@@ -444,18 +489,18 @@ def execute(plan, output):
         ]
         phases += [("overload_c2", 2, settings["overload_requests"])]
         for phase, concurrency, count in phases:
-            result, stopped = run_phase(
+            result, stopped = benchmark.run_phase(
                 phase, concurrency, count, request, budget, journal.emit, check
             )
             report["phases"][phase] = result
             if phase == "first_forecast":
                 report["cold_start"]["first_forecast"] = result
             if stopped:
-                raise StopRun(stopped)
+                raise benchmark.StopRun(stopped)
             if phase in {"first_forecast", "warmup"} and result["errors"]:
-                raise StopRun("first_request_or_warmup_failed")
+                raise benchmark.StopRun("first_request_or_warmup_failed")
         report["status"] = "complete"
-    except StopRun as error:
+    except benchmark.StopRun as error:
         report["stop_reason"] = str(error)
     except (OSError, ValueError, http.client.HTTPException) as error:
         report["stop_reason"] = type(error).__name__  # exclude paths/credentials/raw server errors
@@ -496,7 +541,7 @@ def execute(plan, output):
             if plan["evidence_kind"] == "fixture"
             else "One isolated target and bounded sample; no production SLO or approval",
         ]
-        write_json(output / "report.json", report)
+        benchmark.write_json(output / "report.json", report)
         journal.close()
     return report["status"] == "complete"
 
@@ -504,26 +549,26 @@ def execute(plan, output):
 def supervise(plan_path, output, receipt_path, lock_path, proposal_path=None):
     """Validate gates, lock the whole subprocess lifetime and enforce an external deadline."""
     plan = json.loads(Path(plan_path).read_text(encoding="utf-8"))
-    validate_plan(plan)
+    benchmark.validate_plan(plan)
     receipt = json.loads(Path(receipt_path).read_text(encoding="utf-8")) if receipt_path else None
-    validate_receipt(plan, receipt)
+    benchmark.validate_receipt(plan, receipt)
     proposal = (
         json.loads(Path(proposal_path).read_text(encoding="utf-8")) if proposal_path else None
     )
     if plan["purpose"] == "confirmation":
         if proposal is None:
             raise ValueError("Confirmation requires a separately retained discovery proposal")
-        confirm({"plan": plan, "status": "stopped", "phases": {}}, proposal)
+        benchmark.confirm({"plan": plan, "status": "stopped", "phases": {}}, proposal)
     elif proposal is not None:
         raise ValueError("A discovery run cannot consume a confirmation proposal")
     with compute_lock(lock_path):
         output = Path(output).resolve()
         output.mkdir(parents=True, exist_ok=False)
-        write_json(output / "declaration.json", plan)
+        benchmark.write_json(output / "declaration.json", plan)
         if receipt:
-            write_json(output / "target-receipt.json", receipt)
-        write_json(output / "runtime-identity.json", runtime_identity(plan))
-        argv = [sys.executable, "-m", "src.benchmark_runtime", "_worker", str(output)]
+            benchmark.write_json(output / "target-receipt.json", receipt)
+        benchmark.write_json(output / "runtime-identity.json", runtime_identity(plan))
+        argv = [sys.executable, str(Path(__file__).resolve()), "_worker", str(output)]
         process = subprocess.Popen(argv, start_new_session=True)
         interrupted = None
         try:
@@ -543,7 +588,7 @@ def supervise(plan_path, output, receipt_path, lock_path, proposal_path=None):
                 cleaned = (
                     cleanup(plan["startup"], None) if lifecycle_was_launched(output) else True
                 )
-                write_json(
+                benchmark.write_json(
                     output / "watchdog.json",
                     {"stop_reason": interrupted, "cleanup_verified": cleaned},
                 )
@@ -557,8 +602,8 @@ def supervise(plan_path, output, receipt_path, lock_path, proposal_path=None):
             return False
         report = json.loads(path.read_text(encoding="utf-8"))
         if proposal:
-            confirmation = confirm(report, proposal)
-            write_json(output / "confirmation.json", confirmation)
+            confirmation = benchmark.confirm(report, proposal)
+            benchmark.write_json(output / "confirmation.json", confirmation)
             if not confirmation["passed"]:
                 return False
         return process.returncode == 0 and report["status"] == "complete"
@@ -591,9 +636,9 @@ def main():
     if args.command == "_worker":
         output = Path(args.output)
         plan = json.loads((output / "declaration.json").read_text(encoding="utf-8"))
-        validate_plan(plan)
+        benchmark.validate_plan(plan)
         receipt_path = output / "target-receipt.json"
-        validate_receipt(
+        benchmark.validate_receipt(
             plan,
             json.loads(receipt_path.read_text(encoding="utf-8"))
             if receipt_path.exists()
@@ -601,7 +646,7 @@ def main():
         )
         ok = execute(plan, output)
     elif args.command == "request":
-        write_json(args.output, synthetic_request())
+        benchmark.write_json(args.output, benchmark.synthetic_request())
         ok = True
     elif args.command == "declare":
         receipt = json.loads(Path(args.receipt).read_text(encoding="utf-8"))
@@ -622,17 +667,19 @@ def main():
             purpose=args.purpose,
             request=json.loads(Path(args.request).read_text(encoding="utf-8")),
         )
-        validate_plan(plan)
-        validate_receipt(plan, receipt)
-        write_json(args.output, plan)
+        benchmark.validate_plan(plan)
+        benchmark.validate_receipt(plan, receipt)
+        benchmark.write_json(args.output, plan)
         ok = True
     elif args.command == "propose":
         if (Path(args.report).parent / "watchdog.json").exists():
             raise ValueError("A forced-stop discovery cannot produce an NFR-7 proposal")
         content = Path(args.report).read_bytes()
-        write_json(
+        benchmark.write_json(
             args.output,
-            propose(json.loads(content), hashlib.sha256(content).hexdigest(), args.concurrency),
+            benchmark.propose(
+                json.loads(content), hashlib.sha256(content).hexdigest(), args.concurrency
+            ),
         )
         ok = True
     else:

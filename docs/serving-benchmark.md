@@ -5,17 +5,16 @@ needs serving-machine evidence for [NFR-7](requirements.md). This harness measur
 one isolated service through the HTTP contract in
 [PR #86](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/86).
 It imports neither the predictor nor training/evaluation code and requires only
-Python 3.11's standard library on a POSIX host. Container source is supplied by
+Python 3.8 or newer and its standard library on a POSIX host. Container source is supplied by
 [PR #88](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/88).
 These dependencies retain their own merge, deployment and human review gates.
 
 The implementation and fixture checks do not supply Virtech measurements. No
 target latency requirement, resource recommendation or deployment success is
-established by the local fixture. New decision proposals remain in the ignored
-issue-specific temporary note pending Dídac's review; this document is a proposed
-experiment protocol, not a formal engineering decision.
+established by the local fixture. Engineering-decision drafts are kept outside Git. This document describes the
+benchmark interface, execution protocol and evidence boundaries.
 
-## Predeclare the experiment
+## Declare the experiment before execution
 
 Retain a JSON plan before launch. The plan contains the complete request,
 expected API identity/settings, actual hardware, exact lifecycle argv, resource
@@ -30,15 +29,15 @@ directory, records its SHA-256, and never overwrites an earlier run.
 | Identity | Full service and benchmark commits, parameter-file SHA-256, immutable image ID for containers. Every 200 forecast must match identity/settings and contain finite, ordered 48-value p10/p50/p90 arrays. |
 | Machine | Actual hostname (`platform.node()`), OS, CPU description/count and RAM bytes from #75's verified target receipt. Template screenshots are not hardware evidence. |
 | Cold lifecycle | Start a stopped, dedicated service with an unused loopback port. Time launch to successful `/ready`, then the first forecast separately. Filesystem/model caches are uncontrolled; this is process/container cold start. |
-| Warm-up | Predeclare a positive count; proposed target baseline: 5 requests, excluded from warm statistics. |
-| Warm workload | Predeclare at least 20 requests at each of concurrency 1 and 2; proposed target baseline: 50 each. Synchronized batches drain before the next batch. At most two HTTP workers. |
-| Overload probe | Predeclare a small bounded c2 phase, proposed baseline: 10 requests. Record queuing, statuses and timeouts; concurrency 2 may not overload the target. No higher load or shared-service saturation is authorized by this protocol. |
-| Deadlines | Each discovery/confirmation lifecycle, including cleanup, has a maximum 900-second budget: at most 1,800 seconds for the pair. Proposed startup deadline 120 s, total HTTP request deadline 10 s, three consecutive timeout completions stop work. No automatic experiment retries. |
+| Warm-up | Predeclare a positive count; reference declaration: 5 requests, excluded from warm statistics. |
+| Warm workload | Predeclare at least 20 requests at each of concurrency 1 and 2; reference declaration: 50 each. Synchronized batches drain before the next batch. At most two HTTP workers. |
+| Overload probe | Predeclare a small bounded c2 phase, reference declaration: 10 requests. Record queuing, statuses and timeouts; concurrency 2 may not overload the target. No higher load or shared-service saturation is authorized by this protocol. |
+| Deadlines | Each discovery/confirmation lifecycle, including cleanup, has a maximum 900-second budget: at most 1,800 seconds for the pair. Reference startup deadline 120 s, total HTTP request deadline 10 s, three consecutive timeout completions stop work. No automatic experiment retries. |
 | Memory stop | Explicit byte threshold below measured host and container limits, leaving headroom. Stop on threshold, cgroup OOM event, or lost/unavailable target memory telemetry. HTTP 507 is a server resource error, not an OOM diagnosis. |
-| Proposal margin | Predeclare a margin before measurement; proposed baseline `0.2`. This creates no numerical latency target until actual target discovery exists. |
+| Proposal margin | Predeclare a margin before measurement; reference value `0.2`. This creates no numerical latency target until actual target discovery exists. |
 
-The baseline values above are proposals for the isolated experiment. #75 supplies
-the actual capacity and authorizes the exact declaration. A negative/stopped run
+The reference values describe a bounded isolated experiment. #75 supplies the
+actual capacity and authorizes the exact declaration before execution. A negative/stopped run
 retains its evidence; do not silently reduce sample count, shorten warm-up, change
 seeds, or retune a failed run. Do not train, load final-test targets, evaluate
 forecast quality, download a replacement checkpoint or publish an image here.
@@ -61,7 +60,7 @@ The non-secret receipt is JSON with these fields:
 | `expected` | API `model_id`, `model_revision`, `checkpoint` (`sha256`, `training_run_id`), `value_scale`, `context_length`, `horizon`, full executed `settings`. |
 | `hardware` | `host_identity`, `os`, `cpu`, positive `cpu_count` and `memory_bytes`. |
 | `startup` | Foreground `argv`, absolute `cwd`, `stop_argv` (empty for a directly owned native process; explicit bounded stop for a container). No shell expressions or credentials. |
-| `resource` | `{"scope":"process"}` or `{"scope":"container","cgroup_path":"absolute isolated cgroup v2 directory"}`. |
+| `resource` | `{"scope":"process"}` or `{"scope":"container","cgroup_path":"absolute isolated memory-controller directory","cgroup_version":1}`. |
 | `measurement` | `budget_seconds`, `startup_seconds`, `request_timeout_seconds`, `warmup_requests`, `requests_per_level`, `concurrency:[1,2]`, `overload_requests`, `consecutive_timeout_limit`, `memory_limit_bytes`, `proposal_margin_fraction`. |
 | `request_sha256` | `src.serving_benchmark.digest(request)` for the retained 512-value request. |
 
@@ -74,8 +73,8 @@ establish them through the target/container inspection.
 For a container, #75 can prepare a dedicated **stopped** container with known
 immutable ID/cgroup path, mounts and loopback port. A foreground launch is
 `["docker","start","--attach",NAME]`; cleanup is
-`["docker","stop","--time","1",NAME]`. The cgroup must be absent before
-launch. A live cgroup or occupied port refuses the run without invoking cleanup.
+`["docker","stop","--time","1",NAME]`. Declare `cgroup_version` as 1 or 2 from actual inspection. The memory-controller
+cgroup must be absent before launch. A live cgroup or occupied port refuses the run without invoking cleanup.
 The harness does not create/remove containers or restart the serving deployment.
 A native launcher must be a foreground single-worker process; its memory excludes
 children. It must not fork/detach or share a listening socket.
@@ -92,12 +91,12 @@ paths; use a new directory for every attempted experiment.
 
 ```sh
 mkdir -p reports/serving-benchmark
-python3 -m src.benchmark_runtime request reports/serving-benchmark/request.json
-python3 -m src.benchmark_runtime declare \
+python3 src/benchmark_runtime.py request reports/serving-benchmark/request.json
+python3 src/benchmark_runtime.py declare \
   reports/serving-benchmark/target-receipt.json \
   reports/serving-benchmark/request.json \
   reports/serving-benchmark/discovery-plan.json --purpose discovery
-python3 -m src.benchmark_runtime run \
+python3 src/benchmark_runtime.py run \
   reports/serving-benchmark/discovery-plan.json \
   reports/serving-benchmark/discovery \
   --receipt reports/serving-benchmark/target-receipt.json \
@@ -130,8 +129,18 @@ First request and warm-up are separate. This closed-loop batched load does not
 estimate arrival-rate capacity or forecast accuracy.
 
 Linux process memory uses the owned leader's `VmRSS`/`VmHWM`. Container memory
-uses its cgroup v2 `memory.current`, `memory.peak` and OOM events, including cgroup
-page cache. Sampling is 100 ms plus boundary samples; kernel high-water readings
+uses the declared controller: v1 `memory.usage_in_bytes`,
+`memory.max_usage_in_bytes`, `memory.limit_in_bytes`, `memory.failcnt` and
+`memory.oom_control`; v2 `memory.current`, `memory.peak`, `memory.max` and
+`memory.events`. Both scopes include cgroup page cache. A v1 fail count stops the
+run as a memory-limit event; it does not prove an OOM kill. `under_oom` and an
+available `oom_kill` counter remain distinct. Missing counters/peaks stay unavailable,
+and the byte stop threshold must precede the measured container limit. No
+controller reset, boot/kernel change or Docker-client metric is used. These file
+semantics follow the kernel documentation for
+[cgroup v1](https://docs.kernel.org/admin-guide/cgroup-v1/memory.html) and
+[cgroup v2](https://docs.kernel.org/admin-guide/cgroup-v2.html); #75 must verify
+the actual guest files and interpreter before execution. Sampling is 100 ms plus boundary samples; kernel high-water readings
 capture peaks between polls. Host memory is explicitly unavailable. No Docker
 client RSS or local client memory is substituted. Missing fixture memory (for
 example `/proc` on macOS) remains `null`; real target work stops without telemetry.
@@ -151,17 +160,17 @@ candidate. Select concurrency 1 or 2 using the measured latency, errors, peak
 memory and overload observations; retain that rationale in the issue report.
 The candidate latency ceiling is observed p95 times `(1 + declared margin)`.
 The operating throughput floor is observed throughput divided by that factor.
-These are proposed targets pending Dídac's review, never an accepted SLO.
+The numerical output is experimental evidence for review; it does not approve an SLO.
 
 ```sh
-python3 -m src.benchmark_runtime propose \
+python3 src/benchmark_runtime.py propose \
   reports/serving-benchmark/discovery/report.json \
   reports/serving-benchmark/nfr7-proposal.json --concurrency 1
-python3 -m src.benchmark_runtime declare \
+python3 src/benchmark_runtime.py declare \
   reports/serving-benchmark/target-receipt.json \
   reports/serving-benchmark/request.json \
   reports/serving-benchmark/confirmation-plan.json --purpose confirmation
-python3 -m src.benchmark_runtime run \
+python3 src/benchmark_runtime.py run \
   reports/serving-benchmark/confirmation-plan.json \
   reports/serving-benchmark/confirmation \
   --receipt reports/serving-benchmark/target-receipt.json \
@@ -186,12 +195,26 @@ fixture deliberately reports all-zero checkpoint/run IDs; it loads no predictor.
 uv sync --locked --dev
 OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 \
   uv run pytest tests/test_serving_benchmark.py -q
-python3 tests/fixtures/benchmark_http.py \
+mkdir -p reports/serving-benchmark
+uv run python tests/fixtures/benchmark_http.py \
   --write-plan reports/serving-benchmark/fixture-plan.json
-python3 -m src.benchmark_runtime run \
+uv run python src/benchmark_runtime.py run \
   reports/serving-benchmark/fixture-plan.json \
   reports/serving-benchmark/fixture-run
 ```
+
+The standalone entrypoint bypasses the project package initializer, so it needs
+no `dotenv`, model or API dependencies. The repository tests still use the locked
+Python 3.11 development environment. Local Python 3.10/3.11 execution and Python
+3.8 syntax are checked; guest Python 3.8 execution remains a #75 compatibility
+gate until actually observed.
+
+The first local module invocation (`python3 -m src.benchmark_runtime`) failed
+before launch because the existing package initializer imported missing `dotenv`.
+Its subsequent report read also failed because no run output had been created.
+The failure record is retained in ignored
+`reports/serving-benchmark/failed-system-python-2026-11-02.json`. The corrected
+commands above create the output parent and use the standalone script.
 
 Use fresh paths on repetition. Deterministic fixtures cover quantile/throughput
 arithmetic, all-request/error accounting, timeout resets, concurrent draining,

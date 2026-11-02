@@ -1,5 +1,7 @@
 """Bounded HTTP benchmark accounting, independent of model/training dependencies."""
 
+from __future__ import annotations
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 import hashlib
@@ -151,7 +153,11 @@ def validate_plan(plan):
     if resource["scope"] == "container" and (
         not startup["stop_argv"] or not Path(resource["cgroup_path"]).is_absolute()
     ):
-        raise ValueError("Container lifecycle needs explicit cleanup and an isolated cgroup v2")
+        raise ValueError("Container lifecycle needs explicit cleanup and an isolated cgroup")
+    if resource["scope"] == "container" and (
+        type(resource.get("cgroup_version")) is not int or resource["cgroup_version"] not in {1, 2}
+    ):
+        raise ValueError("Declare the actual memory cgroup version, 1 or 2")
     if resource["scope"] == "container" and not re.fullmatch(
         r"sha256:[0-9a-f]{64}", plan["source"].get("image_id") or ""
     ):

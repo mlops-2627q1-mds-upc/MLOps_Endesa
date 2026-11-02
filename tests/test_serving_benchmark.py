@@ -26,7 +26,10 @@ SPEC.loader.exec_module(FIXTURE)
 @pytest.fixture
 def plan():
     """Use the same fixture declaration as the documented subprocess smoke."""
-    return FIXTURE.fixture_plan(54321, Path(__file__).resolve().parents[1])
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        port = listener.getsockname()[1]
+    return FIXTURE.fixture_plan(port, Path(__file__).resolve().parents[1])
 
 
 class Clock:
@@ -333,11 +336,12 @@ def test_same_run_cannot_be_its_own_confirmation(plan):
     ],
 )
 def test_container_memory_uses_kernel_peak_and_oom_scope(plan, tmp_path, events, peak, reason):
-    plan["resource"] = {"scope": "container", "cgroup_path": str(tmp_path)}
+    plan["resource"] = {"scope": "container", "cgroup_path": str(tmp_path), "cgroup_version": 2}
     plan["measurement"]["memory_limit_bytes"] = 4096
     (tmp_path / "memory.current").write_text("1024")
     (tmp_path / "memory.peak").write_text(str(peak))
     (tmp_path / "memory.events").write_text(events)
+    (tmp_path / "memory.max").write_text("max")
     records = []
     monitor = runtime.MemoryMonitor(plan, None, SimpleNamespace(emit=records.append), 0)
     assert monitor.sample() == 1024
@@ -349,7 +353,7 @@ def test_container_memory_uses_kernel_peak_and_oom_scope(plan, tmp_path, events,
 
 
 def test_missing_memory_stays_unavailable_and_blocks_selected_work(plan, tmp_path):
-    plan["resource"] = {"scope": "container", "cgroup_path": str(tmp_path)}
+    plan["resource"] = {"scope": "container", "cgroup_path": str(tmp_path), "cgroup_version": 2}
     monitor = runtime.MemoryMonitor(plan, None, SimpleNamespace(emit=lambda _: None), 0)
     assert monitor.sample() is None
     assert monitor.report()["peak_bytes"] is None
@@ -360,6 +364,74 @@ def test_missing_memory_stays_unavailable_and_blocks_selected_work(plan, tmp_pat
     monitor.armed = True
     monitor.sample()
     assert monitor.reason == "memory_telemetry_lost"
+
+
+@pytest.mark.parametrize(
+    "failcnt,control,peak,reason",
+    [
+        (0, "oom_kill_disable 0\nunder_oom 0\noom_kill 0\n", 2048, None),
+        (1, "oom_kill_disable 0\nunder_oom 0\noom_kill 0\n", 2048, "container_memory_limit_event"),
+        (0, "oom_kill_disable 0\nunder_oom 1\n", 2048, "container_oom_event"),
+        (0, "oom_kill_disable 0\nunder_oom 0\noom_kill 1\n", 2048, "container_oom_event"),
+        (0, "oom_kill_disable 0\nunder_oom 0\n", 4096, "memory_limit_reached"),
+    ],
+)
+def test_cgroup_v1_high_water_and_limit_events_are_distinct(
+    plan, tmp_path, failcnt, control, peak, reason
+):
+    plan["resource"] = {"scope": "container", "cgroup_path": str(tmp_path), "cgroup_version": 1}
+    plan["measurement"]["memory_limit_bytes"] = 4096
+    for name, value in {
+        "memory.usage_in_bytes": "1024",
+        "memory.max_usage_in_bytes": str(peak),
+        "memory.failcnt": str(failcnt),
+        "memory.oom_control": control,
+        "memory.limit_in_bytes": "8192",
+    }.items():
+        (tmp_path / name).write_text(value)
+    records = []
+    monitor = runtime.MemoryMonitor(plan, None, SimpleNamespace(emit=records.append), 0)
+    assert monitor.sample() == 1024
+    assert monitor.reason == reason
+    report = monitor.report()
+    assert report["peak_bytes"] == peak
+    assert report["cgroup_version"] == 1
+    assert report["container_limit_bytes"] == 8192
+    assert report["cgroup_counters"]["failcnt"] == failcnt
+    assert report["cgroup_counters"].get("oom_kill") == (
+        1 if "oom_kill 1" in control else 0 if "oom_kill 0" in control else None
+    )
+    assert records[0]["scope"] == "container"
+    assert not (tmp_path / "memory.current").exists()  # v2 is never substituted
+
+
+def test_memory_stop_threshold_must_precede_container_limit(plan, tmp_path):
+    plan["resource"] = {"scope": "container", "cgroup_path": str(tmp_path), "cgroup_version": 2}
+    for name, value in {
+        "memory.current": "1",
+        "memory.peak": "2",
+        "memory.max": "1000",
+        "memory.events": "oom 0\noom_kill 0",
+    }.items():
+        (tmp_path / name).write_text(value)
+    plan["measurement"]["memory_limit_bytes"] = 1000
+    monitor = runtime.MemoryMonitor(plan, None, SimpleNamespace(emit=lambda _: None), 0)
+    monitor.sample()
+    assert monitor.reason == "memory_stop_not_below_container_limit"
+
+
+def test_standalone_cli_imports_without_site_packages(tmp_path):
+    result = subprocess.run(
+        [sys.executable, "-S", runtime.__file__, "request", str(tmp_path / "request.json")],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    request = json.loads((tmp_path / "request.json").read_text())
+    assert request["state"] == "TAS"
+    assert len(request["history"]) == 512
+    assert min(request["history"]) < 0
 
 
 def test_memory_stop_cleans_owned_lifecycle_once(plan, monkeypatch):
