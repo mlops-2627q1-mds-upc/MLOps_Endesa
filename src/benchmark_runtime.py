@@ -363,12 +363,12 @@ def runtime_identity(plan):
 
 
 def lifecycle_was_launched(output):
-    """Read only complete flushed journal records after a forced worker stop."""
+    """Read flushed ownership intent too, covering a crash before the PID record."""
     raw = output / "observations.jsonl"
     if raw.exists():
         for line in raw.read_text(encoding="utf-8").splitlines():
             try:
-                if json.loads(line).get("type") == "lifecycle":
+                if json.loads(line).get("type") in {"lifecycle_intent", "lifecycle"}:
                     return True
             except ValueError:
                 continue
@@ -446,6 +446,9 @@ def execute(plan, output):
             }
         )
         env.update({"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1"})
+        # Ownership starts after refusal checks and before Popen can launch a
+        # daemon. A parent may safely clean this dedicated lifecycle after a crash.
+        journal.emit({"type": "lifecycle_intent", "at_seconds": budget.clock() - budget.started})
         launch_started = budget.clock()
         report["cold_start"]["launch_started_seconds"] = launch_started - budget.started
         with (output / "service.log").open("x", encoding="utf-8") as log:
@@ -558,7 +561,7 @@ def supervise(plan_path, output, receipt_path, lock_path, proposal_path=None):
     if plan["purpose"] == "confirmation":
         if proposal is None:
             raise ValueError("Confirmation requires a separately retained discovery proposal")
-        benchmark.confirm({"plan": plan, "status": "stopped", "phases": {}}, proposal)
+        benchmark.validate_confirmation_plan(plan, proposal)
     elif proposal is not None:
         raise ValueError("A discovery run cannot consume a confirmation proposal")
     with compute_lock(lock_path):
@@ -578,35 +581,72 @@ def supervise(plan_path, output, receipt_path, lock_path, proposal_path=None):
         except KeyboardInterrupt:
             interrupted = "operator_interrupt"
         finally:
+            # Local descendants and daemon containers have different lifetimes.
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
             if interrupted:
-                # Kill worker and its local descendants; container daemon needs explicit cleanup.
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
                 process.wait()
-                cleaned = (
-                    cleanup(plan["startup"], None) if lifecycle_was_launched(output) else True
-                )
-                benchmark.write_json(
-                    output / "watchdog.json",
-                    {"stop_reason": interrupted, "cleanup_verified": cleaned},
-                )
-            else:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
         path = output / "report.json"
-        if interrupted or not path.exists():
+        content = None
+        try:
+            content = path.read_bytes() if path.exists() else None
+            report = json.loads(content) if content else None
+            if not isinstance(report, dict):
+                report = None
+            report_digest = benchmark.digest(report) if report else None
+        except (OSError, ValueError):
+            report = None
+            report_digest = None
+        launched = lifecycle_was_launched(output)
+        worker_success = bool(
+            not interrupted
+            and process.returncode == 0
+            and report
+            and report.get("status") == "complete"
+            and report.get("cleanup_verified") is True
+        )
+        # A report precedes terminal exit. After a crash, explicitly stop only
+        # the launched dedicated lifecycle, even if its report claimed cleanup.
+        cleaned = cleanup(plan["startup"], None) if launched and not worker_success else True
+        if launched and not worker_success:
+            with socket.socket() as probe:
+                probe.settimeout(0.2)
+                cleaned = (
+                    cleaned
+                    and probe.connect_ex(("127.0.0.1", urlsplit(plan["base_url"]).port)) != 0
+                )
+        if interrupted:
+            benchmark.write_json(
+                output / "watchdog.json",
+                {
+                    "stop_reason": interrupted,
+                    "cleanup_verified": cleaned,
+                },
+            )
+        outcome = {
+            "status": "success" if worker_success and launched and cleaned else "failed",
+            "worker_returncode": process.returncode,
+            "stop_reason": interrupted
+            or ("worker_or_report_failed" if not worker_success else None),
+            "service_launched": launched,
+            "cleanup_verified": cleaned,
+            "explicit_cleanup_attempted": launched and not worker_success,
+            "run_id": report.get("run_id") if report else None,
+            "plan_sha256": benchmark.digest(plan),
+            "report_digest": report_digest,
+            "report_sha256": hashlib.sha256(content).hexdigest() if content else None,
+        }
+        benchmark.write_json(output / "supervisor.json", outcome)
+        if outcome["status"] != "success":
             return False
-        report = json.loads(path.read_text(encoding="utf-8"))
         if proposal:
-            confirmation = benchmark.confirm(report, proposal)
+            confirmation = benchmark.confirm(report, proposal, outcome)
             benchmark.write_json(output / "confirmation.json", confirmation)
             if not confirmation["passed"]:
                 return False
-        return process.returncode == 0 and report["status"] == "complete"
+        return True
 
 
 def main():
@@ -675,10 +715,19 @@ def main():
         if (Path(args.report).parent / "watchdog.json").exists():
             raise ValueError("A forced-stop discovery cannot produce an NFR-7 proposal")
         content = Path(args.report).read_bytes()
+        supervisor_path = Path(args.report).parent / "supervisor.json"
+        supervision = (
+            json.loads(supervisor_path.read_text(encoding="utf-8"))
+            if supervisor_path.exists()
+            else None
+        )
         benchmark.write_json(
             args.output,
             benchmark.propose(
-                json.loads(content), hashlib.sha256(content).hexdigest(), args.concurrency
+                json.loads(content),
+                hashlib.sha256(content).hexdigest(),
+                args.concurrency,
+                supervision,
             ),
         )
         ok = True

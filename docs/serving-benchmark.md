@@ -114,9 +114,13 @@ credential in these commands. A busy lock fails before launch. Hold no lock
 while waiting for access, review or another worker.
 
 Each output contains `declaration.json`, `runtime-identity.json`, the target
-receipt, `observations.jsonl`, `service.log`, and normally `report.json`. Raw
+receipt, `observations.jsonl`, `service.log`, `supervisor.json`, and normally
+`report.json`. The supervisor records the terminal worker return code, cleanup
+outcome and hashes binding the report to its declaration. A worker report by
+itself is ineligible for confirmation or candidate derivation. Raw
 records distinguish dispatch, completed request, readiness probe, lifecycle PID,
-and scoped memory. Each completed request retains its status/outcome, timing,
+and scoped memory. Lifecycle intent is flushed after refusal checks and before
+launch so a crash before the PID record still triggers owned cleanup. Each completed request retains its status/outcome, timing,
 phase/concurrency/index and response-body checksum. The plan retains input values
 and settings. Logs/output stay ignored under `reports/serving-benchmark/`; inspect
 and sanitize evidence before any later publication.
@@ -148,14 +152,17 @@ example `/proc` on macOS) remains `null`; real target work stops without telemet
 Stop conditions prevent new batches and drain/account for dispatched work. The
 external watchdog bounds blocked reads/startup as well; `watchdog.json` then
 marks the forced stop and cleanup outcome, and raw dispatches expose incomplete
-requests. A watchdog run is incomplete even if a partial `report.json` exists.
+requests. A watchdog run is incomplete even if a partial `report.json` exists. Any abnormal
+worker exit also triggers explicit dedicated cleanup before the lock is released.
+The raw worker report is preserved; `supervisor.json` records failure even when
+that report was written as complete before the crash.
 Nonzero exit means stopped, failed cleanup, or failed confirmation: inspect the
 artifacts. The harness stops its owned service on success, failure and interruption.
 
 ## Derive and confirm an NFR-7 proposal
 
 Only a complete **selected-target discovery** with memory evidence, verified
-cleanup and an error-free warm level of at least 20 successes can create a
+cleanup, successful terminal supervision and an error-free warm level of at least 20 successes can create a
 candidate. Select concurrency 1 or 2 using the measured latency, errors, peak
 memory and overload observations; retain that rationale in the issue report.
 The candidate latency ceiling is observed p95 times `(1 + declared margin)`.
@@ -178,6 +185,8 @@ python3 src/benchmark_runtime.py run \
   --lock /tmp/m4-m6-compute.lock
 ```
 
+The candidate embeds the successful discovery supervision record. Missing, failed
+or stale report supervision prevents candidate derivation and confirmation.
 Confirmation starts a separate isolated lifecycle/run ID and preserves the target,
 source, model, request, settings, budget and method. Its `confirmation.json`
 compares p95, throughput and errors against the retained discovery candidate.

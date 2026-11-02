@@ -288,43 +288,57 @@ def discovery_report(plan):
     }
 
 
+def supervised_fixture(report, report_sha256="a" * 64):
+    """Construct a parent-outcome double for isolated arithmetic/gate tests only."""
+    return {
+        "status": "success",
+        "worker_returncode": 0,
+        "cleanup_verified": True,
+        "service_launched": True,
+        "run_id": report["run_id"],
+        "report_digest": benchmark.digest(report),
+        "plan_sha256": benchmark.digest(report["plan"]),
+        "report_sha256": report_sha256,
+    }
+
+
 def test_proposals_refuse_fixture_and_partial_evidence(plan):
     report = discovery_report(plan)
     with pytest.raises(ValueError, match="target discovery"):
-        benchmark.propose(report, "a" * 64, 1)
+        benchmark.propose(report, "a" * 64, 1, supervised_fixture(report))
     plan["evidence_kind"] = "selected-target"
     report["status"] = "stopped"
     with pytest.raises(ValueError):
-        benchmark.propose(report, "a" * 64, 1)
+        benchmark.propose(report, "a" * 64, 1, supervised_fixture(report))
     report["status"] = "complete"
     report["memory"]["peak_bytes"] = None
     with pytest.raises(ValueError):
-        benchmark.propose(report, "a" * 64, 1)
+        benchmark.propose(report, "a" * 64, 1, supervised_fixture(report))
 
 
 def test_separate_confirmation_preserves_protocol_and_reports_regression(plan):
     plan["evidence_kind"] = "selected-target"
     report = discovery_report(plan)
-    proposal = benchmark.propose(report, "a" * 64, 1)
+    proposal = benchmark.propose(report, "a" * 64, 1, supervised_fixture(report))
     assert proposal["p95_ceiling_seconds"] == 2.4
     assert proposal["status"] == "proposed_pending_Didac_review"
     plan["purpose"] = "confirmation"
     report["run_id"] = "separate-confirmation-fixture-arithmetic-only"
-    assert benchmark.confirm(report, proposal)["passed"]
+    assert benchmark.confirm(report, proposal, supervised_fixture(report))["passed"]
     report["phases"]["warm_c1"]["p95_seconds"] = 2.5
-    assert not benchmark.confirm(report, proposal)["passed"]
+    assert not benchmark.confirm(report, proposal, supervised_fixture(report))["passed"]
     plan["expected"]["settings"]["seed"] = 8
     with pytest.raises(ValueError, match="preserve"):
-        benchmark.confirm(report, proposal)
+        benchmark.confirm(report, proposal, supervised_fixture(report))
 
 
 def test_same_run_cannot_be_its_own_confirmation(plan):
     plan["evidence_kind"] = "selected-target"
     report = discovery_report(plan)
-    proposal = benchmark.propose(report, "a" * 64, 1)
+    proposal = benchmark.propose(report, "a" * 64, 1, supervised_fixture(report))
     plan["purpose"] = "confirmation"
     with pytest.raises(ValueError):
-        benchmark.confirm(report, proposal)
+        benchmark.confirm(report, proposal, supervised_fixture(report))
 
 
 @pytest.mark.parametrize(
@@ -518,7 +532,7 @@ def test_external_watchdog_keeps_evidence_and_respects_launch_ownership(
     class HungWorker:
         """Deterministically simulate expiry, without a real hanging process."""
 
-        pid = 12345
+        pid, returncode = 12345, -9
 
         def __init__(self, _argv, **_kwargs):
             self.waits = 0
@@ -544,6 +558,125 @@ def test_external_watchdog_keeps_evidence_and_respects_launch_ownership(
     assert (output / "declaration.json").exists()
     assert len(signals) == 1
     assert len(cleanups) == int(launched)
+
+
+@pytest.mark.parametrize("record", ["lifecycle", "lifecycle_intent", None])
+@pytest.mark.parametrize("cleanup_ok", [False, True])
+def test_nonzero_worker_exit_cleans_launched_daemon(
+    plan, tmp_path, monkeypatch, record, cleanup_ok
+):
+    """An exited worker cannot leave its daemon-owned service after releasing the lock."""
+    declaration = tmp_path / "plan.json"
+    benchmark.write_json(declaration, plan)
+    output = tmp_path / "run"
+    cleanups = []
+
+    class DeadWorker:
+        """Simulate a crash after the lifecycle was flushed, before a report exists."""
+
+        pid, returncode = 12345, 7
+
+        def __init__(self, _argv, **_kwargs):
+            if record:
+                (output / "observations.jsonl").write_text(
+                    json.dumps({"type": record, "pid": 42}) + "\n"
+                )
+
+        def wait(self, **_kwargs):
+            """Return the abnormal terminal outcome."""
+            return self.returncode
+
+    monkeypatch.setattr(runtime.subprocess, "Popen", DeadWorker)
+    monkeypatch.setattr(runtime, "runtime_identity", lambda _: {"fixture": True})
+    monkeypatch.setattr(runtime.os, "killpg", lambda *_args: None)
+    monkeypatch.setattr(runtime, "cleanup", lambda *_args: cleanups.append(True) or cleanup_ok)
+    assert not runtime.supervise(declaration, output, None, tmp_path / "lock")
+    assert len(cleanups) == int(record is not None)
+    outcome = json.loads((output / "supervisor.json").read_text())
+    assert outcome["status"] == "failed"
+    assert outcome["worker_returncode"] == 7
+    assert outcome["cleanup_verified"] == (cleanup_ok if record else True)
+
+
+def test_nonzero_worker_cannot_emit_passing_confirmation(plan, tmp_path, monkeypatch):
+    """A complete-looking worker report remains untrusted after exit 7."""
+    plan["evidence_kind"] = "selected-target"
+    report = discovery_report(plan)
+    proposal = benchmark.propose(report, "a" * 64, 1, supervised_fixture(report))
+    plan["purpose"] = "confirmation"
+    report["run_id"] = "untrusted-worker-report-fixture-only"
+    declaration, proposal_path = tmp_path / "plan.json", tmp_path / "proposal.json"
+    benchmark.write_json(declaration, plan)
+    benchmark.write_json(proposal_path, proposal)
+    output = tmp_path / "run"
+
+    class DeadWorker:
+        """Flush a plausible report, then fail instead of completing successfully."""
+
+        pid, returncode = 12345, 7
+
+        def __init__(self, _argv, **_kwargs):
+            (output / "observations.jsonl").write_text('{"type":"lifecycle","pid":42}\n')
+            benchmark.write_json(output / "report.json", report)
+
+        def wait(self, **_kwargs):
+            """Return a failure after the report was written."""
+            return self.returncode
+
+    monkeypatch.setattr(runtime.subprocess, "Popen", DeadWorker)
+    monkeypatch.setattr(runtime, "runtime_identity", lambda _: {"fixture": True})
+    monkeypatch.setattr(benchmark, "validate_receipt", lambda *_args: None)
+    monkeypatch.setattr(runtime.os, "killpg", lambda *_args: None)
+    monkeypatch.setattr(runtime, "cleanup", lambda *_args: True)
+    assert not runtime.supervise(declaration, output, None, tmp_path / "lock", proposal_path)
+    assert not (output / "confirmation.json").exists()
+    outcome = json.loads((output / "supervisor.json").read_text())
+    assert outcome["status"] == "failed"
+    assert outcome["worker_returncode"] == 7
+    retained = json.loads((output / "report.json").read_text())
+    assert retained == report  # never overwrite the negative evidence
+    with pytest.raises(ValueError, match="Successful supervisor"):
+        benchmark.confirm(report, proposal, outcome)
+
+
+def test_propose_cli_requires_successful_supervision(plan, tmp_path):
+    """A worker-only complete report cannot create a numerical candidate."""
+    plan["evidence_kind"] = "selected-target"
+    report = discovery_report(plan)  # deliberately untrusted synthetic worker report
+    path, candidate = tmp_path / "report.json", tmp_path / "candidate.json"
+    benchmark.write_json(path, report)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-S",
+            runtime.__file__,
+            "propose",
+            str(path),
+            str(candidate),
+            "--concurrency",
+            "1",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert not candidate.exists()
+
+
+def test_nonzero_discovery_with_complete_report_cannot_generate_candidate(plan):
+    plan["evidence_kind"] = "selected-target"
+    report = discovery_report(plan)
+    outcome = supervised_fixture(report)
+    outcome.update(status="failed", worker_returncode=7)
+    with pytest.raises(ValueError, match="Successful supervisor"):
+        benchmark.propose(report, "a" * 64, 1, outcome)
+    outcome.update(status="success", worker_returncode=0, cleanup_verified=False)
+    with pytest.raises(ValueError, match="Successful supervisor"):
+        benchmark.propose(report, "a" * 64, 1, outcome)
+    outcome.update(cleanup_verified=True, report_digest="stale")
+    with pytest.raises(ValueError, match="Successful supervisor"):
+        benchmark.propose(report, "a" * 64, 1, outcome)
 
 
 def test_early_service_exit_is_failed_startup_without_forecasts(plan, tmp_path):

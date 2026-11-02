@@ -360,7 +360,21 @@ def comparison_identity(plan):
     )
 
 
-def propose(report, report_sha256, concurrency):
+def require_supervision(report, supervision):
+    """A worker-written report is eligible only after successful parent supervision."""
+    if not supervision or (
+        supervision.get("status") != "success"
+        or supervision.get("worker_returncode") != 0
+        or supervision.get("cleanup_verified") is not True
+        or supervision.get("service_launched") is not True
+        or supervision.get("run_id") != report.get("run_id")
+        or supervision.get("report_digest") != digest(report)
+        or supervision.get("plan_sha256") != digest(report["plan"])
+    ):
+        raise ValueError("Successful supervisor outcome and verified cleanup are required")
+
+
+def propose(report, report_sha256, concurrency, supervision=None):
     """Derive an unapproved NFR-7 candidate only from a complete real-target discovery."""
     if (
         report["plan"]["evidence_kind"] != "selected-target"
@@ -372,6 +386,9 @@ def propose(report, report_sha256, concurrency):
         raise ValueError(
             "NFR-7 proposal requires a complete target discovery with memory evidence"
         )
+    require_supervision(report, supervision)
+    if supervision["report_sha256"] != report_sha256:
+        raise ValueError("Discovery report bytes do not match the supervisor outcome")
     phase = report["phases"][f"warm_c{concurrency}"]
     if phase["errors"] or phase["successes"] < 20:
         raise ValueError("Choose a warm level with at least 20 successes and no errors")
@@ -380,6 +397,7 @@ def propose(report, report_sha256, concurrency):
         "status": "proposed_pending_Didac_review",
         "discovery_run_id": report["run_id"],
         "discovery_report_sha256": report_sha256,
+        "discovery_supervision": supervision,
         "comparison_identity": comparison_identity(report["plan"]),
         "concurrency": concurrency,
         "observed_p95_seconds": phase["p95_seconds"],
@@ -393,17 +411,34 @@ def propose(report, report_sha256, concurrency):
     }
 
 
-def confirm(report, proposal):
-    """Report a separate run's comparison; this never approves an NFR or deployment."""
+def validate_confirmation_plan(plan, proposal):
+    """Check discovery provenance and protocol before starting a new lifecycle."""
+    proof = proposal.get("discovery_supervision") or {}
     if (
-        report["plan"]["purpose"] != "confirmation"
-        or report["plan"]["evidence_kind"] != "selected-target"
+        proof.get("status") != "success"
+        or proof.get("worker_returncode") != 0
+        or proof.get("cleanup_verified") is not True
+        or proof.get("service_launched") is not True
+        or proof.get("run_id") != proposal.get("discovery_run_id")
+        or proof.get("report_sha256") != proposal.get("discovery_report_sha256")
+    ):
+        raise ValueError("Confirmation requires successful discovery supervision")
+    if (
+        plan["purpose"] != "confirmation"
+        or plan["evidence_kind"] != "selected-target"
         or proposal.get("status") != "proposed_pending_Didac_review"
-        or report.get("run_id") == proposal.get("discovery_run_id")
-    ) or (comparison_identity(report["plan"]) != proposal["comparison_identity"]):
+    ) or (comparison_identity(plan) != proposal["comparison_identity"]):
         raise ValueError(
             "Confirmation must preserve discovery inputs, target, identity and protocol"
         )
+
+
+def confirm(report, proposal, supervision=None):
+    """Report a separately supervised comparison; never approve an NFR or deployment."""
+    validate_confirmation_plan(report["plan"], proposal)
+    if report.get("run_id") == proposal.get("discovery_run_id"):
+        raise ValueError("Confirmation must use a separate run")
+    require_supervision(report, supervision)
     phase = report["phases"].get(f"warm_c{proposal['concurrency']}", {})
     return {
         "proposal": proposal,
