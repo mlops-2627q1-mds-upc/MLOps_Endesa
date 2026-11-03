@@ -19,6 +19,7 @@ dependencies = [
     "codecarbon>=3.3.1",
     "dvc>=3.67.1",
     "dvc-http>=2.32.0",
+    "fastapi>=0.142.2,<1",
     "great-expectations>=1.24.0",
     "ipython",
     "jupyterlab",
@@ -30,11 +31,13 @@ dependencies = [
     "pandas",
     "pip",
     "pyarrow>=25.0.1",
+    "pydantic>=2.13.5,<3",
     "python-dotenv",
     "pyyaml>=6.0.3",
     "scikit-learn",
     "tqdm",
     "typer",
+    "uvicorn>=0.54.0,<1",
 ]
 requires-python = "~=3.11.0"
 
@@ -64,6 +67,7 @@ explicit = true
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1,<1",
     "pylint>=4.1.2",
     "pytest",
     "pytest-cov>=7.1.0",
