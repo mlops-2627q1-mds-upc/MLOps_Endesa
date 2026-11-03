@@ -1,0 +1,61 @@
+name: endesa-service-monitoring
+
+services:
+  api:
+    image: endesa-forecast:monitoring-local
+    build:
+      context: ../..
+      args:
+        GIT_SHA: ${GIT_SHA:?Set GIT_SHA to the full source commit}
+    volumes:
+      - type: bind
+        source: ${FORECAST_CHECKPOINT_DIR:?Set an absolute path to the selected checkpoint}
+        target: /app/models/chronos-t5-small-fine-tuned
+        read_only: true
+        bind:
+          create_host_path: false
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks: [monitoring]
+
+  prometheus:
+    image: prom/prometheus:v3.15.1@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2
+    working_dir: /etc/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --web.listen-address=0.0.0.0:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks: [monitoring]
+
+  grafana:
+    image: grafana/grafana:13.3.0@sha256:488984b716c0862639f91a698adbe2862677a5a07bad42da5f03f3030883b205
+    environment:
+      GF_SECURITY_ADMIN_USER: endesa
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set a local Grafana password}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks: [monitoring]
+
+networks:
+  monitoring:
+    internal: true
+
+volumes:
+  prometheus-data:
+  grafana-data:
