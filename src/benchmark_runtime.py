@@ -1,0 +1,747 @@
+"""Own an isolated benchmark lifecycle, HTTP observations and an external watchdog."""
+
+import argparse
+from contextlib import contextmanager
+import fcntl
+import hashlib
+import http.client
+import json
+import os
+from pathlib import Path
+import platform
+import signal
+import socket
+import subprocess
+import sys
+from threading import Event, Lock, Thread, Timer
+import time
+from urllib.parse import urlsplit
+from uuid import uuid4
+
+if __package__:
+    from . import serving_benchmark as benchmark
+else:
+    # Direct script execution puts this file's directory on sys.path.
+    import serving_benchmark as benchmark  # pylint: disable=import-error
+
+DEFAULT_LOCK = (
+    "/Users/dcayuela/Desktop/UPC/MLOPS/MLOps_Endesa/temporary/"
+    "m4-m6-work-2026-10-23/m4-m6-compute.lock"
+)
+
+
+@contextmanager
+def compute_lock(path):
+    """Fail busy instead of overlapping #75/#76/#77 heavyweight subprocesses."""
+    with Path(path).open("a", encoding="utf-8") as stream:
+        fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        try:
+            yield
+        finally:
+            fcntl.flock(stream, fcntl.LOCK_UN)
+
+
+class Journal:
+    """Flush every observation so watchdog stops retain partial evidence."""
+
+    def __init__(self, path):
+        self.stream = Path(path).open("x", encoding="utf-8")  # noqa: SIM115
+        # Closed after the sampler joins; this journal spans the complete owned lifecycle.
+        self.lock = Lock()
+
+    def emit(self, value):
+        """Keep request/resource records intact across the sampling thread."""
+        with self.lock:
+            self.stream.write(json.dumps(value, allow_nan=False) + "\n")
+            self.stream.flush()
+
+    def close(self):
+        """Release the evidence descriptor after sampling stops."""
+        self.stream.close()
+
+
+def http_json(base_url, method, route, payload, timeout):
+    """Use direct loopback HTTP, no proxies/redirects/retries; cap response size."""
+    url = urlsplit(base_url)
+    connection = http.client.HTTPConnection(url.hostname, url.port, timeout=timeout)
+    deadline = time.monotonic() + timeout
+    expired = Event()
+    timer = None
+    try:
+        connection.connect()
+        connected_socket = connection.sock
+
+        def expire():
+            expired.set()
+            # shutdown unblocks makefile reads too, even after Connection: close.
+            try:
+                connected_socket.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+
+        timer = Timer(max(0, deadline - time.monotonic()), expire)
+        timer.daemon = True
+        timer.start()
+        data = None if payload is None else json.dumps(payload, allow_nan=False).encode()
+        connection.request(method, route, body=data, headers={"Content-Type": "application/json"})
+        response = connection.getresponse()
+        body = response.read(1024 * 1024 + 1)
+        if expired.is_set() or time.monotonic() >= deadline:
+            raise TimeoutError("request deadline")
+        if len(body) > 1024 * 1024:
+            return response.status, None, None
+        try:
+            parsed = json.loads(body)
+        except (ValueError, UnicodeDecodeError):
+            parsed = None
+        return response.status, parsed, hashlib.sha256(body).hexdigest()
+    except (OSError, http.client.HTTPException) as error:
+        if expired.is_set():
+            raise TimeoutError("request deadline") from error
+        raise
+    finally:
+        if timer is not None:
+            timer.cancel()
+            timer.join()
+        connection.close()
+
+
+def forecast_request(plan, budget, phase, concurrency, index, timeout):
+    """Time HTTP serialization, transfer and validation; retain every attempt."""
+    started = budget.clock()
+    status, response_hash = None, None
+    try:
+        status, body, response_hash = http_json(
+            plan["base_url"], "POST", "/forecast", plan["request"], timeout
+        )
+        if status == 200:
+            outcome = "ok" if benchmark.validate_forecast(body, plan) else "invalid_response"
+        else:
+            outcome = "http_error"
+    except TimeoutError:
+        outcome = "timeout"
+    except (OSError, http.client.HTTPException):
+        outcome = "transport_error"
+    return benchmark.Observation(
+        phase,
+        concurrency,
+        index,
+        started - budget.started,
+        budget.clock() - started,
+        status,
+        outcome,
+        response_hash,
+    )
+
+
+class MemoryMonitor:
+    """Sample Linux leader RSS/HWM or an isolated cgroup; never report client RSS."""
+
+    def __init__(self, plan, service, journal, started):
+        self.plan, self.service, self.journal, self.started = plan, service, journal, started
+        self.done = Event()
+        self.reason = None
+        self.peak = None
+        self.samples = 0
+        self.unavailable = 0
+        self.armed = False
+        self.last_counters = None
+        self.container_limit = None
+        self.thread = Thread(target=self._watch, daemon=True)
+
+    def _container_memory(self, resource):
+        directory = Path(resource["cgroup_path"])
+
+        def read_int(name):
+            return int((directory / name).read_text(encoding="utf-8"))
+
+        if resource["cgroup_version"] == 1:
+            counters = dict(
+                line.split()
+                for line in (directory / "memory.oom_control")
+                .read_text(encoding="utf-8")
+                .splitlines()
+            )
+            counters = {key: int(value) for key, value in counters.items()}
+            counters["failcnt"] = read_int("memory.failcnt")
+            if counters.get("under_oom", 0) or counters.get("oom_kill", 0):
+                self.reason = "container_oom_event"
+            elif counters["failcnt"]:
+                self.reason = "container_memory_limit_event"
+            current, peak = (
+                read_int("memory.usage_in_bytes"),
+                read_int("memory.max_usage_in_bytes"),
+            )
+            self.container_limit = read_int("memory.limit_in_bytes")
+        else:
+            counters = dict(
+                line.split()
+                for line in (directory / "memory.events").read_text(encoding="utf-8").splitlines()
+            )
+            counters = {key: int(value) for key, value in counters.items()}
+            if counters.get("oom", 0) or counters.get("oom_kill", 0):
+                self.reason = "container_oom_event"
+            elif counters.get("max", 0):
+                self.reason = "container_memory_limit_event"
+            current, peak = read_int("memory.current"), read_int("memory.peak")
+            limit = (directory / "memory.max").read_text(encoding="utf-8").strip()
+            self.container_limit = None if limit == "max" else int(limit)
+        self.last_counters = counters
+        if (
+            self.container_limit is not None
+            and self.plan["measurement"]["memory_limit_bytes"] >= self.container_limit
+        ):
+            self.reason = self.reason or "memory_stop_not_below_container_limit"
+        return current, peak
+
+    def sample(self):
+        """Read kernel high-water memory; container scope includes all cgroup processes."""
+        resource = self.plan["resource"]
+        try:
+            if resource["scope"] == "container":
+                current, peak = self._container_memory(resource)
+            else:
+                fields = dict(
+                    line.split(":", 1)
+                    for line in Path(f"/proc/{self.service.process.pid}/status")
+                    .read_text(encoding="utf-8")
+                    .splitlines()
+                    if ":" in line
+                )
+                current = int(fields["VmRSS"].split()[0]) * 1024
+                peak = int(fields["VmHWM"].split()[0]) * 1024
+        except (OSError, ValueError, KeyError):
+            self.unavailable += 1
+            if self.armed and self.plan["evidence_kind"] == "selected-target":
+                self.reason = self.reason or "memory_telemetry_lost"
+            return None
+        self.samples += 1
+        self.peak = max(self.peak or 0, current, peak)
+        self.journal.emit(
+            {
+                "type": "memory",
+                "at_seconds": time.monotonic() - self.started,
+                "scope": resource["scope"],
+                "current_bytes": current,
+                "peak_bytes": peak,
+                "cgroup_counters": self.last_counters,
+                "container_limit_bytes": self.container_limit,
+            }
+        )
+        if self.peak >= self.plan["measurement"]["memory_limit_bytes"]:
+            self.reason = self.reason or "memory_limit_reached"
+        return current
+
+    def _watch(self):
+        while not self.done.is_set():
+            self.sample()
+            if self.reason:
+                # Stop the actual owned service immediately, including a daemon container.
+                self.service.stop()
+                break
+            self.done.wait(0.1)
+
+    def check(self):
+        """Stop launching work if memory failed or real-target telemetry is absent."""
+        if self.reason:
+            raise benchmark.StopRun(self.reason)
+        if not self.samples and self.plan["evidence_kind"] == "selected-target":
+            raise benchmark.StopRun("memory_telemetry_unavailable")
+
+    def report(self):
+        """Explicitly qualify scope and missing observations."""
+        return {
+            "scope": self.plan["resource"]["scope"],
+            "peak_bytes": self.peak,
+            "samples": self.samples,
+            "unavailable_samples": self.unavailable,
+            "method": (
+                "cgroup v1 memory.usage_in_bytes/memory.max_usage_in_bytes"
+                if self.plan["resource"].get("cgroup_version") == 1
+                else "cgroup v2 memory.current/memory.peak"
+            )
+            if self.plan["resource"]["scope"] == "container"
+            else "Linux /proc owned leader VmRSS/VmHWM; excludes child processes and host memory",
+            "cgroup_version": self.plan["resource"].get("cgroup_version"),
+            "cgroup_counters": self.last_counters,
+            "oom_kill_count": (self.last_counters or {}).get("oom_kill"),
+            "container_limit_bytes": self.container_limit,
+            "host_memory": "unavailable",
+            "sampling_interval_seconds": 0.1,
+        }
+
+
+def assert_port_free(base_url):
+    """Refuse an already-running service, including an unrelated/non-HTTP listener."""
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", urlsplit(base_url).port))
+
+
+def cleanup(startup, process):
+    """Stop only the declared isolated lifecycle, with bounded cleanup."""
+    clean = True
+    if startup["stop_argv"]:
+        try:
+            result = subprocess.run(
+                startup["stop_argv"],
+                cwd=startup["cwd"],
+                check=False,
+                timeout=2,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            clean = result.returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            clean = False
+    if process is not None:
+        if process.poll() is None:
+            try:
+                process.terminate()
+            except ProcessLookupError:
+                pass
+            try:
+                process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                try:
+                    process.wait(timeout=1)
+                except subprocess.TimeoutExpired:
+                    clean = False
+        clean = clean and process.poll() is not None
+    return clean
+
+
+class OwnedService:
+    """Serialize sampler/finalizer cleanup and keep it idempotent."""
+
+    def __init__(self, startup, process):
+        self.startup, self.process = startup, process
+        self.lock = Lock()
+        self.cleaned = None
+
+    def stop(self):
+        """Stop the owned lifecycle exactly once."""
+        with self.lock:
+            if self.cleaned is None:
+                self.cleaned = cleanup(self.startup, self.process)
+            return self.cleaned
+
+
+def runtime_identity(plan):
+    """Record actual harness bytes/HEAD; require committed selected-model tooling."""
+    root = Path(__file__).resolve().parents[1]
+    files = ["src/benchmark_runtime.py", "src/serving_benchmark.py"]
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+    status = subprocess.check_output(
+        ["git", "status", "--porcelain", "--", *files], cwd=root, text=True
+    )
+    if plan["evidence_kind"] == "selected-target":
+        if status or head != plan["source"]["benchmark_commit"]:
+            raise ValueError("Selected-target run requires the declared committed harness HEAD")
+        provenance = json.loads(
+            (root / "models/chronos-t5-small-fine-tuned.provenance.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        if plan["expected"]["checkpoint"] != {
+            "sha256": provenance["model_safetensors_sha256"],
+            "training_run_id": provenance["training_run_id"],
+        }:
+            raise ValueError("Selected-target checkpoint differs from tracked provenance")
+        if plan["hardware"]["host_identity"] != platform.node():
+            raise ValueError("Run on the host identified by #75's receipt")
+    return {
+        "benchmark_commit": head,
+        "benchmark_dirty": bool(status),
+        "python": sys.version,
+        "platform": platform.platform(),
+        "host_identity": platform.node(),
+        "module_sha256": {
+            name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in files
+        },
+    }
+
+
+def lifecycle_was_launched(output):
+    """Read flushed ownership intent too, covering a crash before the PID record."""
+    raw = output / "observations.jsonl"
+    if raw.exists():
+        for line in raw.read_text(encoding="utf-8").splitlines():
+            try:
+                if json.loads(line).get("type") in {"lifecycle_intent", "lifecycle"}:
+                    return True
+            except ValueError:
+                continue
+    return False
+
+
+def wait_ready(plan, budget, process, journal, memory):
+    """Measure launch to readiness; probe observations cannot contaminate warm latency."""
+    deadline = min(budget.deadline, budget.started + plan["measurement"]["startup_seconds"])
+    while budget.clock() < deadline:
+        if memory.reason:
+            raise benchmark.StopRun(memory.reason)
+        if process.poll() is not None:
+            raise benchmark.StopRun("service_exited_during_startup")
+        timeout = min(1, deadline - budget.clock())
+        try:
+            status, body, _ = http_json(plan["base_url"], "GET", "/ready", None, timeout)
+            journal.emit(
+                {"type": "probe", "status": status, "at_seconds": budget.clock() - budget.started}
+            )
+            if status == 200 and body == {"status": "ready"}:
+                return budget.clock() - budget.started
+        except (OSError, http.client.HTTPException):
+            journal.emit(
+                {"type": "probe", "status": None, "at_seconds": budget.clock() - budget.started}
+            )
+        time.sleep(min(0.1, max(0, deadline - budget.clock())))
+    raise benchmark.StopRun("startup_deadline")
+
+
+def execute(plan, output):
+    """Worker: retain declarations, raw observations, partial phases and cleanup state."""
+    budget = benchmark.Budget(plan["measurement"])
+    journal = Journal(output / "observations.jsonl")
+    report = {
+        "schema_version": 1,
+        "run_id": str(uuid4()),
+        "started_unix_seconds": time.time(),
+        "plan": plan,
+        "plan_sha256": benchmark.digest(plan),
+        "status": "stopped",
+        "stop_reason": None,
+        "phases": {},
+        "cold_start": {
+            "scope": "owned service process/container restart; filesystem/model caches uncontrolled",
+            "launch_to_ready_seconds": None,
+            "first_forecast": None,
+        },
+    }
+    process, memory, service = None, None, None
+    try:
+        assert_port_free(plan["base_url"])
+        if (
+            plan["resource"]["scope"] == "container"
+            and (
+                Path(plan["resource"]["cgroup_path"])
+                / (
+                    "memory.usage_in_bytes"
+                    if plan["resource"]["cgroup_version"] == 1
+                    else "memory.current"
+                )
+            ).exists()
+        ):
+            raise benchmark.StopRun("container_cgroup_already_exists")
+        env = os.environ.copy()
+        env.update(
+            {
+                key: "2"
+                for key in (
+                    "OMP_NUM_THREADS",
+                    "MKL_NUM_THREADS",
+                    "OPENBLAS_NUM_THREADS",
+                    "FORECAST_CPU_THREADS",
+                )
+            }
+        )
+        env.update({"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1"})
+        # Ownership starts after refusal checks and before Popen can launch a
+        # daemon. A parent may safely clean this dedicated lifecycle after a crash.
+        journal.emit({"type": "lifecycle_intent", "at_seconds": budget.clock() - budget.started})
+        launch_started = budget.clock()
+        report["cold_start"]["launch_started_seconds"] = launch_started - budget.started
+        with (output / "service.log").open("x", encoding="utf-8") as log:
+            process = subprocess.Popen(  # no shell, foreground owned lifecycle
+                plan["startup"]["argv"],
+                cwd=plan["startup"]["cwd"],
+                env=env,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+            )
+        journal.emit(
+            {
+                "type": "lifecycle",
+                "pid": process.pid,
+                "at_seconds": budget.clock() - budget.started,
+            }
+        )
+        service = OwnedService(plan["startup"], process)
+        memory = MemoryMonitor(plan, service, journal, budget.started)
+        memory.thread.start()
+        ready_elapsed = wait_ready(plan, budget, process, journal, memory)
+        report["cold_start"]["launch_to_ready_seconds"] = ready_elapsed - (
+            launch_started - budget.started
+        )
+        # Sample synchronously before real forecast work as well as periodically.
+        memory.sample()
+        memory.armed = True
+
+        def check():
+            memory.check()
+            if process.poll() is not None:
+                raise benchmark.StopRun("service_exited")
+
+        def request(phase, concurrency, index, timeout):
+            return forecast_request(plan, budget, phase, concurrency, index, timeout)
+
+        settings = plan["measurement"]
+        phases = [("first_forecast", 1, 1), ("warmup", 1, settings["warmup_requests"])]
+        phases += [
+            (f"warm_c{c}", c, settings["requests_per_level"]) for c in settings["concurrency"]
+        ]
+        phases += [("overload_c2", 2, settings["overload_requests"])]
+        for phase, concurrency, count in phases:
+            result, stopped = benchmark.run_phase(
+                phase, concurrency, count, request, budget, journal.emit, check
+            )
+            report["phases"][phase] = result
+            if phase == "first_forecast":
+                report["cold_start"]["first_forecast"] = result
+            if stopped:
+                raise benchmark.StopRun(stopped)
+            if phase in {"first_forecast", "warmup"} and result["errors"]:
+                raise benchmark.StopRun("first_request_or_warmup_failed")
+        report["status"] = "complete"
+    except benchmark.StopRun as error:
+        report["stop_reason"] = str(error)
+    except (OSError, ValueError, http.client.HTTPException) as error:
+        report["stop_reason"] = type(error).__name__  # exclude paths/credentials/raw server errors
+    finally:
+        if memory:
+            memory.done.set()
+            memory.thread.join(timeout=4)
+            memory.sample()
+        report["memory"] = (
+            memory.report()
+            if memory
+            else {
+                "scope": plan["resource"]["scope"],
+                "peak_bytes": None,
+                "samples": 0,
+                "method": "unavailable; lifecycle did not start",
+                "host_memory": "unavailable",
+            }
+        )
+        # Never run a stop command when launch was refused (e.g. an occupied port).
+        report["cleanup_verified"] = service.stop() if service else True
+        if service:
+            with socket.socket() as probe:
+                probe.settimeout(0.2)
+                if probe.connect_ex(("127.0.0.1", urlsplit(plan["base_url"]).port)) == 0:
+                    report["cleanup_verified"] = False
+        if memory and memory.reason:
+            report.update(status="stopped", stop_reason=memory.reason)
+        if not report["cleanup_verified"]:
+            report.update(status="stopped", stop_reason="cleanup_failed")
+        report["total_seconds"] = budget.clock() - budget.started
+        report["limitations"] = [
+            "Synthetic inputs check serving, not forecast quality; no dataset/test evaluation",
+            "Warm quantiles include successful requests only; inspect attempts/errors/raw records",
+            "Batched closed-loop concurrency 1/2 is not an arrival-rate capacity test",
+            "Overload phase may show queuing without rejection; no inferred admission control",
+            "Fixture timings are not selected-model or Virtech evidence"
+            if plan["evidence_kind"] == "fixture"
+            else "One isolated target and bounded sample; no production SLO or approval",
+        ]
+        benchmark.write_json(output / "report.json", report)
+        journal.close()
+    return report["status"] == "complete"
+
+
+def supervise(plan_path, output, receipt_path, lock_path, proposal_path=None):
+    """Validate gates, lock the whole subprocess lifetime and enforce an external deadline."""
+    plan = json.loads(Path(plan_path).read_text(encoding="utf-8"))
+    benchmark.validate_plan(plan)
+    receipt = json.loads(Path(receipt_path).read_text(encoding="utf-8")) if receipt_path else None
+    benchmark.validate_receipt(plan, receipt)
+    proposal = (
+        json.loads(Path(proposal_path).read_text(encoding="utf-8")) if proposal_path else None
+    )
+    if plan["purpose"] == "confirmation":
+        if proposal is None:
+            raise ValueError("Confirmation requires a separately retained discovery proposal")
+        benchmark.validate_confirmation_plan(plan, proposal)
+    elif proposal is not None:
+        raise ValueError("A discovery run cannot consume a confirmation proposal")
+    with compute_lock(lock_path):
+        output = Path(output).resolve()
+        output.mkdir(parents=True, exist_ok=False)
+        benchmark.write_json(output / "declaration.json", plan)
+        if receipt:
+            benchmark.write_json(output / "target-receipt.json", receipt)
+        benchmark.write_json(output / "runtime-identity.json", runtime_identity(plan))
+        argv = [sys.executable, str(Path(__file__).resolve()), "_worker", str(output)]
+        process = subprocess.Popen(argv, start_new_session=True)
+        interrupted = None
+        try:
+            process.wait(timeout=plan["measurement"]["budget_seconds"] - 3)
+        except subprocess.TimeoutExpired:
+            interrupted = "external_budget_deadline"
+        except KeyboardInterrupt:
+            interrupted = "operator_interrupt"
+        finally:
+            # Local descendants and daemon containers have different lifetimes.
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            if interrupted:
+                process.wait()
+        path = output / "report.json"
+        content = None
+        try:
+            content = path.read_bytes() if path.exists() else None
+            report = json.loads(content) if content else None
+            if not isinstance(report, dict):
+                report = None
+            report_digest = benchmark.digest(report) if report else None
+        except (OSError, ValueError):
+            report = None
+            report_digest = None
+        launched = lifecycle_was_launched(output)
+        worker_success = bool(
+            not interrupted
+            and process.returncode == 0
+            and report
+            and report.get("status") == "complete"
+            and report.get("cleanup_verified") is True
+        )
+        # A report precedes terminal exit. After a crash, explicitly stop only
+        # the launched dedicated lifecycle, even if its report claimed cleanup.
+        cleaned = cleanup(plan["startup"], None) if launched and not worker_success else True
+        if launched and not worker_success:
+            with socket.socket() as probe:
+                probe.settimeout(0.2)
+                cleaned = (
+                    cleaned
+                    and probe.connect_ex(("127.0.0.1", urlsplit(plan["base_url"]).port)) != 0
+                )
+        if interrupted:
+            benchmark.write_json(
+                output / "watchdog.json",
+                {
+                    "stop_reason": interrupted,
+                    "cleanup_verified": cleaned,
+                },
+            )
+        outcome = {
+            "status": "success" if worker_success and launched and cleaned else "failed",
+            "worker_returncode": process.returncode,
+            "stop_reason": interrupted
+            or ("worker_or_report_failed" if not worker_success else None),
+            "service_launched": launched,
+            "cleanup_verified": cleaned,
+            "explicit_cleanup_attempted": launched and not worker_success,
+            "run_id": report.get("run_id") if report else None,
+            "plan_sha256": benchmark.digest(plan),
+            "report_digest": report_digest,
+            "report_sha256": hashlib.sha256(content).hexdigest() if content else None,
+        }
+        benchmark.write_json(output / "supervisor.json", outcome)
+        if outcome["status"] != "success":
+            return False
+        if proposal:
+            confirmation = benchmark.confirm(report, proposal, outcome)
+            benchmark.write_json(output / "confirmation.json", confirmation)
+            if not confirmation["passed"]:
+                return False
+        return True
+
+
+def main():
+    """Run/propose CLI; stdout contains only artifact locations and overall status."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+    run = sub.add_parser("run")
+    run.add_argument("plan")
+    run.add_argument("output")
+    run.add_argument("--receipt")
+    run.add_argument("--proposal")
+    run.add_argument("--lock", default=DEFAULT_LOCK)
+    request = sub.add_parser("request", help="Retain the 512-value synthetic request")
+    request.add_argument("output")
+    declare = sub.add_parser("declare", help="Bind #75's receipt and retained request to a plan")
+    declare.add_argument("receipt")
+    declare.add_argument("request")
+    declare.add_argument("output")
+    declare.add_argument("--purpose", choices=["discovery", "confirmation"], required=True)
+    proposal = sub.add_parser("propose")
+    proposal.add_argument("report")
+    proposal.add_argument("output")
+    proposal.add_argument("--concurrency", type=int, choices=[1, 2], required=True)
+    worker = sub.add_parser("_worker", help=argparse.SUPPRESS)
+    worker.add_argument("output")
+    args = parser.parse_args()
+    if args.command == "_worker":
+        output = Path(args.output)
+        plan = json.loads((output / "declaration.json").read_text(encoding="utf-8"))
+        benchmark.validate_plan(plan)
+        receipt_path = output / "target-receipt.json"
+        benchmark.validate_receipt(
+            plan,
+            json.loads(receipt_path.read_text(encoding="utf-8"))
+            if receipt_path.exists()
+            else None,
+        )
+        ok = execute(plan, output)
+    elif args.command == "request":
+        benchmark.write_json(args.output, benchmark.synthetic_request())
+        ok = True
+    elif args.command == "declare":
+        receipt = json.loads(Path(args.receipt).read_text(encoding="utf-8"))
+        plan = {
+            key: receipt[key]
+            for key in (
+                "base_url",
+                "source",
+                "expected",
+                "hardware",
+                "startup",
+                "resource",
+                "measurement",
+            )
+        }
+        plan.update(
+            evidence_kind="selected-target",
+            purpose=args.purpose,
+            request=json.loads(Path(args.request).read_text(encoding="utf-8")),
+        )
+        benchmark.validate_plan(plan)
+        benchmark.validate_receipt(plan, receipt)
+        benchmark.write_json(args.output, plan)
+        ok = True
+    elif args.command == "propose":
+        if (Path(args.report).parent / "watchdog.json").exists():
+            raise ValueError("A forced-stop discovery cannot produce an NFR-7 proposal")
+        content = Path(args.report).read_bytes()
+        supervisor_path = Path(args.report).parent / "supervisor.json"
+        supervision = (
+            json.loads(supervisor_path.read_text(encoding="utf-8"))
+            if supervisor_path.exists()
+            else None
+        )
+        benchmark.write_json(
+            args.output,
+            benchmark.propose(
+                json.loads(content),
+                hashlib.sha256(content).hexdigest(),
+                args.concurrency,
+                supervision,
+            ),
+        )
+        ok = True
+    else:
+        ok = supervise(args.plan, args.output, args.receipt, args.lock, args.proposal)
+    print("complete" if ok else "stopped; inspect retained evidence")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+
+    def terminate(_signum, _frame):
+        """Route operator SIGTERM through the same owned-process cleanup as Ctrl-C."""
+        raise KeyboardInterrupt
+
+    signal.signal(signal.SIGTERM, terminate)
+    sys.exit(main())
