@@ -1,0 +1,40 @@
+# Use after monitoring/service/compose.yml; relative paths resolve from that file.
+services:
+  quality:
+    image: endesa-forecast:monitoring-local
+    command:
+      - uvicorn
+      - quality_exporter:create_app
+      - --factory
+      - --host
+      - 0.0.0.0
+      - --port
+      - "9101"
+      - --workers
+      - "1"
+    environment:
+      ENDESA_QUALITY_REPORT: /quality/report.json
+      ENDESA_QUALITY_MAX_AGE_SECONDS: "300"
+    volumes:
+      - ../quality/exporter.py:/app/quality_exporter.py:ro
+      - type: bind
+        source: ${QUALITY_REPORT_DIR:?Set an absolute directory containing report.json}
+        target: /quality
+        read_only: true
+        bind:
+          create_host_path: false
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9101/metrics', timeout=2).close()"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks: [monitoring]
+
+  prometheus:
+    volumes:
+      - ../quality/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    volumes:
+      - ../quality/grafana/dashboards:/var/lib/grafana/quality:ro
+      - ../quality/grafana/provisioning.yml:/etc/grafana/provisioning/dashboards/quality.yml:ro

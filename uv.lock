@@ -2450,7 +2450,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "ptyprocess" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [
@@ -3409,6 +3409,7 @@ dependencies = [
     { name = "codecarbon" },
     { name = "dvc" },
     { name = "dvc-http" },
+    { name = "fastapi" },
     { name = "great-expectations" },
     { name = "ipython" },
     { name = "jupyterlab" },
@@ -3419,12 +3420,15 @@ dependencies = [
     { name = "numpy" },
     { name = "pandas" },
     { name = "pip" },
+    { name = "prometheus-client" },
     { name = "pyarrow" },
+    { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
     { name = "scikit-learn" },
     { name = "tqdm" },
     { name = "typer" },
+    { name = "uvicorn" },
 ]
 
 [package.optional-dependencies]
@@ -3438,10 +3442,27 @@ forecast = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "httpx" },
     { name = "pylint" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
+]
+serving = [
+    { name = "chronos-forecasting" },
+    { name = "fastapi" },
+    { name = "loguru" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "prometheus-client" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "pyyaml" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'linux'" },
+    { name = "torch", version = "2.14.1+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'win32'" },
+    { name = "typer" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
@@ -3450,6 +3471,7 @@ requires-dist = [
     { name = "codecarbon", specifier = ">=3.3.1" },
     { name = "dvc", specifier = ">=3.67.1" },
     { name = "dvc-http", specifier = ">=2.32.0" },
+    { name = "fastapi", specifier = ">=0.142.2,<1" },
     { name = "great-expectations", specifier = ">=1.24.0" },
     { name = "ipython" },
     { name = "jupyterlab" },
@@ -3461,7 +3483,9 @@ requires-dist = [
     { name = "pandas" },
     { name = "peft", marker = "extra == 'forecast'", specifier = ">=0.21.2,<1" },
     { name = "pip" },
+    { name = "prometheus-client", specifier = ">=0.26.0,<1" },
     { name = "pyarrow", specifier = ">=25.0.1" },
+    { name = "pydantic", specifier = ">=2.13.5,<3" },
     { name = "python-dotenv" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "scikit-learn" },
@@ -3470,15 +3494,33 @@ requires-dist = [
     { name = "torch", marker = "sys_platform == 'win32' and extra == 'forecast'", specifier = ">=2.2,<3", index = "https://download.pytorch.org/whl/cu130" },
     { name = "tqdm" },
     { name = "typer" },
+    { name = "uvicorn", specifier = ">=0.54.0,<1" },
 ]
 provides-extras = ["forecast"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "httpx", specifier = ">=0.28.1,<1" },
     { name = "pylint", specifier = ">=4.1.2" },
     { name = "pytest" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "ruff" },
+]
+serving = [
+    { name = "chronos-forecasting", specifier = ">=2.3.2,<3" },
+    { name = "fastapi", specifier = ">=0.142.2,<1" },
+    { name = "loguru" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "prometheus-client", specifier = ">=0.26.0,<1" },
+    { name = "pydantic", specifier = ">=2.13.5,<3" },
+    { name = "python-dotenv" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "torch", marker = "sys_platform != 'linux' and sys_platform != 'win32'", specifier = ">=2.2,<3" },
+    { name = "torch", marker = "sys_platform == 'linux'", specifier = ">=2.2,<3", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torch", marker = "sys_platform == 'win32'", specifier = ">=2.2,<3", index = "https://download.pytorch.org/whl/cu130" },
+    { name = "typer" },
+    { name = "uvicorn", specifier = ">=0.54.0,<1" },
 ]
 
 [[package]]
@@ -3627,13 +3669,13 @@ resolution-markers = [
     "sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "filelock", marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
-    { name = "fsspec", marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
-    { name = "jinja2", marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
-    { name = "networkx", marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
-    { name = "setuptools", marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
-    { name = "sympy", marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
-    { name = "typing-extensions", marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "filelock" },
+    { name = "fsspec" },
+    { name = "jinja2" },
+    { name = "networkx" },
+    { name = "setuptools" },
+    { name = "sympy" },
+    { name = "typing-extensions" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5d/9b/fd1cd143a7bda5abc1fc352ed7b431f6f52aa3c454293211a33656db2cb5/torch-2.14.1-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:b6074b130fd26bc50f5d171f07dfed70db22dd0c354ab34767729249f9e0f042", size = 127281154, upload-time = "2026-09-30T17:43:58.328Z" },
@@ -3647,13 +3689,13 @@ resolution-markers = [
     "sys_platform == 'linux'",
 ]
 dependencies = [
-    { name = "filelock", marker = "sys_platform == 'linux'" },
-    { name = "fsspec", marker = "sys_platform == 'linux'" },
-    { name = "jinja2", marker = "sys_platform == 'linux'" },
-    { name = "networkx", marker = "sys_platform == 'linux'" },
-    { name = "setuptools", marker = "sys_platform == 'linux'" },
-    { name = "sympy", marker = "sys_platform == 'linux'" },
-    { name = "typing-extensions", marker = "sys_platform == 'linux'" },
+    { name = "filelock" },
+    { name = "fsspec" },
+    { name = "jinja2" },
+    { name = "networkx" },
+    { name = "setuptools" },
+    { name = "sympy" },
+    { name = "typing-extensions" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp311-cp311-linux_s390x.whl", hash = "sha256:cccd0a609fe3f83ab2ff651b627d5bd68c7fb33ee77a994b31c18b7c9a6f9a52", upload-time = "2026-09-30T19:47:01Z" },
@@ -3669,13 +3711,13 @@ resolution-markers = [
     "sys_platform == 'win32'",
 ]
 dependencies = [
-    { name = "filelock", marker = "sys_platform == 'win32'" },
-    { name = "fsspec", marker = "sys_platform == 'win32'" },
-    { name = "jinja2", marker = "sys_platform == 'win32'" },
-    { name = "networkx", marker = "sys_platform == 'win32'" },
-    { name = "setuptools", marker = "sys_platform == 'win32'" },
-    { name = "sympy", marker = "sys_platform == 'win32'" },
-    { name = "typing-extensions", marker = "sys_platform == 'win32'" },
+    { name = "filelock" },
+    { name = "fsspec" },
+    { name = "jinja2" },
+    { name = "networkx" },
+    { name = "setuptools" },
+    { name = "sympy" },
+    { name = "typing-extensions" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.1%2Bcu130-cp311-cp311-win_amd64.whl", hash = "sha256:e98711737150b5a6451cbbfdb425abd5d1bea77f4a1a5d29c48d5ec41cd54949", upload-time = "2026-09-30T20:22:28Z" },

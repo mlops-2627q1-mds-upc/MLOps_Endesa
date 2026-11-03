@@ -1,0 +1,382 @@
+rule_files:
+- alerts.yml
+evaluation_interval: 15s
+tests:
+- name: healthy zero forecast activity
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_model_ready{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_forecasts_in_flight{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_process_metrics_available{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: process_cpu_seconds_total{job="forecast-api",instance="api:8000"}
+    values: 10+0x10
+  - series: process_resident_memory_bytes{job="forecast-api",instance="api:8000"}
+    values: 1024+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="5xx"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: ForecastApiDown
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastScrapeTargetMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastModelNotReady
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastTelemetryMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastProcessTelemetryUnavailable
+    exp_alerts: []
+- name: unreachable API
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_model_ready{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_forecasts_in_flight{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_process_metrics_available{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: process_cpu_seconds_total{job="forecast-api",instance="api:8000"}
+    values: 10+0x10
+  - series: process_resident_memory_bytes{job="forecast-api",instance="api:8000"}
+    values: 1024+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="5xx"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: ForecastApiDown
+    exp_alerts:
+    - exp_labels:
+        job: forecast-api
+        instance: api:8000
+        severity: critical
+      exp_annotations: &id002
+        summary: Forecast API scrape is failing
+        description: Check API process logs, selected checkpoint mount and /health on the private API address; then
+          check the Prometheus target error.
+  - eval_time: 2m
+    alertname: ForecastScrapeTargetMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastModelNotReady
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastTelemetryMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastProcessTelemetryUnavailable
+    exp_alerts: []
+- name: reachable but not ready
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_model_ready{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_forecasts_in_flight{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_process_metrics_available{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: process_cpu_seconds_total{job="forecast-api",instance="api:8000"}
+    values: 10+0x10
+  - series: process_resident_memory_bytes{job="forecast-api",instance="api:8000"}
+    values: 1024+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="5xx"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: ForecastApiDown
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastScrapeTargetMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastModelNotReady
+    exp_alerts:
+    - exp_labels:
+        job: forecast-api
+        instance: api:8000
+        severity: critical
+      exp_annotations:
+        summary: API is reachable but its model is unavailable
+        description: Check /ready and startup or shutdown logs; verify the selected checkpoint provenance and mount
+          before retrying forecasts.
+  - eval_time: 2m
+    alertname: ForecastTelemetryMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastProcessTelemetryUnavailable
+    exp_alerts: []
+- name: missing readiness telemetry
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_forecasts_in_flight{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_process_metrics_available{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: process_cpu_seconds_total{job="forecast-api",instance="api:8000"}
+    values: 10+0x10
+  - series: process_resident_memory_bytes{job="forecast-api",instance="api:8000"}
+    values: 1024+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="5xx"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: ForecastApiDown
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastScrapeTargetMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastModelNotReady
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastTelemetryMissing
+    exp_alerts:
+    - exp_labels:
+        job: forecast-api
+        instance: api:8000
+        severity: warning
+      exp_annotations: &id001
+        summary: Reachable API has incomplete service telemetry
+        description: Inspect /metrics for the endesa service families and available process CPU/RSS samples; check
+          the deployed image and scrape relabeling before treating absent data as zero.
+  - eval_time: 2m
+    alertname: ForecastProcessTelemetryUnavailable
+    exp_alerts: []
+- name: missing error telemetry
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_model_ready{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_forecasts_in_flight{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_process_metrics_available{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: process_cpu_seconds_total{job="forecast-api",instance="api:8000"}
+    values: 10+0x10
+  - series: process_resident_memory_bytes{job="forecast-api",instance="api:8000"}
+    values: 1024+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: ForecastApiDown
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastScrapeTargetMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastModelNotReady
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastTelemetryMissing
+    exp_alerts:
+    - exp_labels:
+        job: forecast-api
+        instance: api:8000
+        severity: warning
+      exp_annotations: *id001
+  - eval_time: 2m
+    alertname: ForecastProcessTelemetryUnavailable
+    exp_alerts: []
+- name: unsupported macOS process collector
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_model_ready{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_forecasts_in_flight{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_process_metrics_available{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="5xx"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: ForecastApiDown
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastScrapeTargetMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastModelNotReady
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastTelemetryMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastProcessTelemetryUnavailable
+    exp_alerts:
+    - exp_labels:
+        job: forecast-api
+        instance: api:8000
+        severity: warning
+      exp_annotations:
+        summary: API process CPU and RSS telemetry is unavailable
+        description: The Python process collector needs readable Linux /proc files; on macOS this is expected, so
+          verify resource collection in the Linux serving container before capacity assessment.
+- name: claimed process availability but missing RSS
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_model_ready{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_forecasts_in_flight{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_process_metrics_available{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: process_cpu_seconds_total{job="forecast-api",instance="api:8000"}
+    values: 10+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="5xx"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: ForecastApiDown
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastScrapeTargetMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastModelNotReady
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastTelemetryMissing
+    exp_alerts:
+    - exp_labels:
+        job: forecast-api
+        instance: api:8000
+        severity: warning
+      exp_annotations: *id001
+  - eval_time: 2m
+    alertname: ForecastProcessTelemetryUnavailable
+    exp_alerts: []
+- name: scrape job absent
+  interval: 15s
+  input_series: []
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: ForecastApiDown
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastScrapeTargetMissing
+    exp_alerts:
+    - exp_labels:
+        job: forecast-api
+        severity: critical
+      exp_annotations:
+        summary: Forecast API scrape target is missing
+        description: Restore the forecast-api scrape job and target in prometheus.yml; verify target discovery before
+          interpreting workload panels.
+  - eval_time: 2m
+    alertname: ForecastModelNotReady
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastTelemetryMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastProcessTelemetryUnavailable
+    exp_alerts: []
+- name: API outage resolves after successful scrape
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 0+0x4 1+0x5
+  - series: endesa_model_ready{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_forecasts_in_flight{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_process_metrics_available{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: process_cpu_seconds_total{job="forecast-api",instance="api:8000"}
+    values: 10+0x10
+  - series: process_resident_memory_bytes{job="forecast-api",instance="api:8000"}
+    values: 1024+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="5xx"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 2m
+    alertname: ForecastApiDown
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastScrapeTargetMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastModelNotReady
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastTelemetryMissing
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: ForecastProcessTelemetryUnavailable
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: ForecastApiDown
+    exp_alerts:
+    - exp_labels:
+        job: forecast-api
+        instance: api:8000
+        severity: critical
+      exp_annotations: *id002
