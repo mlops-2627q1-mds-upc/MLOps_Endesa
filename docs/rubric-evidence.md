@@ -17,7 +17,22 @@ The points below are course rubric weights, not awarded marks.
 
 M4-M6 cover the remaining 50 points: system design (15), APIs (10), containers
 (5), CI/CD for ML (10), resource monitoring (5), and model monitoring (5).
-They remain later work. Existing PR CI is not evidence of a deployed system.
+Their decision records are prepared for wording review in
+[issue #96](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/96):
+
+* System design and APIs: [checkpoint loading](edn/0013-checkpoint-loading.md),
+  [component boundaries](edn/0014-serving-architecture.md),
+  [API lifecycle](edn/0015-api-model-lifecycle.md),
+  [Virtech deployment](edn/0022-virtech-deployment.md) and
+  [serving benchmark](edn/0023-serving-benchmark.md).
+* Packaging and CI/CD: [serving container](edn/0016-serving-container.md) and
+  [release validation](edn/0017-release-validation.md).
+* Monitoring: [service metrics](edn/0018-service-monitoring.md),
+  [replay journal](edn/0019-replay-journal.md), [demand drift](edn/0020-demand-drift.md)
+  and [forecast quality](edn/0021-forecast-quality.md).
+
+Implementation and verification remain tracked in the linked issues and PRs.
+Existing PR CI is not evidence of a deployed system.
 
 Sources: supplied course lab slides, pages 18, 21-26 and 34-41. See the current
 [Project](https://github.com/orgs/mlops-2627q1-mds-upc/projects/3) for operational

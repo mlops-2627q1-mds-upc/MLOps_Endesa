@@ -17,6 +17,22 @@ part, and how AI contributed where applicable.
 | [EDN-010: Forecast invariance](0010-forecast-invariance.md) | 2026-10-14 | M3 | Base-model cases reviewed in PR #59; local-checkpoint extension included in approved and merged PR #69 |
 | [EDN-011: Directional expectations](0011-directional-expectations.md) | 2026-10-14 | M3 | Base-model cases reviewed in PR #58; local-checkpoint extension included in approved and merged PR #69 |
 | [EDN-012: Bounded fine-tuning](0012-chronos-fine-tuning.md) | 2026-10-12 | M2/M3 | Experiment records, integration and provenance repair included in approved and merged PR #69 |
+| [EDN-013: Verified checkpoint loading](0013-checkpoint-loading.md) | 2026-11-11 | M4 | Local draft |
+| [EDN-014: Keep replay and monitoring outside the API](0014-serving-architecture.md) | 2026-11-11 | M4 | Local draft |
+| [EDN-015: One model per API lifecycle](0015-api-model-lifecycle.md) | 2026-11-11 | M4 | Local draft |
+| [EDN-016: Separate the serving image from model provisioning](0016-serving-container.md) | 2026-11-11 | M5 | Local draft |
+| [EDN-017: Separate release validation from fast PR checks](0017-release-validation.md) | 2026-11-11 | M5 | Local draft |
+| [EDN-018: Bounded metrics with explicit missing samples](0018-service-monitoring.md) | 2026-11-11 | M6 | Local draft |
+| [EDN-019: Use SQLite for restartable historical replay](0019-replay-journal.md) | 2026-11-11 | M6 | Local draft |
+| [EDN-020: Keep drift assessment finite and separate from serving](0020-demand-drift.md) | 2026-11-11 | M6 | Local draft |
+| [EDN-021: Score only released observations and suppress stale quality values](0021-forecast-quality.md) | 2026-11-11 | M6 | Local draft |
+| [EDN-022: Fit the Virtech deployment to the account quota](0022-virtech-deployment.md) | 2026-11-11 | M4 | Local draft |
+| [EDN-023: Measure serving with an isolated, supervised benchmark](0023-serving-benchmark.md) | 2026-11-11 | M4 | Local draft |
+
+Entries EDN-013 to EDN-023 are prepared for wording review under
+[issue #96](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/96).
+Their dates record when the entries were written; implementation evidence retains its
+own dates.
 
 ## Adding an entry
 
