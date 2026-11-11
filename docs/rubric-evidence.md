@@ -17,7 +17,7 @@ The points below are course rubric weights, not awarded marks.
 
 M4-M6 cover the remaining 50 points: system design (15), APIs (10), containers
 (5), CI/CD for ML (10), resource monitoring (5), and model monitoring (5).
-Their decision records are prepared for wording review in
+Their decision records are linked from
 [issue #96](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/96):
 
 * System design and APIs: [checkpoint loading](edn/0013-checkpoint-loading.md),

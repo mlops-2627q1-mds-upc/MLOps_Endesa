@@ -8,7 +8,7 @@ Activity / Topic: Deployment target (#75)
 
 Decision Participants: Dídac Cayuela
 
-Status: Draft for wording review before push.
+Status: Recorded; peer review pending.
 
 ## Decision
 

@@ -8,7 +8,7 @@ Activity / Topic: API lifecycle (#49)
 
 Decision Participants: Dídac Cayuela
 
-Status: Draft for wording review before push.
+Status: Recorded; peer review pending.
 
 ## Decision
 
