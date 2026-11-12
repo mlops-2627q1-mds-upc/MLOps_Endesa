@@ -1,0 +1,226 @@
+name: Image publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact reviewed main commit (must equal this dispatch SHA)
+        required: true
+        type: string
+      image_repository:
+        description: Agreed registry/repository, without tag (no default destination)
+        required: true
+        type: string
+      release_version:
+        description: Version such as v0.1.0; the tag also includes the source SHA
+        required: true
+        type: string
+      validation_run_id:
+        description: Successful manual release-validation Actions run ID
+        required: true
+        type: string
+      validation_run_attempt:
+        description: Exact successful validation run attempt
+        required: true
+        type: string
+      validation_artifact_id:
+        description: Unexpired release-validation artifact ID for that attempt
+        required: true
+        type: string
+      validation_artifact_digest:
+        description: Expected sha256 digest of that Actions artifact ZIP
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-publication
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      actions: read
+      packages: write
+    env:
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      IMAGE_REPOSITORY: ${{ inputs.image_repository }}
+      RELEASE_VERSION: ${{ inputs.release_version }}
+      VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
+      VALIDATION_ATTEMPT: ${{ inputs.validation_run_attempt }}
+      VALIDATION_ARTIFACT_ID: ${{ inputs.validation_artifact_id }}
+      VALIDATION_ARTIFACT_DIGEST: ${{ inputs.validation_artifact_digest }}
+      # Registry credentials stay outside the checkout and retained evidence.
+      DOCKER_CONFIG: ${{ runner.temp }}/endesa-publication-docker
+    steps:
+      - name: Reject a different dispatch source
+        run: |
+          python3 - <<'PY'
+          import os, re
+          source = os.environ['SOURCE_SHA']
+          if not re.fullmatch(r'[0-9a-f]{40}', source) or source != os.environ['GITHUB_SHA']:
+              raise SystemExit('source_sha must equal the reviewed main SHA of this dispatch')
+          for key in ('VALIDATION_RUN_ID', 'VALIDATION_ATTEMPT', 'VALIDATION_ARTIFACT_ID'):
+              if not re.fullmatch(r'[1-9][0-9]{0,19}', os.environ[key]):
+                  raise SystemExit('Use explicit positive Actions run/attempt/artifact IDs')
+          if not re.fullmatch(r'sha256:[0-9a-f]{64}', os.environ['VALIDATION_ARTIFACT_DIGEST']):
+              raise SystemExit('Pin the Actions artifact SHA-256 digest')
+          PY
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.11.32"
+          python-version: "3.11"
+      - name: Install locked evidence-checking dependencies
+        timeout-minutes: 10
+        run: uv sync --locked --dev
+      - name: Validate the explicit destination and version
+        run: |
+          uv run --no-sync python - <<'PY'
+          import os, re
+          from src.release_manifest import REPOSITORY, VERSION
+          repository = os.environ['IMAGE_REPOSITORY']
+          host = repository.split('/')[0]
+          if not re.fullmatch(REPOSITORY, repository) or not ('.' in host or ':' in host):
+              raise SystemExit('Use an explicit lowercase registry/repository, without credentials')
+          if not re.fullmatch(VERSION, os.environ['RELEASE_VERSION']):
+              raise SystemExit('Use a version such as v0.1.0')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as stream:
+              stream.write(f'REGISTRY={host}\n')
+              stream.write(f'IMAGE_TAG={os.environ["RELEASE_VERSION"]}-{os.environ["SOURCE_SHA"]}\n')
+          PY
+          mkdir -p temporary/image-publication
+      - name: Retrieve the selected successful validation attempt and artifact
+        timeout-minutes: 3
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          timeout 20 gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VALIDATION_RUN_ID/attempts/$VALIDATION_ATTEMPT" \
+            > temporary/image-publication/validation-run.json
+          timeout 20 gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$VALIDATION_ARTIFACT_ID" \
+            > temporary/image-publication/validation-artifact.json
+          uv run --no-sync python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from src.release_manifest import artifact_record
+          selection = {key: os.environ[value] for key, value in {
+              'source_sha': 'SOURCE_SHA', 'run_id': 'VALIDATION_RUN_ID',
+              'run_attempt': 'VALIDATION_ATTEMPT', 'artifact_id': 'VALIDATION_ARTIFACT_ID',
+              'artifact_digest': 'VALIDATION_ARTIFACT_DIGEST'}.items()}
+          artifact_record(json.loads(Path('temporary/image-publication/validation-run.json').read_text()),
+                          json.loads(Path('temporary/image-publication/validation-artifact.json').read_text()),
+                          selection)
+          PY
+          timeout 60 gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$VALIDATION_ARTIFACT_ID/zip" \
+            > temporary/image-publication/validation-artifact.zip
+          uv run --no-sync python -m src.release_manifest ingest \
+            --run-metadata temporary/image-publication/validation-run.json \
+            --artifact-metadata temporary/image-publication/validation-artifact.json \
+            --archive temporary/image-publication/validation-artifact.zip \
+            --source-sha "$SOURCE_SHA" --run-id "$VALIDATION_RUN_ID" \
+            --run-attempt "$VALIDATION_ATTEMPT" --artifact-id "$VALIDATION_ARTIFACT_ID" \
+            --artifact-digest "$VALIDATION_ARTIFACT_DIGEST" \
+            --output-dir temporary/release-validation
+      - name: Authenticate only to the explicit registry
+        timeout-minutes: 2
+        env:
+          WORKFLOW_TOKEN: ${{ github.token }}
+          REGISTRY_USER: ${{ secrets.IMAGE_REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.IMAGE_REGISTRY_PASSWORD }}
+        run: |
+          if [ "$REGISTRY" = ghcr.io ]; then
+            printf '%s' "$WORKFLOW_TOKEN" | docker login "$REGISTRY" --username "$GITHUB_ACTOR" --password-stdin
+          else
+            test -n "$REGISTRY_USER" && test -n "$REGISTRY_PASSWORD"
+            printf '%s' "$REGISTRY_PASSWORD" | docker login "$REGISTRY" --username "$REGISTRY_USER" --password-stdin
+          fi
+      - name: Refuse an occupied version or an ambiguous registry response
+        timeout-minutes: 2
+        run: |
+          if docker manifest inspect "$IMAGE_REPOSITORY:$IMAGE_TAG" > temporary/image-publication/tag-check.log 2>&1; then
+            echo 'This version/source tag exists; retain its release record and choose a different version.' >&2
+            exit 1
+          fi
+          if ! grep -Eiq 'manifest unknown|no such manifest' temporary/image-publication/tag-check.log; then
+            echo 'Could not establish that the tag is absent; check agreed registry access before retrying.' >&2
+            exit 1
+          fi
+      - name: Locate retained validation evidence
+        id: evidence
+        run: |
+          uv run --no-sync python - <<'PY'
+          import os
+          from pathlib import Path
+          reports = list(Path('temporary/release-validation').glob('*/report.json'))
+          if len(reports) != 1:
+              raise SystemExit('Require exactly one validation run in the fresh Actions checkout')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as stream:
+              stream.write(f'directory={reports[0].parent}\n')
+          PY
+      - name: Require complete successful evidence for this clean source
+        env:
+          VALIDATION_DIR: ${{ steps.evidence.outputs.directory }}
+        run: |
+          uv run --no-sync python -m src.release_manifest check \
+            --validation-dir "$VALIDATION_DIR" \
+            --source-sha "$SOURCE_SHA" --repository "$IMAGE_REPOSITORY" \
+            --version "$IMAGE_TAG" --architecture amd64
+      - name: Build the allowlisted locked CPU image
+        timeout-minutes: 12
+        run: |
+          docker build --platform linux/amd64 --build-arg GIT_SHA="$SOURCE_SHA" \
+            --tag "$IMAGE_REPOSITORY:$IMAGE_TAG" .
+          docker image inspect "$IMAGE_REPOSITORY:$IMAGE_TAG" > temporary/image-publication/built-image-inspect.json
+      - name: Recheck evidence and publish the versioned image
+        timeout-minutes: 6
+        env:
+          VALIDATION_DIR: ${{ steps.evidence.outputs.directory }}
+        run: |
+          uv run --no-sync python -m src.release_manifest check \
+            --validation-dir "$VALIDATION_DIR" --source-sha "$SOURCE_SHA" \
+            --repository "$IMAGE_REPOSITORY" --version "$IMAGE_TAG" --architecture amd64 \
+            --image-inspect temporary/image-publication/built-image-inspect.json
+          docker push "$IMAGE_REPOSITORY:$IMAGE_TAG" | tee temporary/image-publication/push.log
+          docker image inspect "$IMAGE_REPOSITORY:$IMAGE_TAG" > temporary/image-publication/image-inspect.json
+          uv run --no-sync python -m src.release_manifest create \
+            --validation-dir "$VALIDATION_DIR" --source-sha "$SOURCE_SHA" \
+            --repository "$IMAGE_REPOSITORY" --version "$IMAGE_TAG" --architecture amd64 \
+            --image-inspect temporary/image-publication/image-inspect.json \
+            --output temporary/image-publication/manifest.json
+      - name: Retain reports and publication receipts, including failures
+        if: always()
+        timeout-minutes: 2
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: image-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            temporary/image-publication/manifest.json
+            temporary/image-publication/image-inspect.json
+            temporary/image-publication/built-image-inspect.json
+            temporary/image-publication/*.log
+            temporary/release-validation/**/report.json
+            temporary/release-validation/**/identities.json
+            temporary/release-validation/**/handoff.json
+            temporary/release-validation/**/handoff.sha256
+            temporary/release-validation/**/actions-provenance.json
+            temporary/release-validation/**/validation-artifact.zip
+            temporary/release-validation/**/*.log
+            temporary/release-validation/**/params-cpu2.yaml
+            temporary/release-validation/**/minimum-functionality.json
+            temporary/release-validation/**/directional/**/*.json
+            temporary/release-validation/**/data-check/reports/*.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: End registry authentication
+        if: always()
+        run: |
+          if [ -n "${REGISTRY:-}" ]; then docker logout "$REGISTRY"; fi
