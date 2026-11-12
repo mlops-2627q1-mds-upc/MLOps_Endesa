@@ -11,7 +11,10 @@ This implementation integrates #75/PR #94 at
 `01ed11b93da2ea0f5ac050b8502359339bdf664d`, including #78/PR #98 at
 `fad4e155554902834bfc09802ac78c834d14354d`, #77/PR #87 at
 `147e4500a086f4b5ceb7d58c0d121923c6b86915` and #50/PR #88 at
-`6bd12575d7b80a1166b2370c0a98790ef7ad5075`. Required human reviews, integrated
+`6bd12575d7b80a1166b2370c0a98790ef7ad5075`. It also integrates #78's workflow
+context repair at `d6ded8cb954afc7df02af78ee997a883dea246c3`, with an automatic
+semantic check and an invalid-context regression fixture. Publication workflow
+execution remains a separate authorized step. Required human reviews, integrated
 real-model validation, publication, independent startup and target execution
 remain pending. Fixture tests establish transaction behavior using fabricated
 release evidence and local helper packages. They execute no selected model.
