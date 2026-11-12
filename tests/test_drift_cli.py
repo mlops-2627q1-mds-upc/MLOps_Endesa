@@ -34,6 +34,7 @@ def test_atomic_reports_preserve_prior_assessments(tmp_path):
         ["fixture", "--max-seconds", "0"],
         ["fixture", "--max-seconds", "301"],
         ["replay"],
+        ["scenario"],
     ],
 )
 def test_cli_rejects_invalid_budget_or_missing_journal(tmp_path, monkeypatch, arguments):

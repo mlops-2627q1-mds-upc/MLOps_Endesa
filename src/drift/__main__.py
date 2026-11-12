@@ -12,6 +12,7 @@ from src.drift.assessment import assess_controls, fixture_data
 from src.drift.core import build_reference, is_integer
 from src.drift.data import DEFAULT_CONFIG, ROOT, load_config, load_data
 from src.drift.replay import assess_replay
+from src.drift.scenario import SCENARIOS, recorded_scenario
 
 
 def write_report(path: Path, report: dict, *, replace: bool = False) -> None:
@@ -89,16 +90,28 @@ def _run_replay(args):
 def main() -> None:
     """Never train, infer a forecast, contact a service or read final-test data."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("fixture", "assess", "replay"))
+    parser.add_argument("command", choices=("fixture", "assess", "replay", "scenario"))
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data/processed")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--journal", type=Path)
     parser.add_argument("--max-seconds", type=int, default=120)
+    parser.add_argument("--scenario", choices=SCENARIOS, default="level")
+    parser.add_argument("--clock-position", type=int)
+    parser.add_argument("--observation-delay", type=int, default=0)
     args = parser.parse_args()
     if not 1 <= args.max_seconds <= 300:
         parser.error("--max-seconds must be 1..300")
-    if args.command == "fixture":
+    if args.command == "scenario":
+        if args.clock_position is None:
+            parser.error("scenario requires --clock-position")
+        report = recorded_scenario(
+            args.scenario,
+            clock_position=args.clock_position,
+            observation_delay=args.observation_delay,
+            max_seconds=args.max_seconds,
+        )
+    elif args.command == "fixture":
         report = assess_controls(*fixture_data(), max_seconds=args.max_seconds)
     elif args.command == "assess":
         cfg = load_config(args.config)
