@@ -63,8 +63,7 @@ def recorded_scenario(
             if (
                 available
                 and alert
-                and onset is not None
-                and start >= onset
+                and (onset is None or start >= onset)
                 and first_signals[state] is None
             ):
                 first_signals[state] = end + observation_delay
@@ -98,7 +97,7 @@ def recorded_scenario(
             "intervention_start_position": onset,
             "replay_first_signal_position": first_signals,
             "replay_detection_delay_positions": {
-                state: position - onset if position is not None else None
+                state: position - onset if position is not None and onset is not None else None
                 for state, position in first_signals.items()
             },
             "wall_clock_alert_latency_seconds": None,

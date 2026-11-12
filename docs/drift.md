@@ -135,7 +135,9 @@ This status describes playback availability; it is not a measured missing-sample
 count. `recorded_summary` retains the complete prior assessment, while `windows`
 and `timing.replay_first_signal_position` describe the requested playback clock.
 `timing.replay_detection_delay_positions` includes the supplied label delay;
-the recorded detector delay in `recorded_summary` excludes it.
+the recorded detector delay in `recorded_summary` excludes it. The unchanged
+control reports its first alarm positions, with null detection delay because
+there is no intervention onset.
 
 For example, with a seven-position delay the first affected window is available
 at 201271. NSW and SA variability shifts remain missed there; their first signal

@@ -14,6 +14,17 @@ def test_historical_control_retains_eight_alarms_in_thirty_comparisons():
     results = [state for window in report["windows"] for state in window["states"].values()]
     assert len(results) == 30
     assert sum(state["status"] == "drift" for state in results) == 8
+    assert not any(state["missed_declared_shift"] for state in results)
+    assert report["timing"]["replay_first_signal_position"] == {
+        "NSW": 206640,
+        "VIC": 209328,
+        "QLD": 203952,
+        "SA": 206640,
+        "TAS": 203952,
+    }
+    assert all(
+        value is None for value in report["timing"]["replay_detection_delay_positions"].values()
+    )
     assert report["evidence_kind"] == "recorded-historical-playback"
     assert not report["recovery_assessed"]
     assert not report["alert_delivery_verified"]
