@@ -62,3 +62,27 @@ external-network latency, cold filesystem caches, forecast accuracy and final-te
 evaluation. Fixtures and CI checks remain separate evidence from these target runs.
 No model, data, image, VM configuration, shared service or formal EDN was changed
 by the benchmark.
+
+## Release applicability checked on 12 November
+
+PR #93 was refreshed with `main` at
+`26f260e33766689bcdce4a6db6062a9e1e74475d`. The measured harness modules,
+original manifest and retained raw journals were preserved. Integration tests
+use the merged HTTP API with an injected predictor; they load no checkpoint.
+
+An offline comparison with #79/PR #99 source
+`b08fe64f1eddc07e761f614effb280ed62e97a2e` found matching API/inference and
+runtime support source, model provenance, parameter bytes and dependency locks.
+Its Dockerfile adds the repository source label. This comparison supplies no
+published digest, final image inspection or executed-settings evidence for a
+release. The [protocol's applicability checks](../serving-benchmark.md#applicability-to-release-and-monitoring-work)
+describe the separate publication/deployment interfaces and evidence for #84/#85.
+
+The retained discovery-derived c1 comparison used p95 at most 5.748611460 seconds
+and throughput at least 0.185599796 requests/s; confirmation passed. These are the
+original predeclared-margin comparison values, not adopted NFR-7 or alert limits.
+The local operating proposal remains pending human assessment. Any final target
+with different source/image, request, settings or resource inputs needs a separate
+declared observation. No target benchmark, target connection, publication or model
+execution ran during this refresh; graceful shutdown and human peer review
+remain unverified for this experiment.

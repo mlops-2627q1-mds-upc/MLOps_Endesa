@@ -3,7 +3,8 @@
 Issue [#76](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/76)
 needs serving-machine evidence for [NFR-7](requirements.md). This harness measures
 one isolated service through the HTTP contract in
-[PR #86](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/86).
+[PR #86](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/86), merged in
+`main` at `26f260e33766689bcdce4a6db6062a9e1e74475d`.
 It imports neither the predictor nor training/evaluation code and requires only
 Python 3.8 or newer and its standard library on a POSIX host. Container source is supplied by
 [PR #88](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/88).
@@ -16,6 +17,48 @@ benchmark interface, execution protocol and evidence boundaries.
 
 The completed target observations are recorded in the
 [2 November experiment report](experiments/009-serving-benchmark.md).
+
+## Applicability to release and monitoring work
+
+The 12 November branch refresh preserves the measured harness modules at
+`efdb0813a0a06599927dd6e49760f6f576500097` and the original measurement manifest.
+Added tests exercise the merged API with an injected predictor and reject
+confirmation against different release/runtime inputs. They perform no inference.
+
+The release interface inspected offline is #79/PR #99 at
+`b08fe64f1eddc07e761f614effb280ed62e97a2e`, including #75's deployment helpers
+at `01ed11b93da2ea0f5ac050b8502359339bdf664d` and #78's publication workflow
+repair at `d6ded8cb954afc7df02af78ee997a883dea246c3`. These sources were read;
+their unmerged implementations are not dependencies imported into this branch.
+The [release runbook at that source](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/blob/b08fe64f1eddc07e761f614effb280ed62e97a2e/docs/deployment-release.md)
+defines its public transaction evidence.
+
+| Applicability check | Result and evidence needed for #84/#85 |
+| --- | --- |
+| Runtime source/configuration | Compared with measured service `962471100c1f50838bd55be9ad4664e693082a0a`: API, prediction/checkpoint helpers, their runtime support modules, model provenance, `params.yaml`, `pyproject.toml`, `uv.lock` and `.dockerignore` match byte for byte. The Dockerfile adds the repository source label. Full source/image identity still differs. |
+| Executed prediction | Retain the actual response's selected weights/run, 512/48 dimensions, 20 samples, seed 7, CPU float32, two threads, sampling 1/50/1, linear quantiles and median statistic. Matching defaults or source files alone do not prove execution. |
+| Request and resources | Compare the retained request SHA-256, actual host/CPU allocation, one API worker, CPU quota, 2 GiB container cap and memory-controller scope. The historical receipt used a 1.5 GiB stop threshold. Different request bytes or resource/runtime inputs require a separately declared observation. |
+| Publication and slots | Historical candidate evidence has no registry digest or trusted publication bundle. #75 schema 1 preserves candidate identity; schema 2 binds the manifest, validation directory and immutable registry reference. #79 accepts published schema-2 slots. Neither a deployment config nor transaction status is a benchmark authorization receipt. |
+| Shutdown | The measured one-second stop produced exit 137 without recorded OOM. #75's helper uses a separate 20-second stop and records exit/OOM/`clean_shutdown`; #79 requires clean baseline shutdown. Those contracts do not repair the historical negative stop or establish measured shutdown for a release. |
+
+For [#84](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/84), link
+read-only `release-transaction-status` evidence to the accepted config hash,
+source/image/model/settings and actual monitoring observations. Its schema-1
+`state.current`, `previous`, `pending`, `releases[config_sha256]` and `reports`
+describe recorded transactions; they make no fresh health or alert-delivery claim.
+Retain verification summaries and state commit receipts separately, including a
+failed candidate's status after recovery. The c1/c2 timings explain observed
+queueing under this workload; they establish neither alert thresholds nor
+alert timing/clearing, input drift or forecast degradation.
+
+For [#85](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/85), cite the
+2 November measurements with their original pins and negative stop, alongside
+the final source/CI, real-model validation, trusted publication, independent
+startup and actual target/recovery/monitoring evidence. A final integrated target
+with different runtime inputs needs its own observation. No target execution ran
+during this refresh. The operating-limit proposal remains in ignored
+`temporary/issue-76-release-refresh/decision-proposal.txt`, pending human review;
+formal EDN PR #97, NFR-7 and alert policies are unchanged.
 
 ## Declare the experiment before execution
 
@@ -81,6 +124,15 @@ cgroup must be absent before launch. A live cgroup or occupied port refuses the 
 The harness does not create/remove containers or restart the serving deployment.
 A native launcher must be a foreground single-worker process; its memory excludes
 children. It must not fork/detach or share a listening socket.
+
+The one-second container stop above is the measured protocol, not a general
+release-shutdown recommendation. The harness bounds its stop command at two
+seconds and then terminates its owned launcher. `cleanup_verified` records that
+cleanup command/launcher outcome; it does not inspect the container's exit/OOM
+state or prove graceful shutdown. Retain the separate target inspection and
+direct loopback-refusal observations. A longer stop policy needs a reviewed
+protocol with compatible cleanup/watchdog budgets and fresh evidence; do not
+substitute #75's 20-second command into this historical plan.
 
 The cloud manual's public NAT application mappings do not prove SSH access from
 outside UPC. Use only #75's verified SSH/console route and actual VM mappings;
@@ -217,7 +269,10 @@ uv run python src/benchmark_runtime.py run \
 
 The standalone entrypoint bypasses the project package initializer, so it needs
 no `dotenv`, model or API dependencies. The repository tests still use the locked
-Python 3.11 development environment. Local Python 3.10/3.11 execution and Python
+Python 3.11 development environment, including the merged FastAPI contract for
+the injected-predictor integration cases. These cases accept matching responses
+and reject valid HTTP responses with different model/settings identities.
+Local Python 3.10/3.11 execution and Python
 3.8 syntax are checked; syntax compatibility is not an interpreter execution
 result. The completed target runs used verified Python 3.11.15.
 

@@ -10,11 +10,15 @@ import subprocess
 import sys
 from threading import Event, Thread
 from types import SimpleNamespace
+from unittest.mock import Mock
 
+from fastapi.testclient import TestClient
 import pytest
 
 from src import benchmark_runtime as runtime
 from src import serving_benchmark as benchmark
+from src.api.app import create_app
+from src.api.settings import Settings
 
 SPEC = importlib.util.spec_from_file_location(
     "benchmark_http", Path(__file__).parent / "fixtures" / "benchmark_http.py"
@@ -250,6 +254,38 @@ def test_forecast_validation_preserves_quantile_and_settings_contract(plan):
     assert not benchmark.validate_forecast(body, plan)
 
 
+@pytest.mark.parametrize(
+    "change",
+    [None, "num_samples", "seed", "cpu_threads", "checkpoint", "training_run_id"],
+)
+def test_benchmark_checks_the_served_api_contract_without_a_model(plan, change):
+    prediction = {
+        **deepcopy(plan["expected"]),
+        "p10": [-1.0] * 48,
+        "p50": [0.0] * 48,
+        "p90": [1.0] * 48,
+    }
+    if change in {"num_samples", "seed", "cpu_threads"}:
+        prediction["settings"][change] += 1
+    elif change == "checkpoint":
+        prediction["checkpoint"]["sha256"] = "1" * 64
+        prediction["model_revision"] = "local-sha256:" + "1" * 64
+    elif change == "training_run_id":
+        prediction["checkpoint"]["training_run_id"] = "1" * 32
+    predictor = Mock()
+    predictor.predict.return_value = prediction
+    factory = Mock(return_value=predictor)
+    settings = Settings()
+    with TestClient(create_app(settings, factory)) as client:
+        assert client.get("/health").status_code == 200
+        assert client.get("/ready").status_code == 200
+        response = client.post("/forecast", json=plan["request"])
+    assert response.status_code == 200
+    assert benchmark.validate_forecast(response.json(), plan) is (change is None)
+    predictor.predict.assert_called_once_with(plan["request"]["history"])
+    factory.assert_called_once_with(settings)
+
+
 def test_boolean_or_nonfinite_settings_cannot_pass(plan):
     body = {
         **deepcopy(plan["expected"]),
@@ -339,6 +375,35 @@ def test_same_run_cannot_be_its_own_confirmation(plan):
     plan["purpose"] = "confirmation"
     with pytest.raises(ValueError):
         benchmark.confirm(report, proposal, supervised_fixture(report))
+
+
+@pytest.mark.parametrize(
+    "section,field,value",
+    [
+        ("source", "service_commit", "1" * 40),
+        ("source", "benchmark_commit", "1" * 40),
+        ("source", "image_id", "sha256:" + "1" * 64),
+        ("source", "params_sha256", "1" * 64),
+        ("expected", "checkpoint", {"sha256": "1" * 64, "training_run_id": "1" * 32}),
+        ("expected", "settings", {"num_samples": 21, "seed": 8, "cpu_threads": 1}),
+        ("hardware", "cpu_count", 1000),
+        ("hardware", "memory_bytes", 1000),
+        ("request", "history", [0.0] * 512),
+        ("resource", "scope", "container"),
+        ("startup", "stop_argv", ["docker", "stop", "--time", "20", "fixture-only"]),
+        ("measurement", "requests_per_level", 50),
+        ("measurement", "request_timeout_seconds", 30),
+    ],
+)
+def test_confirmation_refuses_a_different_release_or_runtime(plan, section, field, value):
+    plan["evidence_kind"] = "selected-target"
+    report = discovery_report(plan)
+    proposal = benchmark.propose(report, "a" * 64, 1, supervised_fixture(report))
+    confirmation = deepcopy(plan)
+    confirmation["purpose"] = "confirmation"
+    confirmation[section][field] = value
+    with pytest.raises(ValueError, match="preserve"):
+        benchmark.validate_confirmation_plan(confirmation, proposal)
 
 
 @pytest.mark.parametrize(
