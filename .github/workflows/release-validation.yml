@@ -40,6 +40,8 @@ jobs:
           path: |
             temporary/release-validation/**/report.json
             temporary/release-validation/**/identities.json
+            temporary/release-validation/**/handoff.json
+            temporary/release-validation/**/handoff.sha256
             temporary/release-validation/**/*.log
             temporary/release-validation/**/params-cpu2.yaml
             temporary/release-validation/**/minimum-functionality.json
