@@ -43,4 +43,4 @@ services:
   grafana:
     volumes:
       - ../quality/grafana/dashboards:/var/lib/grafana/quality:ro
-      - ../quality/grafana/provisioning.yml:/etc/grafana/provisioning/dashboards/quality.yml:ro
+      - ../quality/grafana/provisioning.yml:/etc/grafana/provisioning/dashboards/service.yml:ro

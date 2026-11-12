@@ -270,6 +270,26 @@ def test_quality_compose_preserves_loopback_service_monitoring():
     assert jobs["forecast-quality"]["metrics_path"] == "/metrics"
 
 
+def test_quality_provisioning_replaces_an_existing_readonly_parent_file():
+    override = yaml.safe_load((ROOT / "monitoring/quality/compose.yml").read_text())
+    volumes = override["services"]["grafana"]["volumes"]
+    provision_mount = next(volume for volume in volumes if "/etc/grafana/provisioning/" in volume)
+    source, target, mode = provision_mount.split(":")
+    assert mode == "ro"
+    # The base stack mounts this parent read-only; Docker cannot create a child there.
+    relative = Path(target).relative_to("/etc/grafana/provisioning")
+    assert (ROOT / "monitoring/service/grafana/provisioning" / relative).is_file()
+    providers = yaml.safe_load((ROOT / "monitoring/service" / source).read_text())["providers"]
+    base = yaml.safe_load(
+        (ROOT / "monitoring/service/grafana/provisioning" / relative).read_text()
+    )
+    assert all(provider in providers for provider in base["providers"])
+    assert {provider["options"]["path"] for provider in providers} == {
+        "/var/lib/grafana/dashboards",
+        "/var/lib/grafana/quality",
+    }
+
+
 def test_quality_dashboard_uses_availability_gates_and_existing_datasource():
     path = ROOT / "monitoring/quality/grafana/dashboards/quality.json"
     dashboard = json.loads(path.read_text())

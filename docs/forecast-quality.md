@@ -130,6 +130,9 @@ read-only root, one CPU, a 256 MiB memory limit and a 16 MiB `/tmp` mount. The
 source mount must come from the same reviewed checkout as the image;
 it is an explicit local integration configuration, not an immutable deployment
 artifact. No dependency or API instrumentation changes are required.
+The combined dashboard provider replaces the base stack's `service.yml`, whose
+mount point already exists under its read-only provisioning directory; it retains
+both the service and quality dashboards.
 
 ```sh
 export QUALITY_REPORT_DIR="$PWD/temporary/quality"
