@@ -56,8 +56,6 @@ jobs:
       VALIDATION_ATTEMPT: ${{ inputs.validation_run_attempt }}
       VALIDATION_ARTIFACT_ID: ${{ inputs.validation_artifact_id }}
       VALIDATION_ARTIFACT_DIGEST: ${{ inputs.validation_artifact_digest }}
-      # Registry credentials stay outside the checkout and retained evidence.
-      DOCKER_CONFIG: ${{ runner.temp }}/endesa-publication-docker
     steps:
       - name: Reject a different dispatch source
         run: |
@@ -72,6 +70,9 @@ jobs:
           if not re.fullmatch(r'sha256:[0-9a-f]{64}', os.environ['VALIDATION_ARTIFACT_DIGEST']):
               raise SystemExit('Pin the Actions artifact SHA-256 digest')
           PY
+      - name: Keep registry credentials in the runner's private directory
+        run: |
+          printf 'DOCKER_CONFIG=%s/endesa-publication-docker\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.source_sha }}
