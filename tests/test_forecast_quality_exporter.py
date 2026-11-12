@@ -343,3 +343,9 @@ def test_promtool_scenarios_cover_every_dashboard_expression():
         if panel["type"] == "timeseries":
             assert panel["options"]["legend"]["calcs"] == ["last"]
             assert panel["fieldConfig"]["defaults"]["custom"]["spanNulls"] is False
+        if panel["type"] == "table":
+            horizon = panel["fieldConfig"]["overrides"][0]
+            assert horizon["matcher"] == {"id": "byName", "options": "Horizon"}
+            properties = {value["id"]: value["value"] for value in horizon["properties"]}
+            assert properties["unit"] == "none" and properties["decimals"] == 0
+            assert properties["mappings"] == []

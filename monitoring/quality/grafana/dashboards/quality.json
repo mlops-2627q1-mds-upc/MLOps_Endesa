@@ -2,7 +2,7 @@
   "uid": "endesa-quality",
   "title": "Endesa forecast quality",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "editable": false,
   "timezone": "browser",
   "refresh": "15s",
@@ -76,7 +76,7 @@
     },
     {
       "id": 2,
-      "title": "Exporter scrape reachable (1/0)",
+      "title": "Exporter scrape",
       "type": "stat",
       "description": "A failed scrape is 0; absent target data stays absent.",
       "gridPos": {
@@ -147,7 +147,7 @@
     },
     {
       "id": 3,
-      "title": "Valid fresh report available (1/0)",
+      "title": "Report available",
       "type": "stat",
       "description": "0 covers missing, invalid or stale reports. Quality panels omit these measurements.",
       "gridPos": {
@@ -218,7 +218,7 @@
     },
     {
       "id": 4,
-      "title": "Report refresh age",
+      "title": "Report age",
       "type": "stat",
       "description": "Age of report publication, not observation age or replay progress.",
       "gridPos": {
@@ -275,7 +275,7 @@
     },
     {
       "id": 15,
-      "title": "Minimum matched rows per group",
+      "title": "Sample minimum",
       "type": "stat",
       "description": "Report-declared display threshold; no independence or statistical-power claim.",
       "gridPos": {
@@ -713,7 +713,41 @@
           ],
           "max": 1
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Horizon"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "mappings",
+                "value": []
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e93"
+                }
+              }
+            ]
+          }
+        ]
       },
       "targets": [
         {
@@ -799,7 +833,41 @@
             }
           ]
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Horizon"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "mappings",
+                "value": []
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e93"
+                }
+              }
+            ]
+          }
+        ]
       },
       "targets": [
         {
@@ -885,7 +953,41 @@
             }
           ]
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Horizon"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "mappings",
+                "value": []
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e93"
+                }
+              }
+            ]
+          }
+        ]
       },
       "targets": [
         {
@@ -997,7 +1099,41 @@
             }
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Horizon"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "mappings",
+                "value": []
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e93"
+                }
+              }
+            ]
+          }
+        ]
       },
       "targets": [
         {
