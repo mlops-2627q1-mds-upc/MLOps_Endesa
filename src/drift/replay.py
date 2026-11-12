@@ -34,6 +34,8 @@ def _validate_observation(observation, info, cfg):
 def _released_frame(reader, cfg, info, limits):
     max_pages, deadline = limits
     counts = reader.counts()
+    if not is_integer(counts.clock_position) or counts.clock_position < 0:
+        raise ValueError("replay clock must be a nonnegative integer")
     cursor, rows, seen = 0, [], set()
     for _ in range(max_pages):
         if time.monotonic() > deadline:
@@ -66,6 +68,33 @@ def _released_frame(reader, cfg, info, limits):
     return frame, counts, cursor, len(rows)
 
 
+def _check_snapshot(checkpoint, snapshot):
+    if checkpoint is None:
+        return
+    if not isinstance(checkpoint, dict):
+        raise TypeError("replay checkpoint must be a dictionary")
+    if "replay_snapshot" not in checkpoint:
+        # Ledgers without snapshot metadata rely on the CLI's saved report clock.
+        return
+    previous = checkpoint["replay_snapshot"]
+    if (
+        not isinstance(previous, dict)
+        or not isinstance(previous.get("run_id"), str)
+        or not previous["run_id"]
+        or any(
+            not is_integer(previous.get(key)) or previous[key] < 0
+            for key in ("clock_position", "last_scanned_id")
+        )
+    ):
+        raise ValueError("replay checkpoint snapshot is corrupt")
+    if previous["run_id"] != snapshot["run_id"]:
+        raise ValueError("replay checkpoint belongs to a different run")
+    if snapshot["clock_position"] < previous["clock_position"]:
+        raise ValueError("replay clock moved backwards from the saved checkpoint")
+    if snapshot["last_scanned_id"] < previous["last_scanned_id"]:
+        raise ValueError("replay observation cursor moved backwards from the saved checkpoint")
+
+
 def assess_replay(
     reader, reference, source, checkpoint=None, *, max_pages=128, max_seconds=120
 ) -> dict:
@@ -74,7 +103,8 @@ def assess_replay(
     `source` is the public ReplaySource created from the same verified artifacts
     as `reference`. Exact reader/source identities are required before paging.
     No future demand values are taken from that source; only released rows enter
-    the monitored windows. Repeated calls can reuse the returned checkpoint.
+    the monitored windows. Repeated calls reuse the returned checkpoint, which
+    binds the run, clock and observation cursor even before any test completes.
     """
     deadline = deadline_after(max_seconds)
     cfg = reference.config
@@ -92,6 +122,12 @@ def assess_replay(
         frame, counts, cursor, row_count = _released_frame(
             reader, cfg, info, (max_pages, deadline)
         )
+        snapshot = {
+            "run_id": info.run_id,
+            "clock_position": counts.clock_position,
+            "last_scanned_id": cursor,
+        }
+        _check_snapshot(checkpoint, snapshot)
     campaign = {
         "kind": "historical-replay",
         "run_id": info.run_id,
@@ -125,5 +161,5 @@ def assess_replay(
         "replay_config_sha256": info.config_sha256,
         "reference_sha256": reference.sha256,
         "windows": windows,
-        "checkpoint": monitor.checkpoint(),
+        "checkpoint": {**monitor.checkpoint(), "replay_snapshot": snapshot},
     }

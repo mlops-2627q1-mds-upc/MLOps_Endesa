@@ -6,7 +6,10 @@ on:
     paths:
       - "src/drift/**"
       - "src/monitoring/**"
+      - "src/api/**"
+      - "src/splits.py"
       - "tests/test_drift*.py"
+      - "tests/replay_fixture.py"
       - "monitoring/drift/**"
       - ".github/workflows/drift.yml"
   push:
@@ -14,7 +17,10 @@ on:
     paths:
       - "src/drift/**"
       - "src/monitoring/**"
+      - "src/api/**"
+      - "src/splits.py"
       - "tests/test_drift*.py"
+      - "tests/replay_fixture.py"
       - "monitoring/drift/**"
       - ".github/workflows/drift.yml"
 

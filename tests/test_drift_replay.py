@@ -4,11 +4,15 @@ from contextlib import nullcontext
 from dataclasses import replace
 from types import SimpleNamespace
 
+import httpx
 import pandas as pd
 import pytest
 
 from src.drift.core import DriftConfig, build_reference
 from src.drift.replay import assess_replay
+from src.monitoring import JournalReader
+from src.monitoring.replay import Replay
+from tests.replay_fixture import create_replay_fixture
 
 
 @pytest.fixture
@@ -86,6 +90,127 @@ def test_release_snapshot_and_durable_retry(replay_case, compare_calls):
     assert all(
         item["status"] == "insufficient_data" for item in complete["windows"][1]["states"].values()
     )
+
+
+def test_retry_rejects_backward_clock_before_any_completed_test(replay_case, compare_calls):
+    _, reader, reference, source, _, counts = replay_case
+    counts.clock_position = 97
+    first = assess_replay(reader, reference, source)
+    assert first["checkpoint"]["tested"] == {}
+    counts.clock_position = 96
+    with pytest.raises(ValueError, match="clock moved backwards"):
+        assess_replay(reader, reference, source, first["checkpoint"])
+    assert not compare_calls
+
+
+def test_retry_rejects_backward_observation_cursor_before_testing(replay_case, compare_calls):
+    _, reader, reference, source, rows, counts = replay_case
+    counts.clock_position = 97
+    first = assess_replay(reader, reference, source)
+    rows.pop()
+    with pytest.raises(ValueError, match="cursor moved backwards"):
+        assess_replay(reader, reference, source, first["checkpoint"])
+    assert not compare_calls
+
+
+@pytest.mark.parametrize("snapshot", [None, {}, {"run_id": "fixture-run", "clock_position": True}])
+def test_retry_rejects_malformed_snapshot_metadata(replay_case, snapshot, compare_calls):
+    _, reader, reference, source, _, _ = replay_case
+    first = assess_replay(reader, reference, source)
+    first["checkpoint"]["replay_snapshot"] = snapshot
+    with pytest.raises(ValueError, match="snapshot is corrupt"):
+        assess_replay(reader, reference, source, first["checkpoint"])
+    assert len(compare_calls) == 5
+
+
+def test_retry_cannot_reuse_an_observation_cursor_from_a_different_run(replay_case, compare_calls):
+    _, reader, reference, source, _, counts = replay_case
+    counts.clock_position = 97
+    first = assess_replay(reader, reference, source)
+    reader.run_info().run_id = "different-run"
+    with pytest.raises(ValueError, match="different run"):
+        assess_replay(reader, reference, source, first["checkpoint"])
+    assert not compare_calls
+
+
+@pytest.mark.parametrize("clock", [True, -1, float("nan")])
+def test_snapshot_requires_a_nonnegative_integer_clock(replay_case, clock, compare_calls):
+    _, reader, reference, source, _, counts = replay_case
+    counts.clock_position = clock
+    with pytest.raises(ValueError, match="clock must be"):
+        assess_replay(reader, reference, source)
+    assert not compare_calls
+
+
+def test_retry_migrates_a_ledger_without_snapshot_metadata(replay_case, compare_calls):
+    _, reader, reference, source, _, _ = replay_case
+    first = assess_replay(reader, reference, source)
+    first["checkpoint"].pop("replay_snapshot")
+    report = assess_replay(reader, reference, source, first["checkpoint"])
+    assert report["checkpoint"]["replay_snapshot"] == {
+        "run_id": "fixture-run",
+        "clock_position": 98,
+        "last_scanned_id": 160,
+    }
+    assert len(compare_calls) == 5
+
+
+def test_shared_replay_fixture_retains_unique_rows_and_eight_week_minimum(tmp_path, compare_calls):
+    fixture = create_replay_fixture(tmp_path / "contract-v1")
+    # A test-only reference fits the fixture's short training block. Its 56
+    # nominal-day window still requires all 2,688 positions, as production does.
+    cfg = DriftConfig(
+        train_end=512,
+        validation_end=16640,
+        cycle_steps=32,
+        reference_cycles=8,
+        window_cycles=84,
+    )
+    train = pd.read_parquet(fixture.directory / "train.parquet")
+    for state in ("VIC", "QLD", "SA"):
+        train[state] = 0.0
+    reference = build_reference(
+        train,
+        cfg,
+        {
+            "kind": "fixture",
+            "version": "short-replay-consumer-reference-v1",
+            "replay_source_sha256": fixture.source.source_sha256,
+            "replay_source_reference": fixture.source.reference,
+        },
+    )
+
+    def unexpected_request(_request):
+        pytest.fail("Drift consumption and release must not issue inference requests")
+
+    with JournalReader(fixture.journal) as reader:
+        first = assess_replay(reader, reference, fixture.source)
+    assert first["released_observations_read"] == 4
+    assert first["windows"][0]["states"]["NSW"]["observed_positions"] == 2
+    assert first["windows"][0]["states"]["TAS"]["observed_positions"] == 2
+    with (
+        httpx.Client(transport=httpx.MockTransport(unexpected_request)) as client,
+        Replay(fixture.journal, fixture.source, fixture.config, client=client) as replay,
+    ):
+        assert replay.release(563).complete
+    with JournalReader(fixture.journal) as reader:
+        final = assess_replay(reader, reference, fixture.source, first["checkpoint"])
+        assert reader.counts().matched_steps == 192
+        assert final["released_observations_read"] == 98
+        assert final["checkpoint"]["replay_snapshot"] == {
+            "run_id": reader.run_info().run_id,
+            "clock_position": 563,
+            "last_scanned_id": 98,
+        }
+        assert assess_replay(reader, reference, fixture.source, final["checkpoint"]) == final
+    assert final["windows"][0]["states"]["TAS"]["observed_positions"] == 49
+    assert final["checkpoint"]["tested"] == {}
+    assert all(
+        state["status"] == "insufficient_data" and state["expected_positions"] == 2688
+        for window in final["windows"]
+        for state in window["states"].values()
+    )
+    assert not compare_calls
 
 
 @pytest.mark.parametrize(
