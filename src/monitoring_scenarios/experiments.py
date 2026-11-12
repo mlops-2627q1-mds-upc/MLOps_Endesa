@@ -74,7 +74,10 @@ def delayed_observation(directory, declaration):
         "sample_sufficiency": {
             "display_minimum": declaration["minimum_samples"],
             "default_minimum": 30,
-            "default_horizons_remain_insufficient": True,
+            "default_horizons_remain_insufficient": all(
+                row["sample_status"] == "insufficient_samples"
+                for row in conservative["by_state_horizon"]
+            ),
             "overlapping_targets_are_dependent": True,
         },
         "missed_detections": [],
