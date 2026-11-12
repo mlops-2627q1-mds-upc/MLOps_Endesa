@@ -36,6 +36,7 @@ emissions.csv
 /reports/minimum-functionality/
 /reports/directional/
 /reports/invariance/
+/reports/replay/
 /reports/fine-tuning/
 
 # Python caches and build outputs
