@@ -13,6 +13,7 @@ from src.deployment.config import (
     fingerprint,
     write_new,
 )
+from src.deployment.release import verify_release
 
 
 def main(argv=None):
@@ -24,12 +25,28 @@ def main(argv=None):
         parser.add_argument("--" + name, type=Path, required=True)
     for name in ("cpu-threads", "memory-mb", "port"):
         parser.add_argument("--" + name, type=int, required=True)
+    parser.add_argument("--release-manifest", type=Path)
+    parser.add_argument("--validation-dir", type=Path)
+    parser.add_argument("--image-reference")
     args = parser.parse_args(argv)
     try:
+        release = None
+        if any((args.release_manifest, args.validation_dir, args.image_reference)):
+            if not all((args.release_manifest, args.validation_dir, args.image_reference)):
+                raise ValueError(
+                    "Supply release-manifest, validation-dir and image-reference together"
+                )
+            release = {
+                "manifest": str(args.release_manifest),
+                "manifest_sha256": file_sha256(args.release_manifest),
+                "validation_dir": str(args.validation_dir),
+                "image_reference": args.image_reference,
+            }
         selected = json.loads(PROVENANCE.read_text(encoding="utf-8"))
         manifest = checkpoint_files(args.from_checkpoint)
         config = DeploymentConfig(
-            schema_version=1,
+            schema_version=2 if release is not None else 1,
+            release=release,
             deployment_id=args.deployment_id,
             target_hostname=args.target_hostname,
             source_commit=args.source_commit,
@@ -46,6 +63,7 @@ def main(argv=None):
             port=args.port,
         )
         config.validate()
+        verify_release(config)
         config.verify_artifacts(args.from_checkpoint)
         write_new(args.output, config.as_dict())
         print(json.dumps({"config_sha256": config.config_sha256, "output": str(args.output)}))

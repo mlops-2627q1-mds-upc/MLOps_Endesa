@@ -1,4 +1,4 @@
-# Virtech candidate deployment
+# Virtech deployment and release consumer contract
 
 This runbook operates an explicitly allocated course VM. It does not allocate VMs,
 discover hosts, install SSH access, publish images or automate releases. Use the
@@ -6,10 +6,23 @@ course portal and its assigned template/quota first. Read the actual console NAT
 banner; do not copy example IPs, ports, OS versions or capacities from a manual.
 Keep existing VMs, services, credentials and artifacts intact.
 
-The deployment branch carries unmerged dependencies #52 (`7c2a9a4`), #86
-(`6f07154`) and #88 (`488bd4f`). #52/#86 had human approvals at those heads when
-inspected on 2 November 2026; #88 did not. A running candidate does not establish
-merge acceptance, #75 peer review, performance or final-test accuracy.
+The source integrates `main` at `26f260e33766689bcdce4a6db6062a9e1e74475d`
+(including the API/inference merges) and publication PR #98 at
+`fad4e155554902834bfc09802ac78c834d14354d`. The latter includes container PR #88
+at `6bd12575d7b80a1166b2370c0a98790ef7ad5075` and release-validation PR #87 at
+`147e4500a086f4b5ceb7d58c0d121923c6b86915`. These source dependencies still need
+their required human reviews and merges. Source/fixture checks on this branch
+do not establish a release validation, publication or deployment.
+
+On 2 November 2026, VM 2245 ran candidate source
+`962471100c1f50838bd55be9ad4664e693082a0a`, image
+`sha256:780d8e3c4f059a6f89c5277bc272449190210a068d2177c2ba3aecbd86425cd9`.
+Recorded host resources were Ubuntu 20.04.6, one CPU, 3936 MiB RAM and
+20,629,221,376 filesystem bytes. Separate-client initial/restarted/recovered
+checks returned 200/200/200/422; the missing-model probe exited 3, and a clean
+stop exited 0 with direct target-local refusal. Those retained private receipts
+are historical evidence for that candidate. This source integration did not
+contact the VM, inspect its present state, open a tunnel or rerun inference.
 
 ## Target preparation
 
@@ -26,7 +39,9 @@ merge acceptance, #75 peer review, performance or final-test accuracy.
    `sudo apt-get install --no-install-recommends docker.io git ca-certificates`.
    Do not run a distribution upgrade or change the kernel/cgroup mode for this task.
    Inspect `sudo docker info` for the actual cgroup version and driver.
-4. Use Python 3.11 for the deployment tools and independent client. The deployment
+4. Use Python 3.11 for the deployment tools and independent client. Candidate
+   schema 1 uses a minimal bootstrap; release schema 2 requires the full locked
+   environment described in the #79 contract below. The deployment
    modules use its standard library; the existing `src` package bootstrap also
    imports the locked `python-dotenv` and `loguru` packages. Create an isolated
    environment with `uv venv --python 3.11.15 "$WORK/host-env"`, set
@@ -177,6 +192,10 @@ not this refusal check. Initial, restarted and final live HTTP checks run from t
 Mac through SSH; the stopped probe runs on the target. Run `start` again and repeat
 the Mac/client verification so the final deployment remains healthy.
 Use a new `--output` file for every operation; existing evidence is never replaced.
+`stop` retains `exit_code`, `oom_killed`, `was_running` and `clean_shutdown`.
+It exits 1 and writes a failed receipt for a nonzero exit or OOM; exit 137 with
+`OOMKilled=false` cannot establish a clean stop. TCP refusal and exit status are
+separate checks. `start` stops only its owned instance if final inspection fails.
 `inspect` captures a fresh inspection. `remove` requires a matching stopped
 container; it does not delete images, checkpoints, volumes or other services.
 
@@ -195,3 +214,140 @@ paths. Provide the actual Python 3.11 interpreter and measured memory budget.
 Do not change kernel/boot configuration or substitute Docker CLI RSS for container
 memory. Benchmark permission/isolation, raw results and performance conclusions
 remain #76's evidence; a source test or this deployment smoke does not establish them.
+
+## Release contract for #79
+
+This section specifies the consumer interface for a later reviewed execution.
+#75 supplies explicit provisioning, lifecycle operations and independent HTTP
+checks; #79 owns the release trigger, stable deployment lock, candidate/previous
+slot selection, controlled failure and rollback. No release automation runs as
+part of this source-readiness change.
+
+Obtain the complete publication bundle from the trusted successful Actions
+run/attempt as described in [image publication](image-publication.md). Record its
+run URL, actual conclusion and artifact identity. Hashes and JSON receipts alone
+do not authenticate the producer. Use a separate clean checkout of the manifest's
+full `source.git_commit` with `uv sync --locked --dev`; keep the model on CPU with
+two threads and the declared sampling settings. Source or lock changes require
+fresh validation and publication at the resulting integrated commit.
+
+For each authorized release attempt, choose a fresh absolute `WORK` directory and
+a separate clean absolute `CHECKOUT`. The suggested layout is an interface, not
+a claim that these paths or resources exist on Virtech:
+
+| Artifact | Exact path or field |
+| --- | --- |
+| Immutable source | `$CHECKOUT` at `manifest.source.git_commit`; tree equals `manifest.source.git_tree` |
+| Publication manifest | `$WORK/publication/image-publication/manifest.json` |
+| Prepared validation directory | `$WORK/publication/release-validation/$VALIDATOR_RUN_ID` (the validator's report run ID, not the numeric Actions ID) |
+| Parameters mounted at `/app/params.yaml` | `$WORK/params.yaml`, byte-for-byte copy of `$CHECKOUT/params.yaml` |
+| Incoming selected DVC model | `$CHECKOUT/models/chronos-t5-small-fine-tuned` after authorized retrieval and clean `dvc status` |
+| Read-only checkpoint slot | `$WORK/checkpoint`, mounted at `/app/models/chronos-t5-small-fine-tuned` |
+| Deployment config and receipts | `$WORK/deployment.json` and distinct `$WORK/evidence/*.json` |
+| Shared deployment lock | Operator-supplied absolute `$DEPLOY_LOCK`, identical across release attempts and rollback slots |
+
+The model remains directory MD5 `0377ee21f89c25da36b95db59841c3d4.dir`, weights
+SHA-256 `746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9`,
+training run `639eba4cc7e74de08ffab64beee715db`. Verify authorized DVC retrieval
+against the tracked reference before selecting the slot; selection hashes every
+checkpoint file and provisioning checks the copied bytes again. Preserve caches
+and weights. The provenance stays in the image at the tracked sibling path.
+
+Set `MANIFEST` and `VALIDATION` to the paths above and `IMAGE_REFERENCE` to the
+trusted manifest's immutable `image.reference`. On both the target and separate
+client, run the shared verifier before any runtime operation:
+
+```sh
+uv run --no-sync python -m src.release_manifest verify \
+  --manifest "$MANIFEST" --validation-dir "$VALIDATION" \
+  --image-reference "$IMAGE_REFERENCE" --architecture amd64
+```
+
+This command performs no network access or inference. The consumer calls this
+same public verifier through `src/deployment/release.py`, without duplicating
+the validation or manifest rules. Schema 2 binds the manifest SHA-256 and its
+absolute path, the prepared validation directory and registry digest in the
+config's ownership hash. Schema 1 retains its original fields/hash for historical
+candidate operations and supplies no verified-publication claim.
+
+For a published release, consume the existing digest; #78 owns building and
+publication. The candidate build command above is available for a separately
+authorized local candidate and does not establish registry identity. On the
+native Linux amd64 target, pull the selected digest only after execution
+authorization and any required registry login through a secret mechanism:
+
+```sh
+docker --host unix:///var/run/docker.sock pull --platform linux/amd64 "$IMAGE_REFERENCE"
+docker --host unix:///var/run/docker.sock image inspect "$IMAGE_REFERENCE" \
+  > "$WORK/evidence/image-inspect.json"
+IMAGE=$(docker --host unix:///var/run/docker.sock image inspect \
+  --format '{{.Id}}' "$IMAGE_REFERENCE")
+SOURCE=$(git -C "$CHECKOUT" rev-parse HEAD)
+cp "$CHECKOUT/params.yaml" "$WORK/params.yaml"
+chmod 444 "$WORK/params.yaml"
+```
+
+Use `$CHECKOUT/.venv/bin/python` as `PY`, run from `$CHECKOUT`, and provide measured
+`TARGET_HOSTNAME`, `MEMORY_MB` and an unused private `PORT`. `DEPLOYMENT_ID` must
+be a fresh `endesa75-...` name for the attempt. Parent directories must permit UID
+10001 to traverse to the read-only files; do not grant access to private credential
+directories. Keep all credentials outside the source/build context and evidence.
+
+```sh
+"$PY" -m src.deployment.select \
+  --deployment-id "$DEPLOYMENT_ID" --target-hostname "$TARGET_HOSTNAME" \
+  --source-commit "$SOURCE" --image-id "$IMAGE" \
+  --from-checkpoint "$CHECKOUT/models/chronos-t5-small-fine-tuned" \
+  --checkpoint "$WORK/checkpoint" --params "$WORK/params.yaml" \
+  --cpu-threads 2 --memory-mb "$MEMORY_MB" --port "$PORT" \
+  --docker-socket /var/run/docker.sock --output "$WORK/deployment.json" \
+  --release-manifest "$MANIFEST" --validation-dir "$VALIDATION" \
+  --image-reference "$IMAGE_REFERENCE"
+"$PY" -m src.deployment --config "$WORK/deployment.json" \
+  --lock-file "$DEPLOY_LOCK" --output "$WORK/evidence/provision.json" \
+  provision --from-checkpoint "$CHECKOUT/models/chronos-t5-small-fine-tuned"
+"$PY" -m src.deployment --config "$WORK/deployment.json" \
+  --lock-file "$DEPLOY_LOCK" --output "$WORK/evidence/preflight.json" preflight
+"$PY" -m src.deployment --config "$WORK/deployment.json" \
+  --lock-file "$DEPLOY_LOCK" --output "$WORK/evidence/start.json" start
+```
+
+`select` writes schema 2 only when all release arguments are present and valid.
+It rejects mismatched source, weights, training run, parameter hash or thread
+count before writing. Provision/preflight/start/inspect/restart recheck the
+publication bundle. Preflight also inspects the actual image ID, Linux amd64
+platform, source/revision labels, digest in `RepoDigests`, non-root user and normal
+entry point; its no-network container parses the mounted configuration and
+checkpoint without loading a model. It compares the executed settings with the
+manifest. Start uses the inspected immutable image ID and the private runtime
+spec described above. Image ID, registry digest and weights SHA-256 are distinct.
+
+Copy the receipt and trusted bundle to the separate client, check out the same
+source there, and use its full locked Python environment. The copied manifest
+and validation paths may differ; their bytes and identities must agree with the
+target config. With the authorized private tunnel and explicit synthetic request:
+
+```sh
+"$PY" -m src.deployment.verify --base-url "http://127.0.0.1:$CLIENT_PORT" \
+  --receipt "$CLIENT_WORK/start.json" --request "$CLIENT_WORK/request.json" \
+  --release-manifest "$CLIENT_MANIFEST" --validation-dir "$CLIENT_VALIDATION" \
+  --lock-file "$CLIENT_LOCK" --output "$CLIENT_WORK/http-initial.json"
+```
+
+The client reuses #78 verification, compares the inspected release/settings and
+then checks actual 200/200/200/422 responses and 48 ordered finite quantiles. Its
+report binds the receipt and manifest hashes plus registry reference. HTTP cannot
+independently attest the source or image; that evidence comes from the trusted
+bundle and target inspection. Repeat after restart and after rollback. Check a
+clean stop and direct target-local refusal separately before claiming shutdown.
+Stop/remove remain ownership-fenced even if release evidence/model bytes break,
+so an unusable bundle cannot prevent stopping its own instance.
+
+Before #79 execution, retain a reviewed previous config/manifest/bundle/checkpoint
+slot and prove its recovery path. Hold the stable lock across the complete
+deployment/verification/rollback transaction; do not acquire that same lock again
+inside a child CLI. An orchestrator can invoke `Deployment` methods while holding
+`compute_lock`, or serialize the CLIs under its own distinct transaction lock.
+An individual CLI lock does not serialize gaps between several commands. Registry
+destination/reader access, final human reviews, EDN PR #97 assessment and actual
+release validation/publication/independent startup remain pending prerequisites.

@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 from src.deployment.config import DeploymentConfig, compute_lock, fingerprint, write_new
+from src.deployment.release import prediction_settings, verify_release
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -45,7 +46,7 @@ def validate_request(payload: dict):
         raise ValueError("Request requires exactly 512 finite source-scale float32 numbers")
 
 
-def validate_receipt(receipt: dict) -> dict:
+def validate_receipt(receipt: dict, *, release_paths: dict | None = None) -> dict:
     """Require a coherent selected-model inspection; source/image identity is not in HTTP."""
     config = DeploymentConfig(**receipt["config"])
     config.validate()
@@ -72,6 +73,15 @@ def validate_receipt(receipt: dict) -> dict:
     settings = verified["settings"]
     if settings["cpu_threads"] != config.cpu_threads or settings["device"] != "cpu":
         raise ValueError("Receipt inference settings differ from deployment configuration")
+    release = verify_release(config, **(release_paths or {}))
+    if release is not None and (
+        verified.get("release") != release or settings != prediction_settings(release["manifest"])
+    ):
+        raise ValueError(
+            "Receipt prediction settings or release binding differ from the verified bundle"
+        )
+    if release is None and "release" in verified:
+        raise ValueError("Candidate receipt cannot claim a verified release")
     return verified
 
 
@@ -136,7 +146,15 @@ def request_json(base_url: str, route: str, payload: dict | None, timeout: float
     return result
 
 
-def verify(base_url: str, receipt: dict, payload: dict, *, timeout=30, stopped=False) -> dict:
+def verify(
+    base_url: str,
+    receipt: dict,
+    payload: dict,
+    *,
+    timeout=30,
+    stopped=False,
+    release_paths: dict | None = None,
+) -> dict:
     """One valid forecast and one invalid request; never evaluate accuracy or tune sampling."""
     url = urlsplit(base_url)
     if (
@@ -151,7 +169,7 @@ def verify(base_url: str, receipt: dict, payload: dict, *, timeout=30, stopped=F
         raise ValueError("Use an explicit base HTTP(S) URL without credentials, query or subpath")
     if not 0 < timeout <= 120:
         raise ValueError("HTTP timeout must be in (0,120] seconds")
-    verified = validate_receipt(receipt)
+    verified = validate_receipt(receipt, release_paths=release_paths)
     validate_request(payload)
     checks = []
     for route, expected in (("/health", "ok"), ("/ready", "ready")):
@@ -192,6 +210,14 @@ def verify(base_url: str, receipt: dict, payload: dict, *, timeout=30, stopped=F
         "request_sha256": fingerprint(payload),
         "checkpoint": verified["checkpoint"],
         "settings": verified["settings"],
+        **(
+            {
+                "release_manifest_sha256": verified["release"]["manifest_sha256"],
+                "image_reference": verified["release"]["manifest"]["image"]["reference"],
+            }
+            if "release" in verified
+            else {}
+        ),
         "expect_stopped": stopped,
         "checks": checks,
         "status": "passed" if all(check["passed"] for check in checks) else "failed",
@@ -209,10 +235,14 @@ def main(argv=None):
     parser.add_argument("--lock-file", required=True, type=Path)
     parser.add_argument("--timeout", type=float, default=30)
     parser.add_argument("--expect-stopped", action="store_true")
+    parser.add_argument("--release-manifest", type=Path)
+    parser.add_argument("--validation-dir", type=Path)
     args = parser.parse_args(argv)
     try:
         if args.output.exists() or not args.output.parent.is_dir():
             raise ValueError("Output must be a new file in an existing evidence directory")
+        if bool(args.release_manifest) != bool(args.validation_dir):
+            raise ValueError("Supply both client release bundle paths")
         with compute_lock(args.lock_file):
             result = verify(
                 args.base_url,
@@ -220,6 +250,12 @@ def main(argv=None):
                 json.loads(args.request.read_text()),
                 timeout=args.timeout,
                 stopped=args.expect_stopped,
+                release_paths={
+                    "manifest_path": args.release_manifest,
+                    "validation_dir": args.validation_dir,
+                }
+                if args.release_manifest
+                else None,
             )
             write_new(args.output, result)
         print(json.dumps({"status": result["status"], "output": str(args.output)}))

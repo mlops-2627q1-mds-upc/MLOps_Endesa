@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 from pathlib import Path
 import socket
+import subprocess
 from tempfile import TemporaryDirectory
 from threading import Thread
 
@@ -296,6 +297,110 @@ def test_receipt_rejects_public_port_binding(config, monkeypatch):
         deployment.receipt(_verified(config))
 
 
+def test_receipt_rejects_additional_writable_or_volume_mount(config, monkeypatch):
+    deployment = Deployment(config)
+    container = _container(config)
+    container["Mounts"].append(
+        {"Type": "volume", "Source": "other", "Destination": "/extra", "RW": True}
+    )
+    monkeypatch.setattr(deployment, "owned", lambda: container)
+    with pytest.raises(ValueError, match="private container spec"):
+        deployment.receipt(_verified(config))
+
+
+@pytest.mark.parametrize("exit_code,oom", [(0, False), (137, False), (137, True), (1, False)])
+def test_stop_records_clean_shutdown_and_preserves_failed_evidence(
+    config, monkeypatch, tmp_path, exit_code, oom
+):
+    deployment = Deployment(config)
+    running = _container(config)
+    stopped = deepcopy(running)
+    stopped["State"].update(Running=False, ExitCode=exit_code, OOMKilled=oom)
+    inspections = iter((running, stopped))
+    monkeypatch.setattr(deployment, "target", dict)
+    monkeypatch.setattr(deployment, "owned", lambda: next(inspections))
+    calls = []
+    monkeypatch.setattr(deployment, "docker", lambda *args, **kwargs: calls.append(args))
+    result = deployment.lifecycle("stop")
+    clean = exit_code == 0 and not oom
+    assert result["status"] == ("passed" if clean else "failed")
+    assert result["clean_shutdown"] is clean
+    assert result["exit_code"] == exit_code and result["oom_killed"] == oom
+    assert calls == [("stop", "--time", "20", running["Id"])]
+    path = tmp_path / "deployment.json"
+    write_new(path, config.as_dict())
+    monkeypatch.setattr(Deployment, "lifecycle", lambda self, action: result)
+    output = tmp_path / "stop.json"
+    assert main(
+        [
+            "--config",
+            str(path),
+            "--lock-file",
+            str(tmp_path / "lock"),
+            "--output",
+            str(output),
+            "stop",
+        ]
+    ) == (0 if clean else 1)
+    assert json.loads(output.read_text())["status"] == result["status"]
+
+
+def test_final_inspection_failure_stops_only_started_owned_instance(config, monkeypatch):
+    deployment = Deployment(config)
+    monkeypatch.setattr(deployment, "preflight", lambda: _verified(config))
+    monkeypatch.setattr(deployment, "wait_ready", lambda: None)
+    monkeypatch.setattr(deployment, "owned", lambda: _container(config))
+
+    def reject(_verified):
+        raise ValueError("Inspected runtime differs")
+
+    monkeypatch.setattr(deployment, "receipt", reject)
+    calls = []
+    monkeypatch.setattr(deployment, "docker", lambda *args, **kwargs: calls.append(args) or "")
+    with pytest.raises(ValueError, match="runtime differs"):
+        deployment.start()
+    assert calls[-1] == ("stop", "--time", "20", "c" * 64)
+
+
+@pytest.mark.parametrize("failure", [None, "exit", "timeout"])
+def test_preflight_parser_releases_only_its_owned_probe_on_failure(config, monkeypatch, failure):
+    deployment = Deployment(config)
+    container = _container(config)
+    container["State"]["Running"] = failure == "timeout"
+    name = config.deployment_id + "-preflight"
+    inspected = []
+
+    def owned(selected_name):
+        inspected.append(selected_name)
+        return container
+
+    monkeypatch.setattr(deployment, "owned", owned)
+    calls = []
+
+    def docker(*args, **_kwargs):
+        calls.append(args)
+        if args[0] == "wait":
+            if failure == "timeout":
+                raise subprocess.TimeoutExpired("fixture-docker", 90)
+            return "1" if failure == "exit" else "0"
+        return json.dumps({"settings": _settings()}) if args[0] == "logs" else ""
+
+    monkeypatch.setattr(deployment, "docker", docker)
+    if failure:
+        with pytest.raises((ValueError, subprocess.TimeoutExpired)):
+            deployment.parse_settings("fixture parser")
+    else:
+        assert deployment.parse_settings("fixture parser") == {"settings": _settings()}
+    assert inspected == [name]
+    assert calls[0][:5] == ("run", "--detach", "--network=none", "--name", name)
+    assert calls[-1] == ("rm", container["Id"])
+    assert (
+        ("stop", "--time", "10", container["Id"]) in calls
+        if failure == "timeout"
+        else not any(c[0] == "stop" for c in calls)
+    )
+
+
 @pytest.mark.parametrize("code,oom", [("0", False), ("137", True), ("3", False)])
 def test_missing_model_uses_normal_entrypoint_and_cleans_its_probe(config, monkeypatch, code, oom):
     deployment = Deployment(config)
@@ -545,7 +650,6 @@ def test_documented_entrypoints_use_only_declared_bootstrap_packages(module, tmp
     import importlib.util  # pylint: disable=import-outside-toplevel
     import os  # pylint: disable=import-outside-toplevel
     import shutil  # pylint: disable=import-outside-toplevel
-    import subprocess  # pylint: disable=import-outside-toplevel
     import sys  # pylint: disable=import-outside-toplevel
 
     bootstrap = tmp_path / "bootstrap"

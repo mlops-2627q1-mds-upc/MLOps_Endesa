@@ -16,6 +16,7 @@ from urllib.error import URLError
 from urllib.request import ProxyHandler, build_opener
 
 from src.deployment.config import COMMAND, ROOT, DeploymentConfig, fingerprint
+from src.deployment.release import prediction_settings, verify_release
 
 ISSUE_LABEL = "org.mlops-endesa.issue"
 CONFIG_LABEL = "org.mlops-endesa.deployment-config"
@@ -79,6 +80,8 @@ class Deployment:
         info = json.loads(self.docker("info", "--format", "{{json .}}"))
         if info.get("OSType") != "linux" or info.get("Name") != socket.gethostname():
             raise ValueError("Docker daemon is not the selected local Linux host")
+        if self.config.release is not None and info.get("Architecture") not in ("amd64", "x86_64"):
+            raise ValueError("Published releases require a native Linux amd64 target")
         return {
             key: info.get(key)
             for key in (
@@ -94,7 +97,7 @@ class Deployment:
             )
         }
 
-    def image(self) -> dict:
+    def image(self, release: dict | None = None) -> dict:
         """Require immutable content, revision, normal entry point and non-root runtime."""
         image = json.loads(self.docker("image", "inspect", self.config.image_id))[0]
         cfg = image["Config"]
@@ -108,6 +111,16 @@ class Deployment:
         ):
             raise ValueError(
                 "Image ID/revision/user/entrypoint differs from the selected candidate"
+            )
+        if release is not None and (
+            image.get("Os") != "linux"
+            or image.get("Architecture") != "amd64"
+            or self.config.release["image_reference"] not in (image.get("RepoDigests") or [])
+            or (cfg.get("Labels") or {}).get("org.opencontainers.image.source")
+            != "https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa"
+        ):
+            raise ValueError(
+                "Pulled image platform/source/repository digest differs from the release"
             )
         return {"id": image["Id"], "revision": revision, "user": cfg["User"]}
 
@@ -178,10 +191,12 @@ class Deployment:
 
     def preflight(self) -> dict:
         """Verify bytes and reuse the image's actual serving configuration parser."""
+        release = verify_release(self.config)
         target = self.target()
-        verify_source(self.config.source_commit)
+        if release is None:
+            verify_source(self.config.source_commit)
         artifacts = self.config.verify_artifacts()
-        image = self.image()
+        image = self.image(release)
         code = (
             "import json; from src.api.settings import Settings; "
             "from src.modeling.predict import ForecastConfig,SAMPLING; "
@@ -195,27 +210,52 @@ class Deployment:
             "'cpu_threads':c.cpu_threads,'dtype':'float32','sampling':SAMPLING,"
             "'quantile_method':'linear','point_statistic':'median'}}))"
         )
-        observed = json.loads(
-            self.docker(
-                "run",
-                "--rm",
-                "--network=none",
-                *self.limits(),
-                *self.mounts(),
-                *self.environment(),
-                self.config.image_id,
-                "python",
-                "-c",
-                code,
-                timeout=90,
-            )
-        )
+        observed = self.parse_settings(code)
         if observed["checkpoint"] != artifacts["checkpoint"]:
             raise ValueError("Image's serving loader reported a different checkpoint identity")
-        return {"target": target, "image": image, **artifacts, "settings": observed["settings"]}
+        if release is not None and observed["settings"] != prediction_settings(
+            release["manifest"]
+        ):
+            raise ValueError("Image's executed prediction settings differ from the release")
+        return {
+            "target": target,
+            "image": image,
+            **artifacts,
+            "settings": observed["settings"],
+            **({"release": release} if release is not None else {}),
+        }
+
+    def parse_settings(self, code: str) -> dict:
+        """Bound the parser container lifetime, including Docker-client timeouts."""
+        name = self.config.deployment_id + "-preflight"
+        self.docker(
+            "run",
+            "--detach",
+            "--network=none",
+            "--name",
+            name,
+            *self.labels(),
+            *self.limits(),
+            *self.mounts(),
+            *self.environment(),
+            self.config.image_id,
+            "python",
+            "-c",
+            code,
+        )
+        try:
+            if self.docker("wait", name, timeout=90) != "0":
+                raise ValueError("Image's serving configuration parser failed")
+            return json.loads(self.docker("logs", name))
+        finally:
+            container = self.owned(name)
+            if container["State"]["Running"]:
+                self.docker("stop", "--time", "10", container["Id"])
+            self.docker("rm", container["Id"])
 
     def provision(self, source: Path) -> dict:
         """Copy only verified selected bytes to a new slot; never overwrite a checkpoint."""
+        release = verify_release(self.config)
         self.config.verify_target()
         verified = self.config.verify_artifacts(source)
         destination = Path(self.config.checkpoint)
@@ -230,7 +270,7 @@ class Deployment:
             if folder.is_dir():
                 folder.chmod(0o555)
         destination.chmod(0o555)
-        return self.config.verify_artifacts()
+        return {**self.config.verify_artifacts(), **({"release": release} if release else {})}
 
     def start(self) -> dict:
         """Create a new isolated name, or resume only its matching stopped container."""
@@ -257,7 +297,11 @@ class Deployment:
                 self.config.image_id,
             )
         self.wait_ready()
-        return self.receipt(verified)
+        try:
+            return self.receipt(verified)
+        except (ValueError, RuntimeError, OSError):
+            self.docker("stop", "--time", "20", self.owned()["Id"], timeout=45)
+            raise
 
     def wait_ready(self):
         """Keep the operation locked through model startup; stop only its own failed instance."""
@@ -299,6 +343,7 @@ class Deployment:
             or cfg.get("Entrypoint")
             or cfg.get("User") != "10001:10001"
             or expected_mounts != actual_mounts
+            or len(container["Mounts"]) != len(expected_mounts)
             or ports != {"8000/tcp": [{"HostIp": "127.0.0.1", "HostPort": str(self.config.port)}]}
             or not host.get("ReadonlyRootfs")
             or host.get("RestartPolicy", {}).get("Name") != "no"
@@ -355,12 +400,17 @@ class Deployment:
             return {"removed_container": container["Id"]}
         self.docker("stop", "--time", "20", container["Id"], timeout=45)
         stopped = self.owned()
-        if stopped["State"]["Running"]:
+        if stopped["State"]["Running"] or stopped["Id"] != container["Id"]:
             raise RuntimeError("Container did not stop")
+        clean = stopped["State"]["ExitCode"] == 0 and not stopped["State"]["OOMKilled"]
         return {
+            "status": "passed" if clean else "failed",
             "stopped_container": stopped["Id"],
             "running": False,
+            "was_running": container["State"]["Running"],
             "exit_code": stopped["State"]["ExitCode"],
+            "oom_killed": stopped["State"]["OOMKilled"],
+            "clean_shutdown": clean,
         }
 
     def missing_model(self) -> dict:

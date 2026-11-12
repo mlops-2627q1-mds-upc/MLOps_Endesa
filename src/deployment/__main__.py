@@ -51,9 +51,10 @@ def main(argv=None):
                     "start": deployment.start,
                 }[args.action]
                 result = method()
-            write_new(args.output, {"action": args.action, "status": "passed", **result})
-        print(json.dumps({"status": "passed", "action": args.action, "output": str(args.output)}))
-        return 0
+            status = result.get("status", "passed")
+            write_new(args.output, {"action": args.action, "status": status, **result})
+        print(json.dumps({"status": status, "action": args.action, "output": str(args.output)}))
+        return 0 if status == "passed" else 1
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as error:
         print(f"Deployment failed: {error}", file=sys.stderr)
         return 1

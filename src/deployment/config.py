@@ -64,6 +64,16 @@ def write_new(path: Path, payload: dict):
         handle.write("\n")
 
 
+def absolute_path(value) -> bool:
+    """Accept explicit local paths that cannot change Docker's mount arguments."""
+    return (
+        isinstance(value, str)
+        and Path(value).is_absolute()
+        and not any(c in value for c in (",", "\n", "\r", "\x00"))
+        and ".." not in Path(value).parts
+    )
+
+
 @contextmanager
 def compute_lock(path: Path):
     """Hold an advisory lock across the entire operation and its child lifetimes."""
@@ -97,12 +107,16 @@ class DeploymentConfig:  # pylint: disable=too-many-instance-attributes
     memory_mb: int
     port: int
     docker_socket: str
+    release: dict | None = None
 
     @classmethod
     def load(cls, path: Path):
         """Reject incomplete, extra and template fields before executing commands."""
         raw = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(raw, dict) or raw.keys() != {f.name for f in fields(cls)}:
+        expected = {f.name for f in fields(cls)} - {"release"}
+        if isinstance(raw, dict) and raw.get("schema_version") == 2:
+            expected.add("release")
+        if not isinstance(raw, dict) or raw.keys() != expected:
             raise ValueError("Deployment config must contain exactly the documented fields")
         config = cls(**raw)
         config.validate()
@@ -110,8 +124,28 @@ class DeploymentConfig:  # pylint: disable=too-many-instance-attributes
 
     def validate(self):
         """Validate syntax and the tracked selection, without network access."""
-        if type(self.schema_version) is not int or self.schema_version != 1:
-            raise ValueError("Expected deployment schema_version 1")
+        if type(self.schema_version) is not int or self.schema_version not in (1, 2):
+            raise ValueError("Expected deployment schema_version 1 or 2")
+        if self.schema_version == 1 and self.release is not None:
+            raise ValueError("Candidate schema 1 cannot contain a release binding")
+        if self.schema_version == 2:
+            if not isinstance(self.release, dict) or self.release.keys() != {
+                "manifest",
+                "manifest_sha256",
+                "validation_dir",
+                "image_reference",
+            }:
+                raise ValueError("Release schema 2 requires exactly the documented release fields")
+            if any(not absolute_path(self.release[n]) for n in ("manifest", "validation_dir")):
+                raise ValueError("Release bundle paths must be absolute local paths")
+            if not isinstance(self.release["manifest_sha256"], str) or not re.fullmatch(
+                r"[0-9a-f]{64}", self.release["manifest_sha256"]
+            ):
+                raise ValueError("Release manifest requires a SHA-256 pin")
+            if not isinstance(self.release["image_reference"], str) or not re.fullmatch(
+                r"[a-z0-9][a-z0-9._:/-]*@sha256:[0-9a-f]{64}", self.release["image_reference"]
+            ):
+                raise ValueError("Release image requires an explicit immutable repository digest")
         patterns = {
             "deployment_id": r"endesa75-[a-z0-9][a-z0-9-]{0,31}",
             "target_hostname": r"[a-zA-Z0-9][a-zA-Z0-9.-]*",
@@ -128,12 +162,7 @@ class DeploymentConfig:  # pylint: disable=too-many-instance-attributes
                 raise ValueError(f"Invalid or missing deployment field: {name}")
         for name in ("checkpoint", "params", "docker_socket"):
             value = getattr(self, name)
-            if (
-                not isinstance(value, str)
-                or not Path(value).is_absolute()
-                or any(c in value for c in (",", "\n", "\r", "\x00"))
-                or ".." in Path(value).parts
-            ):
+            if not absolute_path(value):
                 raise ValueError(f"{name} must be an absolute local path without mount separators")
         for name, minimum, maximum in (
             ("cpu_threads", 1, 2),
@@ -154,7 +183,11 @@ class DeploymentConfig:  # pylint: disable=too-many-instance-attributes
 
     def as_dict(self) -> dict:
         """Serialize only the declared, non-secret configuration fields."""
-        return {field.name: getattr(self, field.name) for field in fields(self)}
+        return {
+            field.name: getattr(self, field.name)
+            for field in fields(self)
+            if field.name != "release" or self.schema_version == 2
+        }
 
     @property
     def config_sha256(self):
