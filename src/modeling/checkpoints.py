@@ -32,12 +32,13 @@ def write_training_metadata(checkpoint: Path, training_run_id: str) -> dict:
     return metadata
 
 
-def describe_checkpoint(checkpoint: Path) -> dict:
+def describe_checkpoint(checkpoint: Path, *, provenance: Path | None = None) -> dict:
     """Read hash-matched training metadata, or record unknown lineage explicitly.
 
     New checkpoints carry their metadata inside the directory. A versioned sibling
     `<checkpoint>.provenance.json` supports artifacts published before that metadata
-    was introduced, without changing the existing DVC artifact.
+    was introduced, without changing the existing DVC artifact. An explicit
+    `provenance` file is required and checked too, for a selected artifact's identity.
     """
     checkpoint = checkpoint.resolve()
     if not (checkpoint / "model.safetensors").is_file():
@@ -47,6 +48,11 @@ def describe_checkpoint(checkpoint: Path) -> dict:
         checkpoint / METADATA_FILENAME,
         checkpoint.with_name(checkpoint.name + ".provenance.json"),
     )
+    if provenance is not None:
+        provenance = provenance.resolve()
+        if not provenance.is_file():
+            raise ValueError(f"Missing required checkpoint provenance: {provenance}")
+        sources = tuple(dict.fromkeys((*sources, provenance)))
     run_id = None
     verified_sources = []
     for source in sources:
@@ -55,6 +61,7 @@ def describe_checkpoint(checkpoint: Path) -> dict:
         metadata = json.loads(source.read_text())
         if (
             not isinstance(metadata, dict)
+            or type(metadata.get("schema_version")) is not int
             or metadata.get("schema_version") != 1
             or not isinstance(metadata.get("training_run_id"), str)
             or not re.fullmatch(r"[0-9a-f]{32}", metadata["training_run_id"])

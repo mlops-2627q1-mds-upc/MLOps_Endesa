@@ -32,6 +32,7 @@ mlflow.db
 mlflow.db-*
 emissions.csv
 /reports/evaluation/
+/reports/inference/
 /reports/minimum-functionality/
 /reports/directional/
 /reports/invariance/

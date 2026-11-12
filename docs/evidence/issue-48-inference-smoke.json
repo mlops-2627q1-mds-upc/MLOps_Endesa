@@ -1,0 +1,49 @@
+{
+  "date_utc": "2026-10-11T18:56:11.105234+00:00",
+  "source_commit": "3fa698f01f1d4883e9a5ff0cb44d485b06163bf8",
+  "source_sha256": "ca517060e9b3e4f5f5361a29aa2f6ef7dda6b1ffbbea8fe3cccdddbd0ce46de5",
+  "params_sha256": "aeafc6f0781e68a8c2630a6ce216716008eabb579381b538d6a7746217451386",
+  "history_sha256": "d830f4d17f4af70c7bec20bb73377e95df9f8675a89bb3505d697e98bb12cb9f",
+  "history_formula": "float32(5000 + 300*sin(2*pi*arange(512,float32)/48)); history[0]=-3",
+  "input_kind": "synthetic; no shared data or evaluation",
+  "model_id": "amazon/chronos-t5-small",
+  "model_revision": "a971ba21945c4f1796b17a91fe69214b5f4ad472",
+  "settings": {
+    "num_samples": 20,
+    "seed": 7,
+    "device": "cpu",
+    "cpu_threads": 4,
+    "dtype": "float32",
+    "sampling": {
+      "temperature": 1,
+      "top_k": 50,
+      "top_p": 1
+    },
+    "quantile_method": "linear",
+    "point_statistic": "median"
+  },
+  "platform": "macOS-26.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "python": "3.11.15",
+  "software": {
+    "torch": "2.14.1",
+    "chronos-forecasting": "2.3.2",
+    "transformers": "5.18.0",
+    "numpy": "2.4.6"
+  },
+  "local_files_only": true,
+  "model_load_seconds": 2.189028708031401,
+  "prediction_seconds": [
+    0.5775532079860568,
+    0.5357694589765742
+  ],
+  "checks": {
+    "model_reused": true,
+    "cpu_rng_preserved": true,
+    "repeat_equal": true,
+    "finite_ordered_3_by_48": true,
+    "cli_equal": true
+  },
+  "forecast_sha256": "49487e2db43a6a56f3bd382b23f71e5e13be413b0a4b374aba80b97a9898fb6e",
+  "cpu_model": "Apple M4"
+}
