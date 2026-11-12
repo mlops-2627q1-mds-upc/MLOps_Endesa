@@ -1,0 +1,9 @@
+apiVersion: 1
+providers:
+  - name: Endesa service
+    folder: Endesa
+    type: file
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
