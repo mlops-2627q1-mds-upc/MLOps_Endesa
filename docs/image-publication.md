@@ -80,6 +80,41 @@ retrieval path. Registry credentials stay in the runner's private Docker
 configuration and never enter build arguments, the allowlisted context, image
 layers or evidence uploads. Weights/raw data also stay outside that context.
 
+## Workflow semantic validation
+
+[Workflow / semantics](../.github/workflows/workflow-semantics.yml) runs
+checksum-pinned actionlint 1.7.12 against every Actions workflow on PRs and pushes
+to `main`. It checks expression types, allowed contexts and workflow structure;
+optional ShellCheck/Pyflakes integrations are disabled because this job has that
+specific scope. It also requires rejection of the intentionally invalid fixture
+in `tests/fixtures/workflows/invalid-runner-job-env.yml`, outside the directory
+GitHub registers as workflows.
+
+The original [failed run 43224118655](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/actions/runs/43224118655)
+at source `a7225cb47e3ef653d79aac7a6eed7310f5a19a53` created no jobs. Its inherited
+publication file used `runner.temp` in job-level `env`, where GitHub disallows
+the `runner` context. YAML/bash syntax and ordinary tests had passed; actionlint
+reproduces the precise unavailable-context error. The workflow sets
+`DOCKER_CONFIG` in a runner step through `$RUNNER_TEMP` and `$GITHUB_ENV`, keeping
+registry credentials outside the checkout for later steps. GitHub documents this
+restriction in its [context availability table](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#context-availability).
+
+With the pinned actionlint binary available locally, reproduce both checks:
+
+```sh
+actionlint -shellcheck= -pyflakes= -oneline
+if actionlint -shellcheck= -pyflakes= -oneline \
+  tests/fixtures/workflows/invalid-runner-job-env.yml; then
+  echo 'The unavailable-context regression was accepted' >&2
+  exit 1
+fi
+```
+
+The fixture must fail specifically because `runner` is unavailable in job `env`;
+the CI check asserts that diagnostic. Retain the original failed run. Semantic
+validation and ordinary CI do not establish that GitHub accepted or executed a
+publication dispatch; record that separately during the authorized release step.
+
 ## Manifest v1 and read-only verification
 
 `python -m src.release_manifest ingest` checks the API receipts against explicit
