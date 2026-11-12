@@ -37,9 +37,20 @@ def docker(*args, timeout=10):
     endpoint = os.environ.get("DOCKER_HOST", context)
     if not endpoint.startswith(("unix://", "npipe://")):
         raise ValueError("Scenario Docker execution requires a local daemon endpoint")
-    return subprocess.run(
+    result = subprocess.run(
         ["docker", *args], text=True, capture_output=True, check=True, timeout=timeout
-    ).stdout.strip()
+    )
+    return (result.stdout + result.stderr if args[0] == "logs" else result.stdout).strip()
+
+
+def publish_fault(directory, delay):
+    """Replace the complete fixture instruction; readers never see a truncated file."""
+    staged = directory / "fault-next.json"
+    with staged.open("w") as stream:
+        json.dump({"delay_seconds": delay}, stream, allow_nan=False)
+        stream.flush()
+        os.fsync(stream.fileno())
+    staged.replace(directory / "fault.json")
 
 
 def inspect_container(identifier):
@@ -151,8 +162,7 @@ class OwnedStack:
             self.owner,
         )
         self.persist()
-        fault = self.directory / "fault.json"
-        fault.write_text('{"delay_seconds": 0}\n')
+        publish_fault(self.directory, 0)
         self.api = self.launch(
             "api",
             self.image,
@@ -240,6 +250,24 @@ class OwnedStack:
         else:
             docker("stop", "--time", "5", self.api)
 
+    def set_delay(self, delay):
+        """Acknowledge the exact instruction inside this owned container before traffic."""
+        if inspect_container(self.api)["Config"]["Labels"].get(OWNER_LABEL) != self.owner:
+            raise ValueError("Fixture API ownership mismatch")
+        publish_fault(self.directory, delay)
+        observed = json.loads(
+            docker(
+                "exec",
+                self.api,
+                "python",
+                "-c",
+                "import json; print(json.dumps(json.load(open('/scenario/fault.json'))))",
+            )
+        )
+        if observed != {"delay_seconds": delay}:
+            raise ValueError("Container did not acknowledge the declared fixture delay")
+        return observed
+
 
 def _forecast(client):
     start = time.monotonic()
@@ -257,7 +285,7 @@ def fixture_service(directory, scenario, declaration):
     )
 
     fault = directory / "fault.json"
-    fault.write_text('{"delay_seconds": 0}\n')
+    publish_fault(directory, 0)
     predictor = ScenarioPredictor(fault)
     app = create_app(predictor_factory=lambda _settings: predictor)
     with TestClient(app) as client:
@@ -265,12 +293,12 @@ def fixture_service(directory, scenario, declaration):
         if scenario == "service-unavailable":
             app.state.predictor = None
         if scenario == "slow-request":
-            fault.write_text(json.dumps({"delay_seconds": declaration["delay_seconds"]}))
+            publish_fault(directory, declaration["delay_seconds"])
         observations = [_forecast(client) for _ in range(declaration["requests"])]
         metrics = client.get("/metrics").text
         (directory / "fault-metrics.prom").write_text(metrics)
         app.state.predictor = predictor
-        fault.write_text('{"delay_seconds": 0}\n')
+        publish_fault(directory, 0)
         recovery = _forecast(client)
     passed = control["http_status"] == recovery["http_status"] == 200
     expected_status = 503 if scenario == "service-unavailable" else 200
@@ -376,11 +404,11 @@ def docker_service(directory, scenario, declaration, owner, image):
                 fault = []
             else:
                 delay = declaration.get("delay_seconds", 0)
-                (directory / "fault.json").write_text(json.dumps({"delay_seconds": delay}))
+                record("fault_acknowledged", stack.set_delay(delay))
                 fault = [
                     record("forecast", _forecast(api)) for _ in range(declaration["requests"])
                 ]
-                (directory / "fault.json").write_text('{"delay_seconds": 0}\n')
+                record("recovery_acknowledged", stack.set_delay(0))
             recovery = record("recovery", _forecast(api))
             metrics = api.get("/metrics")
             metrics.raise_for_status()

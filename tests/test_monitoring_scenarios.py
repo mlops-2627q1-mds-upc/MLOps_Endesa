@@ -229,6 +229,25 @@ def test_restart_refreshes_dynamic_binding_before_recovery_request(tmp_path, mon
     assert json.loads((tmp_path / "runtime.json").read_text())["api_url"] == stack.api_url
 
 
+def test_delay_publication_is_atomic_and_acknowledged(tmp_path, monkeypatch):
+    service.publish_fault(tmp_path, 0)
+    before = (tmp_path / "fault.json").stat().st_ino
+    stack = service.OwnedStack(tmp_path, "endesa-84-fault", "sha256:" + "a" * 64)
+    stack.api = "c" * 64
+    monkeypatch.setattr(
+        service,
+        "inspect_container",
+        lambda _id: {"Config": {"Labels": {service.OWNER_LABEL: stack.owner}}},
+    )
+    monkeypatch.setattr(service, "docker", lambda *_args: '{"delay_seconds": 0.25}')
+    assert stack.set_delay(0.25) == {"delay_seconds": 0.25}
+    assert (tmp_path / "fault.json").stat().st_ino != before
+    assert not (tmp_path / "fault-next.json").exists()
+    monkeypatch.setattr(service, "docker", lambda *_args: '{"delay_seconds": 0}')
+    with pytest.raises(ValueError, match="acknowledge"):
+        stack.set_delay(0.25)
+
+
 def test_actual_ks_control_shift_recovery_when_isolated_backend_available(tmp_path):
     pytest.importorskip("alibi_detect")
     from src.monitoring_scenarios.experiments import (  # pylint: disable=import-outside-toplevel
