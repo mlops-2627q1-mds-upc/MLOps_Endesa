@@ -80,9 +80,10 @@ Each invocation creates a unique directory under `temporary/release-validation/`
 `--output-dir` selects a different parent. It retains `report.json`, step logs,
 verified identities, original source/configuration hashes, the exact two-thread
 parameter copy and the runners' detailed reports. The summary records the Git
-commit and dirty state, selected weights and training run, DVC identities, commands,
+commit, tree and dirty state, selected weights and training run, DVC identities, commands,
 budgets, exit codes, timings and any GitHub run/attempt identifiers. A failed step
-stops later checks. Earlier evidence is not overwritten.
+stops later checks. Source/configuration hashes are checked again before success;
+changes during execution fail validation. Earlier evidence is not overwritten.
 
 For a controlled failure that requires no data or inference:
 
@@ -107,11 +108,12 @@ permissions, serializes runs and does not cancel a running validation.
 The workflow references repository secrets `DVC_HTTP_USER` and
 `DVC_HTTP_PASSWORD`. Both names were verified present on 2 November 2026; only
 the GitHub secret names were inspected. Their presence does not establish
-authentication or retrieval from Actions. On that date, this workflow was absent from `main`
-and GitHub's workflow registry, so no remote release-validation run was attempted.
-The remaining prerequisite is availability through the normal reviewed merge,
-including the upstream inference dependency in PR #52. That PR has Pau's approval
-on its current head but remains unmerged; PR #87 still requires human review.
+authentication or retrieval from Actions. On 12 November 2026, this workflow was
+still absent from `main` and GitHub's workflow registry, so it was not dispatched.
+Inference dependency [PR #52](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/52)
+merged as `ae9a38c18978251d2389f82367108ff097c3c3f1`; `main` also contains the API
+from PR #86. PR #87 includes `main` at `26f260e33766689bcdce4a6db6062a9e1e74475d`
+and still needs Pau's peer review and a reviewed merge before remote execution.
 
 After the reviewed workflow reaches `main`, record its intended source SHA and
 dispatch it with the authorized GitHub account:
@@ -147,10 +149,76 @@ evidence; neither substitutes for this authenticated Actions execution. GitHub's
 require the workflow to exist on the default branch even when using `--ref`.
 
 An `always()` step uses [upload-artifact](https://github.com/actions/upload-artifact)
-to retain JSON reports, logs and executed parameters for 14 days, including failed
+to retain JSON reports, handoff checksums, logs and executed parameters for 14 days, including failed
 runs. It excludes data, weights, source copies and credential files. A setup
 failure before the command starts may have only the Actions log. Existing PR
 workflow triggers, check names and credentials remain unchanged.
+
+## Publication handoff for #78
+
+Every completed command also writes `handoff.json` and `handoff.sha256` beside
+`report.json`, including on failure. The handoff is a public summary: it contains
+canonical repository paths and hashes, without absolute machine paths, command
+arguments, logs, credentials or raw data. Keep detailed reports in the retained
+validation artifact; their hashes let a publication manifest identify the evidence.
+
+| Field in handoff schema 1 | Meaning |
+| --- | --- |
+| `kind`, `schema_version`, `run_id` | `bounded-release-validation`, `1`, and the unique command run ID |
+| `source.git_commit`, `git_tree`, `git_dirty` | Full commit/tree SHAs and checkout state captured before the checks |
+| `source.sha256` | Original source/configuration file hashes, including `params.yaml`, `pyproject.toml`, `uv.lock`, DVC references, checkpoint provenance and the release workflow |
+| `source.github` | `GITHUB_REPOSITORY`, `GITHUB_RUN_ID`, `GITHUB_RUN_ATTEMPT`, `GITHUB_SHA`, `GITHUB_WORKFLOW_REF`; values are null outside Actions |
+| `checkpoint` | Canonical `path`, weights `sha256`, originating `training_run_id`, complete directory `md5`, and `provenance_sha256` |
+| `data` | Raw-directory and four processed-file DVC MD5 identities, keyed by canonical path |
+| `configuration` | `params_sha256`, `pyproject_sha256`, `uv_lock_sha256`, and `executed_params_sha256` for the CPU/two-thread parameter copy |
+| `outcome` | `status`, `exit_code`, acceptance rule, UTC start/end, elapsed/total budget, and each step's name/status/exit code/elapsed/budget |
+| `reports_sha256` | SHA-256 for each retained report and executed parameter file, keyed relative to the run directory |
+
+`reports_sha256` covers `report.json`, `identities.json`, `params-cpu2.yaml`,
+`minimum-functionality.json`, `directional/*/{plan,report}.json` and
+`data-check/reports/*.json` when present. `handoff.sha256` hashes the exact bytes
+of `handoff.json`; the handoff has no self-referential digest. Failure summaries
+can omit identities or report files for checks that did not finish. They cannot
+authorize publication.
+
+The publication workflow in #78 can consume this interface without inference:
+
+1. Select an authorized run of `.github/workflows/release-validation.yml` in this
+   repository through the GitHub API. Require a successful `workflow_dispatch`
+   run whose `headSha` equals the full image source SHA. Pin its run ID, attempt
+   and unexpired `release-validation-RUN_ID-ATTEMPT` artifact; retain its artifact
+   ID/digest. Never select a run only because it is the latest successful one.
+2. Download that artifact, then run the following check from the same source
+   checkout. Replace the run/attempt/directory placeholders and `IMAGE_SOURCE_SHA`.
+
+   ```sh
+   uv run --no-sync python -m src.release_validation \
+     --check-handoff temporary/release-actions-RUN_ID-ATTEMPT/RUN_UUID/handoff.json \
+     --source-commit IMAGE_SOURCE_SHA
+   ```
+
+   Exit 0 requires matching report hashes, a clean matching source commit, a
+   successful retrieval followed by all five checks, complete result files, and
+   elapsed times within every step/total budget. It also rejects a nonmatching
+   Actions SHA. Missing files, failure, timeout, dirty source, tampering and a
+   cache-only run return nonzero. This command performs no model loading or
+   network access. It checks evidence consistency; the GitHub API selection in
+   step 1 establishes where that evidence came from.
+3. Match every `source.github` value to the selected run/attempt, compare
+   `source.git_tree` and `source.sha256` with the image build checkout, and compare
+   checkpoint/data identities with its tracked provenance and DVC references.
+   A successful check for another commit cannot authorize this image, including
+   a merge commit with an otherwise similar tree. Rerun validation for the exact
+   release source when that source changes.
+4. After the publication prerequisites are reviewed, record the immutable image
+   digest with the source SHA, checkpoint/training-run identity, data/configuration
+   identities, validation run/attempt and artifact ID/digest, the handoff SHA-256,
+   and `reports_sha256`. Keep publication and independent pull/startup evidence
+   separate from validation success.
+
+No image is published by this command or its workflow. The pending decision record
+is [EDN-017 in PR #97](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/blob/e85b168c5bc282463cd6a6f8edf34f3c073ab6f5/docs/edn/0017-release-validation.md);
+this change does not duplicate it or supply peer approval.
 
 ## Local evidence on 2 November 2026
 
@@ -177,3 +245,12 @@ one-second-budget timeout (exit 124); neither reached model inference. The
 27 focused release tests passed. Reports, logs, retrieval-isolation receipts and
 commands are retained under this worktree's ignored
 `temporary/release-validation-2026-11-02/`; earlier run records remain intact.
+
+That run remains evidence for `66266e01f92dcf01e17901ad72bb6d99a4fd0fb1`.
+Its original `report.json` SHA-256 is
+`fe08bf158e35a66d03b9f4d2d0f53783ab7cd3162a67a0d6c10cd2b46d7d149f`.
+The integrated branch has a different dependency lock and adds the handoff
+interface. No real-model run was repeated for this refresh, and the historical
+report was not rewritten or given a retrospective publication handoff. Required
+PR CI and fixture tests cover implementation separately; authenticated Actions
+validation on the intended release source remains a later execution step.

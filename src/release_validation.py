@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import signal
 import subprocess
@@ -31,6 +32,15 @@ BUDGETS = {
     "directional": 210,
 }
 TOTAL_SECONDS = 900
+EVIDENCE_PATTERNS = (
+    "report.json",
+    "identities.json",
+    "params-cpu2.yaml",
+    "minimum-functionality.json",
+    "directional/*/report.json",
+    "directional/*/plan.json",
+    "data-check/reports/*.json",
+)
 ACCEPTANCE = (
     "All tracked artifact identities must match, data validation must pass, and all "
     "10 minimum-functionality cases plus 12 directional cases and the unchanged "
@@ -160,6 +170,7 @@ def _source_record() -> dict:
 
     files = [
         "params.yaml",
+        "pyproject.toml",
         "uv.lock",
         "dvc.yaml",
         "dvc.lock",
@@ -167,17 +178,133 @@ def _source_record() -> dict:
         f"{MODEL}.dvc",
         f"{MODEL}.provenance.json",
         "tests/test_minimum_functionality_model.py",
+        ".github/workflows/release-validation.yml",
     ]
     files += [str(p.relative_to(ROOT)) for p in sorted((ROOT / "src").rglob("*.py"))]
     return {
         "git_commit": git("rev-parse", "HEAD"),
+        "git_tree": git("rev-parse", "HEAD^{tree}"),
         "git_dirty": bool(git("status", "--porcelain")),
         "sha256": {name: _hash(ROOT / name) for name in files},
         "github": {
             name: os.environ.get(name)
-            for name in ("GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT", "GITHUB_SHA")
+            for name in (
+                "GITHUB_REPOSITORY",
+                "GITHUB_RUN_ID",
+                "GITHUB_RUN_ATTEMPT",
+                "GITHUB_SHA",
+                "GITHUB_WORKFLOW_REF",
+            )
         },
     }
+
+
+def _public_handoff(report_path: Path, report: dict) -> dict:
+    """Expose identities and report hashes without commands, local paths or logs."""
+    source = report.get("source", {})
+    hashes = source.get("sha256", {})
+    identities = report.get("identities", {})
+    model = identities.get("model", {})
+    artifacts = identities.get("artifacts", {})
+    return {
+        "schema_version": 1,
+        "kind": "bounded-release-validation",
+        "run_id": report["run_id"],
+        "source": source,
+        "checkpoint": {
+            "path": MODEL,
+            "sha256": model.get("sha256"),
+            "training_run_id": model.get("training_run_id"),
+            "md5": artifacts.get(MODEL, {}).get("md5"),
+            "provenance_sha256": hashes.get(f"{MODEL}.provenance.json"),
+        },
+        "data": {
+            name: {"md5": identity["md5"]}
+            for name, identity in artifacts.items()
+            if name.startswith("data/")
+        },
+        "configuration": {
+            "params_sha256": hashes.get("params.yaml"),
+            "pyproject_sha256": hashes.get("pyproject.toml"),
+            "uv_lock_sha256": hashes.get("uv.lock"),
+            "executed_params_sha256": report.get("executed_params_sha256"),
+        },
+        "outcome": {
+            **{
+                name: report[name]
+                for name in (
+                    "status",
+                    "exit_code",
+                    "acceptance",
+                    "started_utc",
+                    "finished_utc",
+                    "wall_seconds",
+                    "total_budget_seconds",
+                )
+            },
+            "steps": [
+                {
+                    name: step[name]
+                    for name in (
+                        "name",
+                        "status",
+                        "exit_code",
+                        "wall_seconds",
+                        "budget_seconds",
+                    )
+                    if name in step
+                }
+                for step in report["steps"]
+            ],
+        },
+        "reports_sha256": {
+            path.relative_to(report_path.parent).as_posix(): _hash(path)
+            for pattern in EVIDENCE_PATTERNS
+            for path in sorted(report_path.parent.glob(pattern))
+            if path.is_file()
+        },
+    }
+
+
+def check_handoff(path: Path, *, source_commit: str) -> dict:
+    """Check retained evidence for a clean, successful pull of the exact source."""
+    if not re.fullmatch(r"[0-9a-f]{40}", source_commit):
+        raise ValueError("source_commit must be a full Git commit SHA")
+    handoff = json.loads(path.read_text(encoding="utf-8"))
+    report_path = path.parent / "report.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    if handoff != _public_handoff(report_path, report):
+        raise ValueError("Handoff does not match retained reports and their hashes")
+    source, outcome = handoff["source"], handoff["outcome"]
+    if source.get("git_commit") != source_commit or source.get("git_dirty") is not False:
+        raise ValueError("Validation must cover the exact source commit in a clean checkout")
+    if source.get("github", {}).get("GITHUB_SHA") not in (None, source_commit):
+        raise ValueError("Actions source SHA does not match the validated commit")
+    if outcome["status"] != "passed" or outcome["exit_code"] != 0:
+        raise ValueError("Release validation did not pass")
+    if [step["name"] for step in outcome["steps"]] != list(BUDGETS) or any(
+        step["status"] != "passed"
+        or step["exit_code"] != 0
+        or not 0 < step["wall_seconds"] <= step["budget_seconds"] <= BUDGETS[step["name"]]
+        for step in outcome["steps"]
+    ):
+        raise ValueError("Every bounded step, including retrieval, must pass")
+    if not 0 < outcome["wall_seconds"] <= outcome["total_budget_seconds"] <= TOTAL_SECONDS:
+        raise ValueError("Validation exceeded the total budget")
+    files = handoff["reports_sha256"]
+    required = {
+        "report.json",
+        "identities.json",
+        "params-cpu2.yaml",
+        "minimum-functionality.json",
+        "data-check/reports/validation.json",
+    }
+    if not required <= files.keys() or not all(
+        any(Path(name).match(pattern) for name in files)
+        for pattern in ("directional/*/report.json", "directional/*/plan.json")
+    ):
+        raise ValueError("Validation reports are incomplete")
+    return handoff
 
 
 def _data_workspace(directory: Path, data_dir: Path) -> Path:
@@ -294,6 +421,8 @@ def run_validation(
                 str(directory / "directional"),
             ],
         )
+        if _source_record() != report["source"]:
+            raise ValueError("Source changed during release validation")
         report.update(status="passed", exit_code=0)
     except (
         OSError,
@@ -312,6 +441,11 @@ def run_validation(
             report.update(status="timeout", exit_code=124)
         report["finished_utc"] = datetime.now(UTC).isoformat()
         _write(report_path, report)
+        handoff_path = directory / "handoff.json"
+        _write(handoff_path, _public_handoff(report_path, report))
+        (directory / "handoff.sha256").write_text(
+            f"{_hash(handoff_path)}  handoff.json\n", encoding="utf-8"
+        )
     return report_path, report
 
 
@@ -323,6 +457,12 @@ def main() -> None:
     parser.add_argument("--checkpoint", type=Path, default=ROOT / MODEL)
     parser.add_argument("--pull", action="store_true", help="Retrieve only declared DVC targets")
     parser.add_argument(
+        "--check-handoff", type=Path, help="Check retained evidence without inference"
+    )
+    parser.add_argument(
+        "--source-commit", help="Exact image source SHA required by --check-handoff"
+    )
+    parser.add_argument(
         "--max-seconds",
         type=int,
         choices=range(1, TOTAL_SECONDS + 1),
@@ -332,6 +472,17 @@ def main() -> None:
     parser.add_argument("--verify-only", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--retrieve-only", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.check_handoff:
+        if not args.source_commit:
+            parser.error("--check-handoff requires --source-commit")
+        try:
+            check_handoff(args.check_handoff, source_commit=args.source_commit)
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            parser.exit(1, f"Handoff rejected: {error}\n")
+        print(f"Handoff passed for source {args.source_commit}")
+        return
+    if args.source_commit:
+        parser.error("--source-commit requires --check-handoff")
     if args.retrieve_only:
         retrieve_artifacts()
         return

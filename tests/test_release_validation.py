@@ -117,8 +117,29 @@ def test_verification_rejects_extra_files_and_member_symlinks(artifacts, symlink
 def runner(artifacts, monkeypatch):
     """Keep real identity verification; replace only expensive child checks."""
     calls = []
-    monkeypatch.setattr(release, "_source_record", lambda: {"fixture": True})
-    monkeypatch.setattr(release, "_data_workspace", lambda *_: artifacts.root)
+    source = {
+        "git_commit": "b" * 40,
+        "git_tree": "c" * 40,
+        "git_dirty": False,
+        "sha256": {
+            name: "d" * 64
+            for name in (
+                "params.yaml",
+                "pyproject.toml",
+                "uv.lock",
+                f"{release.MODEL}.provenance.json",
+            )
+        },
+        "github": {"GITHUB_SHA": None},
+    }
+    monkeypatch.setattr(release, "_source_record", lambda: source.copy())
+
+    def workspace(directory, _data):
+        path = directory / "data-check"
+        path.mkdir()
+        return path
+
+    monkeypatch.setattr(release, "_data_workspace", workspace)
 
     def execute(command, *, cwd, log, seconds):
         calls.append((command, cwd, seconds))
@@ -126,7 +147,23 @@ def runner(artifacts, monkeypatch):
         if "--verify-only" in command:
             path = Path(command[command.index("--output-dir") + 1])
             path.write_text(json.dumps(release.verify_artifacts(artifacts.data, artifacts.model)))
-        return {"status": "passed", "exit_code": 0, "command": command}
+        if log.stem == "data":
+            (cwd / "reports").mkdir()
+            (cwd / "reports/validation.json").write_text('{"success": true}')
+        if log.stem == "minimum-functionality":
+            Path(command[-1]).write_text('{"status": "passed"}')
+        if log.stem == "directional":
+            path = Path(command[-1]) / "fixture-run"
+            path.mkdir(parents=True)
+            (path / "report.json").write_text('{"status": "passed"}')
+            (path / "plan.json").write_text('{"fixture": true}')
+        return {
+            "status": "passed",
+            "exit_code": 0,
+            "command": command,
+            "wall_seconds": 0.01,
+            "budget_seconds": seconds,
+        }
 
     monkeypatch.setattr(release, "run_step", execute)
     return calls
@@ -381,3 +418,159 @@ def test_cli_exits_nonzero_and_prints_retained_report(tmp_path, monkeypatch, cap
     with pytest.raises(SystemExit) as error:
         release.main()
     assert error.value.code == 7 and str(path) in capsys.readouterr().out
+
+
+def _pull_validation(artifacts):
+    target = artifacts.root / release.MODEL
+    artifacts.model.rename(target)
+    artifacts.model = target
+    return release.run_validation(
+        output_dir=artifacts.output, data_dir=artifacts.data, checkpoint=target, pull=True
+    )
+
+
+def test_public_handoff_binds_reports_without_paths_commands_or_credentials(
+    artifacts, runner, monkeypatch
+):
+    monkeypatch.setenv("DVC_HTTP_PASSWORD", "fixture-secret")
+    path, report = _pull_validation(artifacts)
+    handoff_path = path.parent / "handoff.json"
+    handoff = release.check_handoff(handoff_path, source_commit="b" * 40)
+    assert handoff["outcome"]["status"] == "passed"
+    assert handoff["source"]["git_commit"] == report["source"]["git_commit"]
+    assert handoff["checkpoint"]["sha256"] == hashlib.sha256(b"fixture weights").hexdigest()
+    assert handoff["checkpoint"]["training_run_id"] == "a" * 32
+    assert len(handoff["data"]) == 5
+    assert handoff["configuration"]["executed_params_sha256"] == report["executed_params_sha256"]
+    assert set(handoff["reports_sha256"]) == {
+        "report.json",
+        "identities.json",
+        "params-cpu2.yaml",
+        "minimum-functionality.json",
+        "directional/fixture-run/report.json",
+        "directional/fixture-run/plan.json",
+        "data-check/reports/validation.json",
+    }
+    for name, digest in handoff["reports_sha256"].items():
+        assert hashlib.sha256((path.parent / name).read_bytes()).hexdigest() == digest
+    assert (path.parent / "handoff.sha256").read_text().strip() == (
+        f"{hashlib.sha256(handoff_path.read_bytes()).hexdigest()}  handoff.json"
+    )
+    public = handoff_path.read_text()
+    for private in (str(artifacts.root), str(artifacts.data), "fixture-secret", "command", "cwd"):
+        assert private not in public
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "report.json",
+        "identities.json",
+        "params-cpu2.yaml",
+        "minimum-functionality.json",
+        "directional/fixture-run/report.json",
+        "directional/fixture-run/plan.json",
+        "data-check/reports/validation.json",
+        "handoff.json",
+    ],
+)
+def test_handoff_rejects_tampered_evidence(artifacts, runner, name):
+    path, _ = _pull_validation(artifacts)
+    target = path.parent / name
+    target.write_text(target.read_text() + "\n")
+    if name == "handoff.json":
+        value = json.loads(target.read_text())
+        value["outcome"]["status"] = "failed"
+        target.write_text(json.dumps(value))
+    with pytest.raises(ValueError, match="does not match"):
+        release.check_handoff(path.parent / "handoff.json", source_commit="b" * 40)
+
+
+@pytest.mark.parametrize("mutation", ["source", "dirty", "github"])
+def test_handoff_rejects_incompatible_source(artifacts, runner, monkeypatch, mutation):
+    record = release._source_record()
+    if mutation == "source":
+        record["git_commit"] = "e" * 40
+    elif mutation == "dirty":
+        record["git_dirty"] = True
+    else:
+        record["github"] = {"GITHUB_SHA": "e" * 40}
+    monkeypatch.setattr(release, "_source_record", lambda: record)
+    path, _ = _pull_validation(artifacts)
+    with pytest.raises(ValueError, match="source|SHA"):
+        release.check_handoff(path.parent / "handoff.json", source_commit="b" * 40)
+
+
+def test_handoff_requires_retrieval(artifacts, runner):
+    path, _ = release.run_validation(
+        output_dir=artifacts.output, data_dir=artifacts.data, checkpoint=artifacts.model
+    )
+    with pytest.raises(ValueError, match="including retrieval"):
+        release.check_handoff(path.parent / "handoff.json", source_commit="b" * 40)
+
+
+def test_failed_validation_retains_unusable_public_handoff(artifacts, runner):
+    (artifacts.model / "config.json").write_text('{"changed": true}')
+    path, report = _pull_validation(artifacts)
+    assert report["status"] == "failed"
+    with pytest.raises(ValueError, match="did not pass"):
+        release.check_handoff(path.parent / "handoff.json", source_commit="b" * 40)
+
+
+def test_source_change_during_checks_prevents_success(artifacts, runner, monkeypatch):
+    record = release._source_record()
+    changed = {**record, "git_dirty": True}
+    records = iter([record, changed])
+    monkeypatch.setattr(release, "_source_record", lambda: next(records))
+    path, report = release.run_validation(
+        output_dir=artifacts.output, data_dir=artifacts.data, checkpoint=artifacts.model
+    )
+    assert report["status"] == "failed" and report["exit_code"] == 1
+    assert "Source changed" in report["error"]
+    assert json.loads((path.parent / "handoff.json").read_text())["outcome"]["status"] == "failed"
+
+
+def test_handoff_cli_checks_evidence_without_running_validation(artifacts, runner, monkeypatch):
+    path, _ = _pull_validation(artifacts)
+    monkeypatch.setattr(release, "run_validation", lambda **_: pytest.fail("must not infer"))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "release-validation",
+            "--check-handoff",
+            str(path.parent / "handoff.json"),
+            "--source-commit",
+            "b" * 40,
+        ],
+    )
+    release.main()
+
+
+def test_source_record_binds_build_configuration_and_workflow(artifacts, monkeypatch):
+    for name in (
+        "pyproject.toml",
+        "uv.lock",
+        "dvc.yaml",
+        "tests/test_minimum_functionality_model.py",
+        ".github/workflows/release-validation.yml",
+        "src/release_validation.py",
+    ):
+        path = artifacts.root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("fixture")
+    monkeypatch.setattr(
+        release.subprocess,
+        "check_output",
+        lambda args, **_: {"HEAD": "b" * 40, "HEAD^{tree}": "c" * 40, "--porcelain": ""}[args[-1]],
+    )
+    source = release._source_record()
+    assert source["git_commit"] == "b" * 40 and source["git_tree"] == "c" * 40
+    assert source["git_dirty"] is False
+    assert {
+        "params.yaml",
+        "pyproject.toml",
+        "uv.lock",
+        "src/release_validation.py",
+        ".github/workflows/release-validation.yml",
+    } <= source["sha256"].keys()
