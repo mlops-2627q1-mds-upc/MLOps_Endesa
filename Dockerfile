@@ -9,6 +9,7 @@ RUN uv sync --locked --only-group serving --no-cache
 FROM python:3.11.15-slim-bookworm@sha256:d29f48a31a8b408ed19272ca1e7b10ebae13b240a27e862d3d4217c528e2e0c3 AS runtime
 ARG GIT_SHA
 LABEL org.opencontainers.image.title="Endesa forecast API" \
+      org.opencontainers.image.source="https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa" \
       org.opencontainers.image.revision="${GIT_SHA}"
 RUN python -c 'import re, sys; sys.exit(not re.fullmatch(r"[0-9a-f]{40}", sys.argv[1]))' "${GIT_SHA}" && \
     groupadd --gid 10001 forecast && \
