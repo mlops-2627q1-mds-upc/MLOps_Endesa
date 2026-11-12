@@ -1,0 +1,1113 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-02",
+  "evidence_kind": "actual_selected_target",
+  "review_status": "human_peer_review_pending",
+  "source": {
+    "service_commit": "962471100c1f50838bd55be9ad4664e693082a0a",
+    "benchmark_commit": "efdb0813a0a06599927dd6e49760f6f576500097",
+    "params_sha256": "a470aba4cedc7940052139315e4e03e5db5b26899d57d508ecfc693c6d79343c",
+    "image_id": "sha256:780d8e3c4f059a6f89c5277bc272449190210a068d2177c2ba3aecbd86425cd9"
+  },
+  "selected_checkpoint": {
+    "model_id": "chronos-t5-small-fine-tuned",
+    "model_revision": "local-sha256:746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+    "checkpoint": {
+      "sha256": "746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+      "training_run_id": "639eba4cc7e74de08ffab64beee715db"
+    },
+    "context_length": 512,
+    "horizon": 48,
+    "value_scale": "source",
+    "settings": {
+      "num_samples": 20,
+      "seed": 7,
+      "device": "cpu",
+      "cpu_threads": 2,
+      "dtype": "float32",
+      "sampling": {
+        "temperature": 1.0,
+        "top_k": 50,
+        "top_p": 1.0
+      },
+      "quantile_method": "linear",
+      "point_statistic": "median"
+    }
+  },
+  "target": {
+    "os": "Ubuntu 20.04.6 LTS",
+    "cpu": "Intel Core Processor (Broadwell, no TSX, IBRS)",
+    "cpu_count": 1,
+    "memory_bytes": 4127555584
+  },
+  "target_label": "Allocated FIB Virtech course VM2245",
+  "measurement_scope": "Target-local loopback HTTP; one isolated container; filesystem/model caches uncontrolled",
+  "resource_scope": {
+    "scope": "container",
+    "cgroup_version": 1,
+    "includes": "Memory controller accounting including charged page cache; excludes benchmark client/host memory"
+  },
+  "declared_measurement": {
+    "budget_seconds": 900,
+    "startup_seconds": 90,
+    "request_timeout_seconds": 30,
+    "warmup_requests": 2,
+    "requests_per_level": 20,
+    "concurrency": [
+      1,
+      2
+    ],
+    "overload_requests": 4,
+    "consecutive_timeout_limit": 3,
+    "memory_limit_bytes": 1610612736,
+    "proposal_margin_fraction": 0.2
+  },
+  "request": {
+    "state": "TAS",
+    "context_length": 512,
+    "source": "synthetic; no dataset or frozen-final-test access",
+    "sha256": "b88567a14f4413ec0ca3b1d4421780f7a81a643b70d5f88a103b973fc7de059e",
+    "retention": "Full request retained in ignored local/target evidence"
+  },
+  "runs": {
+    "discovery": {
+      "run_id": "5080d3b4-354d-4bc0-b0c2-f5da49722d88",
+      "status": "complete",
+      "supervision": {
+        "status": "success",
+        "worker_returncode": 0,
+        "stop_reason": null,
+        "service_launched": true,
+        "cleanup_verified": true,
+        "explicit_cleanup_attempted": false,
+        "run_id": "5080d3b4-354d-4bc0-b0c2-f5da49722d88",
+        "plan_sha256": "3d90a5ee096d51fdb5b0616c07349f631e259b8fb768cedd4bc53a5911be498a",
+        "report_digest": "3e88d7a060f9458f1fed2f1d96406bb1f832179b0eaeaddf740b5a4a1bddb0f0",
+        "report_sha256": "db9dbacfc5571a2d7d8e498ae82071a9979d6d05ece311a803d859d620dc3cf9"
+      },
+      "total_seconds": 227.02098076599987,
+      "cold_start": {
+        "scope": "owned service process/container restart; filesystem/model caches uncontrolled",
+        "launch_to_ready_seconds": 14.833219669999835,
+        "first_forecast": {
+          "attempts": 1,
+          "successes": 1,
+          "errors": 0,
+          "statuses": {
+            "200": 1
+          },
+          "outcomes": {
+            "ok": 1
+          },
+          "wall_seconds": 4.657124153000041,
+          "p50_seconds": 4.656554672999846,
+          "p95_seconds": 4.656554672999846,
+          "successful_requests_per_second": 0.21472478876385911,
+          "attempted_requests_per_second": 0.21472478876385911
+        },
+        "launch_started_seconds": 0.0006056199999875389
+      },
+      "phases": {
+        "first_forecast": {
+          "attempts": 1,
+          "successes": 1,
+          "errors": 0,
+          "statuses": {
+            "200": 1
+          },
+          "outcomes": {
+            "ok": 1
+          },
+          "wall_seconds": 4.657124153000041,
+          "p50_seconds": 4.656554672999846,
+          "p95_seconds": 4.656554672999846,
+          "successful_requests_per_second": 0.21472478876385911,
+          "attempted_requests_per_second": 0.21472478876385911
+        },
+        "warmup": {
+          "attempts": 2,
+          "successes": 2,
+          "errors": 0,
+          "statuses": {
+            "200": 2
+          },
+          "outcomes": {
+            "ok": 2
+          },
+          "wall_seconds": 8.889033194000149,
+          "p50_seconds": 4.444239048500094,
+          "p95_seconds": 4.4479348404501255,
+          "successful_requests_per_second": 0.22499634733616977,
+          "attempted_requests_per_second": 0.22499634733616977
+        },
+        "warm_c1": {
+          "attempts": 20,
+          "successes": 20,
+          "errors": 0,
+          "statuses": {
+            "200": 20
+          },
+          "outcomes": {
+            "ok": 20
+          },
+          "wall_seconds": 89.79894945599972,
+          "p50_seconds": 4.431811149499708,
+          "p95_seconds": 4.7905095502001585,
+          "successful_requests_per_second": 0.22271975475392095,
+          "attempted_requests_per_second": 0.22271975475392095
+        },
+        "warm_c2": {
+          "attempts": 20,
+          "successes": 20,
+          "errors": 0,
+          "statuses": {
+            "200": 20
+          },
+          "outcomes": {
+            "ok": 20
+          },
+          "wall_seconds": 89.52736355500019,
+          "p50_seconds": 6.645755048000183,
+          "p95_seconds": 9.18878138474986,
+          "successful_requests_per_second": 0.22339538668211995,
+          "attempted_requests_per_second": 0.22339538668211995
+        },
+        "overload_c2": {
+          "attempts": 4,
+          "successes": 4,
+          "errors": 0,
+          "statuses": {
+            "200": 4
+          },
+          "outcomes": {
+            "ok": 4
+          },
+          "wall_seconds": 18.043626761999803,
+          "p50_seconds": 6.725171544499972,
+          "p95_seconds": 9.02635799695015,
+          "successful_requests_per_second": 0.2216849224804445,
+          "attempted_requests_per_second": 0.2216849224804445
+        }
+      },
+      "memory": {
+        "scope": "container",
+        "peak_bytes": 1359327232,
+        "samples": 2246,
+        "unavailable_samples": 2,
+        "method": "cgroup v1 memory.usage_in_bytes/memory.max_usage_in_bytes",
+        "cgroup_version": 1,
+        "cgroup_counters": {
+          "oom_kill_disable": 0,
+          "under_oom": 0,
+          "oom_kill": 0,
+          "failcnt": 0
+        },
+        "oom_kill_count": 0,
+        "container_limit_bytes": 2147483648,
+        "host_memory": "unavailable",
+        "sampling_interval_seconds": 0.1
+      },
+      "request_count": 47,
+      "request_errors": 0,
+      "request_observation_columns": [
+        "phase",
+        "index",
+        "elapsed_seconds",
+        "status",
+        "outcome"
+      ],
+      "request_observations": [
+        [
+          "first_forecast",
+          0,
+          4.656554672999846,
+          200,
+          "ok"
+        ],
+        [
+          "warmup",
+          0,
+          4.448345484000129,
+          200,
+          "ok"
+        ],
+        [
+          "warmup",
+          1,
+          4.44013261300006,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          0,
+          4.786972963000153,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          1,
+          4.37585940200006,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          2,
+          4.651891215999967,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          3,
+          4.443854080999699,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          4,
+          4.4546344760001375,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          5,
+          4.382057347000227,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          6,
+          4.385766778999823,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          7,
+          4.857704707000266,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          8,
+          4.374947352999698,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          9,
+          4.596572436000315,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          10,
+          4.338787294000213,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          11,
+          4.347045748000255,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          12,
+          4.397821822999958,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          13,
+          4.419768217999717,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          14,
+          4.654514743000163,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          15,
+          4.380410872000084,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          16,
+          4.640079858000263,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          17,
+          4.38058038600002,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          18,
+          4.475741141000071,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          19,
+          4.449167884999952,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          0,
+          4.394214185999772,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          1,
+          9.258632390999992,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          2,
+          4.511637630999758,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          3,
+          9.185105015999852,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          4,
+          4.449134608999884,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          5,
+          8.903014106999763,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          6,
+          4.460492238999905,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          7,
+          9.075771801999963,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          8,
+          4.499584940000204,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          9,
+          9.080952514999808,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          10,
+          4.331231083000148,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          11,
+          8.682118396000078,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          12,
+          4.419348200000059,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          13,
+          8.77470276899976,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          14,
+          4.6093917000002875,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          15,
+          8.948443923000013,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          16,
+          4.596691549999832,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          17,
+          8.89967744400019,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          18,
+          4.373827053999776,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          19,
+          8.713821370000005,
+          200,
+          "ok"
+        ],
+        [
+          "overload_c2",
+          1,
+          4.416228809000131,
+          200,
+          "ok"
+        ],
+        [
+          "overload_c2",
+          0,
+          9.028510549000202,
+          200,
+          "ok"
+        ],
+        [
+          "overload_c2",
+          2,
+          4.436182887000086,
+          200,
+          "ok"
+        ],
+        [
+          "overload_c2",
+          3,
+          9.014160201999857,
+          200,
+          "ok"
+        ]
+      ],
+      "response_sha256_values": [
+        "1c681fa52bd1115da8e392b05c7b0c8c2f93c03c3d1badb4823b87a529c83708"
+      ],
+      "raw_journal_sha256": "36f9b91328224a3239bc6826331a13595b8be6b33041504402a98f6ac3975c3a",
+      "runtime_identity_sha256": "773eb35078adac25b59be57081b7fd040128cbc08c89d0728fe9f4cfcc05f535",
+      "postconditions": {
+        "main_state": {
+          "Running": true,
+          "Status": "running",
+          "ExitCode": 0,
+          "OOMKilled": false,
+          "health": "healthy"
+        },
+        "benchmark_state": {
+          "Running": false,
+          "Status": "exited",
+          "ExitCode": 137,
+          "OOMKilled": false,
+          "health": "unhealthy"
+        },
+        "main_health": {
+          "status": 200,
+          "body": {
+            "status": "ok"
+          }
+        },
+        "main_ready": {
+          "status": 200,
+          "body": {
+            "status": "ready"
+          }
+        },
+        "benchmark_tcp_refused": true
+      }
+    },
+    "confirmation": {
+      "run_id": "936f50d7-fd40-4883-bf6e-32c0bd786ea6",
+      "status": "complete",
+      "supervision": {
+        "status": "success",
+        "worker_returncode": 0,
+        "stop_reason": null,
+        "service_launched": true,
+        "cleanup_verified": true,
+        "explicit_cleanup_attempted": false,
+        "run_id": "936f50d7-fd40-4883-bf6e-32c0bd786ea6",
+        "plan_sha256": "ee74031b9e2eebf363effb64e9b4909ab4af25449190c8cc164754ce0d2dd27d",
+        "report_digest": "43139e70811a38c535e3b0153735b22a024b75bf64803f20c3678e5f8695500c",
+        "report_sha256": "9d53a87513c08f1faf3a9f06544680f8761fdfdaa5b5f6d5d3747af70b25220b"
+      },
+      "total_seconds": 228.45486091700013,
+      "cold_start": {
+        "scope": "owned service process/container restart; filesystem/model caches uncontrolled",
+        "launch_to_ready_seconds": 15.544306953999694,
+        "first_forecast": {
+          "attempts": 1,
+          "successes": 1,
+          "errors": 0,
+          "statuses": {
+            "200": 1
+          },
+          "outcomes": {
+            "ok": 1
+          },
+          "wall_seconds": 4.676384106000114,
+          "p50_seconds": 4.675388668999858,
+          "p95_seconds": 4.675388668999858,
+          "successful_requests_per_second": 0.2138404325506395,
+          "attempted_requests_per_second": 0.2138404325506395
+        },
+        "launch_started_seconds": 0.0006448090002777462
+      },
+      "phases": {
+        "first_forecast": {
+          "attempts": 1,
+          "successes": 1,
+          "errors": 0,
+          "statuses": {
+            "200": 1
+          },
+          "outcomes": {
+            "ok": 1
+          },
+          "wall_seconds": 4.676384106000114,
+          "p50_seconds": 4.675388668999858,
+          "p95_seconds": 4.675388668999858,
+          "successful_requests_per_second": 0.2138404325506395,
+          "attempted_requests_per_second": 0.2138404325506395
+        },
+        "warmup": {
+          "attempts": 2,
+          "successes": 2,
+          "errors": 0,
+          "statuses": {
+            "200": 2
+          },
+          "outcomes": {
+            "ok": 2
+          },
+          "wall_seconds": 8.886208933000034,
+          "p50_seconds": 4.442758524000283,
+          "p95_seconds": 4.465733799600207,
+          "successful_requests_per_second": 0.22506785684193772,
+          "attempted_requests_per_second": 0.22506785684193772
+        },
+        "warm_c1": {
+          "attempts": 20,
+          "successes": 20,
+          "errors": 0,
+          "statuses": {
+            "200": 20
+          },
+          "outcomes": {
+            "ok": 20
+          },
+          "wall_seconds": 90.77817505199982,
+          "p50_seconds": 4.468528663000143,
+          "p95_seconds": 5.028196526250167,
+          "successful_requests_per_second": 0.22031727327128509,
+          "attempted_requests_per_second": 0.22031727327128509
+        },
+        "warm_c2": {
+          "attempts": 20,
+          "successes": 20,
+          "errors": 0,
+          "statuses": {
+            "200": 20
+          },
+          "outcomes": {
+            "ok": 20
+          },
+          "wall_seconds": 89.3756801139998,
+          "p50_seconds": 6.776510633500038,
+          "p95_seconds": 9.362695456350185,
+          "successful_requests_per_second": 0.22377452092660718,
+          "attempted_requests_per_second": 0.22377452092660718
+        },
+        "overload_c2": {
+          "attempts": 4,
+          "successes": 4,
+          "errors": 0,
+          "statuses": {
+            "200": 4
+          },
+          "outcomes": {
+            "ok": 4
+          },
+          "wall_seconds": 17.923978083999828,
+          "p50_seconds": 6.560887523000019,
+          "p95_seconds": 9.144927923249975,
+          "successful_requests_per_second": 0.22316474508360812,
+          "attempted_requests_per_second": 0.22316474508360812
+        }
+      },
+      "memory": {
+        "scope": "container",
+        "peak_bytes": 1337389056,
+        "samples": 2260,
+        "unavailable_samples": 2,
+        "method": "cgroup v1 memory.usage_in_bytes/memory.max_usage_in_bytes",
+        "cgroup_version": 1,
+        "cgroup_counters": {
+          "oom_kill_disable": 0,
+          "under_oom": 0,
+          "oom_kill": 0,
+          "failcnt": 0
+        },
+        "oom_kill_count": 0,
+        "container_limit_bytes": 2147483648,
+        "host_memory": "unavailable",
+        "sampling_interval_seconds": 0.1
+      },
+      "request_count": 47,
+      "request_errors": 0,
+      "request_observation_columns": [
+        "phase",
+        "index",
+        "elapsed_seconds",
+        "status",
+        "outcome"
+      ],
+      "request_observations": [
+        [
+          "first_forecast",
+          0,
+          4.675388668999858,
+          200,
+          "ok"
+        ],
+        [
+          "warmup",
+          0,
+          4.417230440000367,
+          200,
+          "ok"
+        ],
+        [
+          "warmup",
+          1,
+          4.468286608000199,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          0,
+          5.021573801000159,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          1,
+          4.480781393000143,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          2,
+          4.4688117959999545,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          3,
+          4.4772939879999285,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          4,
+          4.423650182000074,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          5,
+          4.444197263000206,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          6,
+          4.524812555000153,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          7,
+          5.154028306000328,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          8,
+          4.455882231000032,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          9,
+          4.430596160999812,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          10,
+          4.451311839000027,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          11,
+          4.419736552999893,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          12,
+          4.411237935999907,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          13,
+          4.520581122000294,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          14,
+          4.81197763199998,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          15,
+          4.423290976999851,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          16,
+          4.4707584869997845,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          17,
+          4.468245530000331,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          18,
+          4.471160151999811,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c1",
+          19,
+          4.4431209609997495,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          0,
+          4.767530338000142,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          1,
+          9.653409788999852,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          2,
+          4.470167561999915,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          3,
+          8.822988168999927,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          4,
+          4.372249656000349,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          5,
+          8.723898777000159,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          7,
+          4.497110465000333,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          6,
+          9.347394702000202,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          8,
+          4.369522573999802,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          9,
+          8.68160387800026,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          10,
+          4.405156842999986,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          11,
+          8.72961801800011,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          12,
+          4.425812585000131,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          13,
+          8.7732250629997,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          14,
+          4.9209475140000905,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          15,
+          9.241169512999932,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          16,
+          4.4506225380000615,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          17,
+          8.765253475000009,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          18,
+          4.35182359800001,
+          200,
+          "ok"
+        ],
+        [
+          "warm_c2",
+          19,
+          8.632073752999986,
+          200,
+          "ok"
+        ],
+        [
+          "overload_c2",
+          1,
+          4.422327469000265,
+          200,
+          "ok"
+        ],
+        [
+          "overload_c2",
+          0,
+          9.22354210200001,
+          200,
+          "ok"
+        ],
+        [
+          "overload_c2",
+          2,
+          4.390226751999762,
+          200,
+          "ok"
+        ],
+        [
+          "overload_c2",
+          3,
+          8.699447576999773,
+          200,
+          "ok"
+        ]
+      ],
+      "response_sha256_values": [
+        "1c681fa52bd1115da8e392b05c7b0c8c2f93c03c3d1badb4823b87a529c83708"
+      ],
+      "raw_journal_sha256": "75d18877af2974d912e350f9713326ec8f8a440482349a6d9bb6786c8b4866a3",
+      "runtime_identity_sha256": "773eb35078adac25b59be57081b7fd040128cbc08c89d0728fe9f4cfcc05f535",
+      "postconditions": {
+        "main_state": {
+          "Running": true,
+          "Status": "running",
+          "ExitCode": 0,
+          "OOMKilled": false,
+          "health": "healthy"
+        },
+        "benchmark_state": {
+          "Running": false,
+          "Status": "exited",
+          "ExitCode": 137,
+          "OOMKilled": false,
+          "health": "unhealthy"
+        },
+        "main_health": {
+          "status": 200,
+          "body": {
+            "status": "ok"
+          }
+        },
+        "main_ready": {
+          "status": 200,
+          "body": {
+            "status": "ready"
+          }
+        },
+        "benchmark_tcp_refused": true
+      }
+    }
+  },
+  "separate_confirmation": {
+    "passed": true,
+    "comparison_source": "Discovery observations and the predeclared margin; numerical artifact retained locally",
+    "artifact_sha256": "33185edab1ae167ba07f93372bd9e0eeadfa89255436948e0ffff62dba2ee36e",
+    "requirement_adoption": "Not established by this measurement comparison"
+  },
+  "combined_lifecycle_seconds": 455.475841683,
+  "experiment_wall_seconds": 722.4077322483063,
+  "limitations": [
+    "One VM, selected checkpoint and one retained synthetic request; 20 observations per warm level per run",
+    "Batched closed-loop concurrency1/2; no arrival-rate capacity or shared-service overload test",
+    "Both isolated stops recorded exit137 with OOMKilled=false and zero recorded OOM/fail counters; graceful shutdown unverified",
+    "Host memory and external network/client latency unavailable; cold filesystem-cache behavior uncontrolled",
+    "No forecast-accuracy evaluation, final-test tuning, image publication or accepted NFR/engineering decision"
+  ]
+}
