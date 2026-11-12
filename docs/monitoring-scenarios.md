@@ -49,7 +49,7 @@ no Docker, network target, dataset, model download or model inference.
 
 ```bash
 uv sync --offline --locked --dev
-python -m src.monitoring_scenarios list
+.venv/bin/python -m src.monitoring_scenarios list
 .venv/bin/python -m src.monitoring_scenarios run --scenario normal \
   --directory temporary/issue-84/control-01
 .venv/bin/python -m src.monitoring_scenarios run --scenario service-unavailable \
@@ -155,6 +155,41 @@ separate evidence categories. The [historical drift playback](drift.md) remains
 recorded evidence: it computes no fresh KS result or recovery. Historical drift
 alarms/delays, subset coverage and the benchmark's forced stop with exit 137 and
 `OOMKilled=false` are unchanged and do not become adopted operating targets.
+
+## Recorded local results, 12 November 2026
+
+The [compact evidence record](../monitoring/scenarios/local-evidence-2026-11-12.json)
+retains exact run source/tree, declaration and report hashes, image/container and
+network identities, actual bindings, observed signals and stopped-container
+states. Full logs/reports remain in ignored `temporary/issue-84/runs/` under the
+recorded run names. The final executable scenario source is
+`aa33efba345c5f9e81f0bac322d28291f1b2eaaa`; in-process fixture runs also retain
+their earlier exact source identities. No registry image was built or published.
+
+| Evidence | Observed result |
+| --- | --- |
+| In-process normal, unavailable and slow controls | Passed through production handlers/metrics; unavailable returned 503 with ready=0; restored predictor returned 200 |
+| Owned Docker normal | Passed in 9.9 seconds; actual Prometheus alert list was empty |
+| Owned Docker outage/recovery | Passed in 78.0 seconds; `ForecastApiDown` fired 63.1 seconds after fault onset, cleared 6.3 seconds after firing, followed by HTTP 200 |
+| Owned Docker slow request | Passed in 10.2 seconds; three HTTP 200 responses took 0.257-0.265 seconds; recovery took 0.004 seconds. Completed forecast duration sum was 0.836 seconds across five requests including control/recovery |
+| Fresh synthetic Alibi | All five states: unchanged control `no_drift`, shifted window `drift`, restored window `no_drift`; no missed shifted windows or control/recovery alarms in this declared run |
+| Delayed observations and exporter | Six matches/186 pending at position 516, then 192/0 at 563; default minimum-30 horizon groups remained insufficient |
+| Pinned promtool | Service alert, service dashboard and quality dashboard suites passed using the retained cached Prometheus image |
+
+Two failed runtime procedures remain in the record. `docker-down-01` observed
+firing/clearing but its HTTP recovery request failed with connection refused;
+Docker had reassigned the dynamic loopback port. The runner refreshes the actual
+binding and opens a fresh client after restart; the passing rerun records both
+ports. `docker-slow-01` returned three fault-phase 503 responses, then recovered
+to 200. Atomic fault-file publication and an explicit container read-back were
+added before the passing rerun. The original API log did not expose the predictor
+exception, so the precise cause of that initial slow-request failure remains
+unproven. Both failed runs stopped their owned containers and were preserved.
+
+These observed local results use a synthetic predictor and a cached dependency
+image with a source overlay. They supply no selected-model, native-amd64 release,
+registry, notification-receiver or Virtech evidence. The small request samples
+are procedure checks and cannot establish a capacity or latency SLO.
 
 ## Dependencies and remaining execution
 
