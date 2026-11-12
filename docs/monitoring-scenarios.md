@@ -162,9 +162,12 @@ The [compact evidence record](../monitoring/scenarios/local-evidence-2026-11-12.
 retains exact run source/tree, declaration and report hashes, image/container and
 network identities, actual bindings, observed signals and stopped-container
 states. Full logs/reports remain in ignored `temporary/issue-84/runs/` under the
-recorded run names. The final executable scenario source is
+recorded run names. The executed scenario source is
 `aa33efba345c5f9e81f0bac322d28291f1b2eaaa`; in-process fixture runs also retain
-their earlier exact source identities. No registry image was built or published.
+their earlier exact source identities. The integrated private-publication update
+adds a standalone guard and workflow/runbook changes; every captured scenario
+source/config path remains byte-identical, so these runs were retained without
+re-execution. No registry publication or selected-model image build occurred.
 
 | Evidence | Observed result |
 | --- | --- |
@@ -199,7 +202,7 @@ human reviews and merge status are separate from implementation readiness.
 | Task | Exact dependency | PR |
 | --- | --- | --- |
 | Deployment helpers #75 | `4fadb245b3e5542fec6027dcdffa1bc9620489c0` | [#94](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/94) |
-| Publication #78 | `d6ded8cb954afc7df02af78ee997a883dea246c3` | [#98](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/98) |
+| Publication #78 | `85452c98f2e1cf52b38156e6c1ecf1446e6a4b9b` | [#98](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/98) |
 | Rollout #79 | `b08fe64f1eddc07e761f614effb280ed62e97a2e` | [#99](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/99) |
 | Service metrics #80 | `da39aa6acc4ebed5bdf6878c23f8f7ae4e2e88c9` | [#90](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/90) |
 | Replay #81 | `067ff119530b0f8cf221778a6a2fc5ce8d5cdda9` | [#89](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/89) |
@@ -208,9 +211,11 @@ human reviews and merge status are separate from implementation readiness.
 | Benchmark #76 | `920103eefbc2515fe682e200872d69be8b92c97c` | [#93](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/93) |
 
 The user selected private GHCR at
-`ghcr.io/mlops-2627q1-mds-upc/endesa-forecast`. Publication is unexecuted. A
-verified publication-source update will need its own integration and refreshed
-checks. New decision proposals remain only in ignored local `.txt` notes; the
+`ghcr.io/mlops-2627q1-mds-upc/endesa-forecast`. Publication is unexecuted. The verified private-destination source at
+`85452c9` is integrated, with #75/#79 contracts unchanged. It restricts the
+destination, checks private package metadata and keeps first-publication bootstrap
+explicit and off by default; a 404 remains unobserved evidence. This source
+configuration does not establish registry access, private visibility or publication. New decision proposals remain only in ignored local `.txt` notes; the
 already-open EDN PR #97 and formal EDN/index are unchanged.
 
 After peer review and a separate concrete execution authorization, validate the
