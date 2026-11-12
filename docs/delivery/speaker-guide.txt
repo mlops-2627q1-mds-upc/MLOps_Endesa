@@ -1,0 +1,137 @@
+MLOps Endesa final presentation DRAFT
+16 slides; planned speaking time 900 seconds / 15 minutes.
+This is a timing/script plan, not a completed human rehearsal.
+Do not replace recorded evidence with a live model/target demonstration without
+the separate reviewed prerequisites and concrete execution authorization.
+
+1. From a selected model to a reviewable release - 30 seconds
+Open with the delivery question: can another person identify, start and diagnose
+the exact selected model? The first model comparison is recorded; this talk
+explains the implemented delivery chain and the remaining observations.
+[Sources] docs/final-delivery.md; PR #100 at f9b5896af998331494175733c557e8dc5dd12cc7.
+
+2. One forecast contract connects every layer - 45 seconds
+Keep M1-M3 context concise. Explain 512 historical values, 48 future positions,
+five states and the historical selected model. The state is a label, not a model
+feature. Do not read the 0.5571 result as a fresh execution or general superiority.
+Mention source-scale/clock limits before the architecture uses replay positions.
+[Sources] docs/MODEL_CARD.md; docs/DATASET_CARD.md; Experiment 004.
+
+3. Inference, replay and service signals stay separate - 65 seconds
+Follow the bidirectional request/response arrow, then the journal and scrape paths.
+The API is stateless. Replay records its own traffic and releases actuals later.
+Quality/drift consume released evidence; Prometheus reads service metrics.
+Explain that this is implemented topology, not proof of final target deployment.
+[Sources] docs/api.md; docs/replay.md; docs/forecast-quality.md; docs/drift.md;
+docs/monitoring-service.md. Diagram is original editable TikZ from those interfaces.
+
+4. A healthy process is only one check - 60 seconds
+Use one failed startup example: missing weights abort rather than falling back.
+Walk through 200/200/200/422, distinguishing process, loaded model, actual forecast
+and rejected input. Actual weight/run identity and sampling settings accompany
+the forecast. Explain prediction 503 separately from invalid model output 500.
+[Sources] docs/api.md; tests/test_api.py; merged PR #86.
+
+5. The image carries code; the mount carries weights - 50 seconds
+Explain why weights/credentials do not enter the image or context. The read-only
+model slot is independently hash-verified. One worker avoids duplicate model loads;
+two numerical threads define the compute setting. Container CI's synthetic
+factory is a mounted test harness, with no production environment switch.
+[Sources] Dockerfile; .dockerignore; docs/container.md; pending PR #88.
+
+6. Release evidence must match the exact source - 75 seconds
+Follow the sequence. Validation retrieves and verifies identities and runs existing
+bounded synthetic model cases. Publication authenticates the producer run/attempt
+and archive digest, then creates an immutable image/manifest. Explain why a similar
+tree or historical successful run cannot authorize a different source commit.
+The private GHCR destination is chosen, but visibility/access/publication are
+unobserved. First-publication bootstrap is explicit and 404 is not absence proof.
+[Sources] docs/release-validation.md; docs/image-publication.md; src/ghcr_privacy.py.
+
+7. Recovery preserves the accepted baseline - 70 seconds
+Describe a candidate failure after stopping the baseline. The persistent lock,
+expected-current fence and pending record prevent stale/overlapping operators.
+Recovery must restore an actual forecast, not only update state. A recovered
+candidate failure stays failed. Final target rollout and recovery have not run.
+[Sources] docs/deployment-release.md; src/deployment/rollout.py; pending PR #99.
+
+8. Green CI establishes a bounded source result - 45 seconds
+Give the exact-head scope: 1,037 passed, 109 skipped, 82 percent rounded coverage
+for PR100, with its generated merge checkout recorded. The separate Alibi job
+actually runs KS on synthetic inputs. A skipped artifact/model test is not a pass.
+No source/fixture check establishes peer approval, publication or target operation.
+[Sources] Actions runs 43240322449, 43240322406, 43240322410, 43240322457,
+43240322420 and 43240322493, all PR head f9b5896; docs/final-delivery.md.
+
+9. More concurrency increased delay, not throughput - 70 seconds
+Read discovery and confirmation as distinct historical small experiments. Each
+warm phase has 20 requests. At c2, p95 nearly doubles and throughput stays near
+0.22 requests/s. The one-CPU target and retained synthetic TAS history limit the
+interpretation. It is not an SLO or a final-release capacity qualification.
+[Sources] docs/evidence/serving-benchmark-2026-11-02.json;
+docs/experiments/009-serving-benchmark.md. Chart reads the versioned JSON.
+
+10. An isolated outage fired and cleared a real alert - 70 seconds
+Point to fault onset, actual firing, clearing and restored HTTP. The one-minute
+hold did not change; isolated scrapes/evaluations were two seconds. Detection was
+63.07 seconds after fault onset. This used a synthetic API in owned containers
+under local amd64 emulation. No external notification receiver exists.
+Mention the retained stale-port recovery failure and verified binding-refresh fix.
+[Sources] monitoring/scenarios/local-evidence-2026-11-12.json, record
+docker-final-service-unavailable-01; docs/monitoring-scenarios.md.
+
+11. Delayed truth must remain visibly pending - 60 seconds
+Explain the two replay clocks, not wall-clock seconds. Four overlapping forecasts
+produce 192 steps, but unique state/targets are a different denominator. The
+display minimum two exercises transitions; default minimum30 horizon groups still
+have insufficient samples. Missing or unreleased truth cannot be scored as zero.
+[Sources] docs/replay.md; docs/forecast-quality.md; fresh #84 delayed fixture.
+
+12. The sampled 80 percent interval was under-covered - 60 seconds
+The dashed line is nominal coverage; each bar is a measured historical validation
+subset. Say the five state percentages directly if time permits. Thirty origins
+per state is not the full validation block or independent calibration evidence.
+No threshold, automatic retraining or test-set retuning follows from this chart.
+[Sources] monitoring/quality/validation-subset.json; 150 forecasts, 7,200 steps.
+Chart values are generated from the versioned JSON.
+
+13. Fresh KS detects the declared synthetic shift - 65 seconds
+Walk control, fixed level shift and restored distribution. All five states behaved
+as declared in this synthetic run. Explain eight weekly cycles per comparison:
+2,688 half-hours / 56 nominal days. Three seconds of compressed execution is not
+live detection latency. The next KS result is not operational alert delivery.
+[Sources] docs/monitoring-scenarios.md; monitoring/drift/config.json;
+monitoring/scenarios/local-evidence-2026-11-12.json, alibi-shift-02.
+
+14. Retained limitations change what we can claim - 60 seconds
+Contrast the fresh synthetic success with historical drift controls: 8/30 alarms
+may include natural change; first detections took 56-112 nominal days with misses.
+Do not call those delays actionable for a fast operational goal. Historical stop
+137/noOOM does not prove graceful shutdown. Retain both failed local procedures.
+[Sources] docs/drift.md; docs/experiments/009-serving-benchmark.md;
+docs/monitoring-scenarios.md. These are distinct experiments and failure histories.
+
+15. AI supported substantive implementation and analysis - 50 seconds
+Credit actual work, not merely writing polish. Explain Codex implementation,
+testing/evidence analysis and document/diagram work; Claude Code's earlier support.
+Keep human experimental choices and recorded reviews separate. The final team
+consensus/CATME and acceptance of proposed EDNs are pending human tasks.
+[Sources] merged EDNs001-012; existing open PR97; report AI disclosure.
+No new/proposed EDN entry text is embedded or published by this deck.
+
+16. The next delivery step is reviewed execution - 25 seconds
+Close with the actual order: reviews, exact-source Actions validation, private
+publication/independent selected-model startup, authorized target work and final
+human assessments/rehearsal. Halt UPC/VPN-dependent steps until the user acts.
+The supplied December schedule remains subject to an Atenea check.
+[Sources] docs/final-delivery.md; supplied MLOps-lab.pdf slides33-34.
+
+Rehearsal/recorded-demo procedure
+Open the final local PDF and advance all16 pages using the PDF viewer's keyboard
+controls. Spend the planned900seconds including chart explanations; record actual
+elapsed time and speaker assignments after a human rehearsal. The guide does
+not assign teammates without their agreement. Use the recorded figures/artifact
+as the default demonstration; do not contact a target or load a model for slides.
+For a separately authorized no-model live example, use the scenario guide's
+in-process normal/delayed commands with fresh output paths and the locked local
+environment. Real deployment/recovery needs the delivery checklist and later GO.

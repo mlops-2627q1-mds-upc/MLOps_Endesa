@@ -108,6 +108,14 @@ configurations on validation, and keep final test targets out of model selection
 
 ## Considerations for using the data
 
+The pending [replay](replay.md) and [drift](drift.md) implementations retain these
+positional semantics. Truth is available only after the declared release clock;
+quality uses released journal observations and training-only MASE scales. The
+[fresh local scenario](monitoring-scenarios.md) uses synthetic demand, while the
+[historical selected-model subset](forecast-quality.md#bounded-selected-model-observation)
+uses only the recorded validation origins. Neither establishes a live source,
+civil-calendar mapping, full validation coverage or a new test-set evaluation.
+
 - Tasmania has 22 negative values. Pablo's upstream inspection shows operational demand falling below the subtracted industrial load during a March 2005 episode; the cause is unverified. Preserve the values. Percentage errors are difficult to interpret around zero or negative targets; the agreed metrics are MAE and MASE.
 - Historical demand may not represent current grid conditions. The base model's possible exposure to these public series also needs investigation before claims of unseen-data generalization.
 
