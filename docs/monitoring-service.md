@@ -100,7 +100,10 @@ Open Grafana at `http://127.0.0.1:3000` (or `GRAFANA_PORT`), log in as `endesa`,
 **Endesa / Endesa service monitoring** (`/d/endesa-service`). The provisioned
 dashboard includes scrape reachability, readiness, in-flight work, process
 collector availability, request/error rates, p50/p95 HTTP latency, process CPU,
-RSS and scrape-result age. Its queries suppress old service values when scrapes
+RSS and scrape-result age. Boolean status values have explicit colors: failed
+scrapes/readiness are red, unsupported process collection is amber, and available
+states are green. Missing telemetry and in-flight counts use a neutral color;
+there is no inferred capacity threshold. Its queries suppress old service values when scrapes
 fail and do not replace absent data with zero. Aggregated rates and latency
 filter each target by its own successful scrape before aggregation, so a healthy
 target cannot retain a failed target's earlier samples. This uses PromQL
