@@ -349,3 +349,10 @@ def test_promtool_scenarios_cover_every_dashboard_expression():
             properties = {value["id"]: value["value"] for value in horizon["properties"]}
             assert properties["unit"] == "none" and properties["decimals"] == 0
             assert properties["mappings"] == []
+            assert panel["fieldConfig"]["defaults"]["unit"] == "none"
+            assert all(
+                mapping["type"] != "value"
+                for mapping in panel["fieldConfig"]["defaults"]["mappings"]
+            )
+    status = panels[14]["fieldConfig"]["overrides"][1]
+    assert status["matcher"] == {"id": "byName", "options": "Horizon sample status"}

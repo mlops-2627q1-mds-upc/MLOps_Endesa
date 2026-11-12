@@ -2,7 +2,7 @@
   "uid": "endesa-quality",
   "title": "Endesa forecast quality",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 4,
   "editable": false,
   "timezone": "browser",
   "refresh": "15s",
@@ -696,7 +696,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit",
+          "unit": "none",
           "noValue": "No current evidence",
           "min": 0,
           "mappings": [
@@ -744,6 +744,18 @@
                   "mode": "fixed",
                   "fixedColor": "#8e8e93"
                 }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Horizon empirical coverage"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
               }
             ]
           }
@@ -817,7 +829,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "none",
           "noValue": "No current evidence",
           "min": 0,
           "mappings": [
@@ -937,7 +949,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "none",
           "noValue": "No current evidence",
           "min": 0,
           "mappings": [
@@ -1062,27 +1074,6 @@
           "min": 0,
           "mappings": [
             {
-              "type": "value",
-              "options": {
-                "0": {
-                  "text": "No forecasts (0)",
-                  "color": "#8e8e93"
-                },
-                "1": {
-                  "text": "Pending observations (1)",
-                  "color": "blue"
-                },
-                "2": {
-                  "text": "Insufficient samples (2)",
-                  "color": "orange"
-                },
-                "3": {
-                  "text": "Sufficient samples (3)",
-                  "color": "green"
-                }
-              }
-            },
-            {
               "type": "special",
               "options": {
                 "match": "null",
@@ -1095,7 +1086,7 @@
           ],
           "custom": {
             "cellOptions": {
-              "type": "color-text"
+              "type": "auto"
             }
           }
         },
@@ -1129,6 +1120,56 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "#8e8e93"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Horizon sample status"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "No forecasts (0)",
+                        "color": "#8e8e93"
+                      },
+                      "1": {
+                        "text": "Pending observations (1)",
+                        "color": "blue"
+                      },
+                      "2": {
+                        "text": "Insufficient samples (2)",
+                        "color": "orange"
+                      },
+                      "3": {
+                        "text": "Sufficient samples (3)",
+                        "color": "green"
+                      }
+                    }
+                  },
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "No current evidence",
+                        "color": "#8e8e93"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
                 }
               }
             ]
