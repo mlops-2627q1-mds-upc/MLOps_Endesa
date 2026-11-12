@@ -30,7 +30,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "One API process, one worker. CPU is consumed cores; RSS is process resident bytes, not host/container usage or limits. Zero forecast rate means no completed forecasts; missing telemetry stays missing. Latency needs completed requests. Capacity thresholds await #76. [Prometheus alerts](http://127.0.0.1:9090/alerts) have no notification receiver configured."
+        "content": "One API process, one worker. CPU is consumed cores; RSS is process resident bytes. Zero forecast rate means no completed forecasts; missing telemetry stays missing. Latency needs completed requests. Capacity thresholds await a recorded owner decision on #76. Inspect Prometheus for alert states; no notification receiver is configured."
       }
     },
     {
@@ -215,7 +215,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (status_class) (rate(endesa_http_requests_total{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval])) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "expr": "sum by (status_class) (rate(endesa_http_requests_total{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1))",
           "legendFormat": "{{status_class}}",
           "instant": false
         }
@@ -253,13 +253,13 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval])) > 0) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1)) > 0)",
           "legendFormat": "p50",
           "instant": false
         },
         {
           "refId": "B",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval])) > 0) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1)) > 0)",
           "legendFormat": "p95"
         }
       ],
@@ -296,7 +296,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (status_class) (rate(endesa_http_errors_total{job=\"forecast-api\"}[$__rate_interval])) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "expr": "sum by (status_class) (rate(endesa_http_errors_total{job=\"forecast-api\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1))",
           "legendFormat": "{{status_class}}",
           "instant": false
         }

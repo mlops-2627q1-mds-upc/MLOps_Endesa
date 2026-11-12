@@ -1,0 +1,212 @@
+rule_files: []
+fuzzy_compare: true
+evaluation_interval: 15s
+tests:
+- name: idle service retains zero activity without latency
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+0x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="5xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_bucket{job="forecast-api",instance="api:8000",method="POST",route="/forecast",le="1"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_bucket{job="forecast-api",instance="api:8000",method="POST",route="/forecast",le="+Inf"}
+    values: 0+0x10
+  promql_expr_test:
+  - expr: sum by (status_class) (rate(endesa_http_requests_total{job="forecast-api", route="/forecast", method="POST"}[1m])
+      and on(job, instance) (up{job="forecast-api"} == 1))
+    eval_time: 2m
+    exp_samples:
+    - labels: '{status_class="2xx"}'
+      value: 0
+  - expr: histogram_quantile(0.5, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1)) > 0)
+    eval_time: 2m
+    exp_samples: []
+  - expr: histogram_quantile(0.95, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1)) > 0)
+    eval_time: 2m
+    exp_samples: []
+  - expr: sum by (status_class) (rate(endesa_http_errors_total{job="forecast-api"}[1m]) and on(job, instance) (up{job="forecast-api"}
+      == 1))
+    eval_time: 2m
+    exp_samples:
+    - labels: '{status_class="4xx"}'
+      value: 0
+    - labels: '{status_class="5xx"}'
+      value: 0
+- name: completed requests have rates and latency
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+30x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+15x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="5xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+30x10
+  - series: endesa_http_request_duration_seconds_bucket{job="forecast-api",instance="api:8000",method="POST",route="/forecast",le="1"}
+    values: 0+30x10
+  - series: endesa_http_request_duration_seconds_bucket{job="forecast-api",instance="api:8000",method="POST",route="/forecast",le="+Inf"}
+    values: 0+30x10
+  promql_expr_test:
+  - expr: sum by (status_class) (rate(endesa_http_requests_total{job="forecast-api", route="/forecast", method="POST"}[1m])
+      and on(job, instance) (up{job="forecast-api"} == 1))
+    eval_time: 2m
+    exp_samples:
+    - labels: '{status_class="2xx"}'
+      value: 2
+  - expr: histogram_quantile(0.5, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1)) > 0)
+    eval_time: 2m
+    exp_samples:
+    - labels: '{}'
+      value: 0.5
+  - expr: histogram_quantile(0.95, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1)) > 0)
+    eval_time: 2m
+    exp_samples:
+    - labels: '{}'
+      value: 0.95
+  - expr: sum by (status_class) (rate(endesa_http_errors_total{job="forecast-api"}[1m]) and on(job, instance) (up{job="forecast-api"}
+      == 1))
+    eval_time: 2m
+    exp_samples:
+    - labels: '{status_class="4xx"}'
+      value: 1
+    - labels: '{status_class="5xx"}'
+      value: 0
+- name: failed scrape suppresses range samples
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 0+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+30x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+15x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="5xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+30x10
+  - series: endesa_http_request_duration_seconds_bucket{job="forecast-api",instance="api:8000",method="POST",route="/forecast",le="1"}
+    values: 0+30x10
+  - series: endesa_http_request_duration_seconds_bucket{job="forecast-api",instance="api:8000",method="POST",route="/forecast",le="+Inf"}
+    values: 0+30x10
+  promql_expr_test:
+  - expr: sum by (status_class) (rate(endesa_http_requests_total{job="forecast-api", route="/forecast", method="POST"}[1m])
+      and on(job, instance) (up{job="forecast-api"} == 1))
+    eval_time: 2m
+    exp_samples: []
+  - expr: histogram_quantile(0.5, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1)) > 0)
+    eval_time: 2m
+    exp_samples: []
+  - expr: histogram_quantile(0.95, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1)) > 0)
+    eval_time: 2m
+    exp_samples: []
+  - expr: sum by (status_class) (rate(endesa_http_errors_total{job="forecast-api"}[1m]) and on(job, instance) (up{job="forecast-api"}
+      == 1))
+    eval_time: 2m
+    exp_samples: []
+- name: healthy target excludes failed target range samples
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  - series: endesa_http_requests_total{job="forecast-api",instance="api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+30x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="4xx"}
+    values: 0+15x10
+  - series: endesa_http_errors_total{job="forecast-api",instance="api:8000",status_class="5xx"}
+    values: 0+0x10
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="api:8000",method="POST",route="/forecast"}
+    values: 0+30x10
+  - series: endesa_http_request_duration_seconds_bucket{job="forecast-api",instance="api:8000",method="POST",route="/forecast",le="1"}
+    values: 0+30x10
+  - series: endesa_http_request_duration_seconds_bucket{job="forecast-api",instance="api:8000",method="POST",route="/forecast",le="+Inf"}
+    values: 0+30x10
+  - series: up{job="forecast-api",instance="failed-api:8000"}
+    values: 1+0x4 0+0x6
+  - series: endesa_http_requests_total{job="forecast-api",instance="failed-api:8000",method="POST",route="/forecast",status_class="2xx"}
+    values: 0+150x6 _x4
+  - series: endesa_http_errors_total{job="forecast-api",instance="failed-api:8000",status_class="4xx"}
+    values: 0+150x6 _x4
+  - series: endesa_http_errors_total{job="forecast-api",instance="failed-api:8000",status_class="5xx"}
+    values: 0+150x6 _x4
+  - series: endesa_http_request_duration_seconds_count{job="forecast-api",instance="failed-api:8000",method="POST",route="/forecast"}
+    values: 0+150x6 _x4
+  - series: endesa_http_request_duration_seconds_bucket{job="forecast-api",instance="failed-api:8000",method="POST",route="/forecast",le="1"}
+    values: 0+150x6 _x4
+  - series: endesa_http_request_duration_seconds_bucket{job="forecast-api",instance="failed-api:8000",method="POST",route="/forecast",le="+Inf"}
+    values: 0+150x6 _x4
+  promql_expr_test:
+  - expr: sum by (status_class) (rate(endesa_http_requests_total{job="forecast-api", route="/forecast", method="POST"}[1m])
+      and on(job, instance) (up{job="forecast-api"} == 1))
+    eval_time: 2m
+    exp_samples:
+    - labels: '{status_class="2xx"}'
+      value: 2
+  - expr: histogram_quantile(0.5, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1)) > 0)
+    eval_time: 2m
+    exp_samples:
+    - labels: '{}'
+      value: 0.5
+  - expr: histogram_quantile(0.95, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1)) > 0)
+    eval_time: 2m
+    exp_samples:
+    - labels: '{}'
+      value: 0.95
+  - expr: sum by (status_class) (rate(endesa_http_errors_total{job="forecast-api"}[1m]) and on(job, instance) (up{job="forecast-api"}
+      == 1))
+    eval_time: 2m
+    exp_samples:
+    - labels: '{status_class="4xx"}'
+      value: 1
+    - labels: '{status_class="5xx"}'
+      value: 0
+- name: reachable service with missing counters has no estimates
+  interval: 15s
+  input_series:
+  - series: up{job="forecast-api",instance="api:8000"}
+    values: 1+0x10
+  promql_expr_test:
+  - expr: sum by (status_class) (rate(endesa_http_requests_total{job="forecast-api", route="/forecast", method="POST"}[1m])
+      and on(job, instance) (up{job="forecast-api"} == 1))
+    eval_time: 2m
+    exp_samples: []
+  - expr: histogram_quantile(0.5, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1)) > 0)
+    eval_time: 2m
+    exp_samples: []
+  - expr: histogram_quantile(0.95, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job="forecast-api",
+      route="/forecast", method="POST"}[1m]) and on(job, instance) (up{job="forecast-api"} == 1)) > 0)
+    eval_time: 2m
+    exp_samples: []
+  - expr: sum by (status_class) (rate(endesa_http_errors_total{job="forecast-api"}[1m]) and on(job, instance) (up{job="forecast-api"}
+      == 1))
+    eval_time: 2m
+    exp_samples: []

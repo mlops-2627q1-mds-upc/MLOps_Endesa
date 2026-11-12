@@ -1,5 +1,6 @@
 """Observable service instrumentation, cardinality, lifecycle and config checks."""
 
+import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
@@ -92,6 +93,53 @@ def test_histogram_observes_elapsed_time_and_scrapes_do_not_count(service, monke
             == 1
         )
         assert all(s.labels.get("route") != "/metrics" for s in _samples(service.client))
+
+
+@pytest.mark.parametrize("failure", [None, "transport", "background"])
+def test_duration_ends_at_final_response_body_and_counts_interrupted_responses(
+    monkeypatch, failure
+):
+    registry = metrics.ServiceMetrics(lambda: True)
+    scope = {"type": "http", "path": "/health", "method": "GET"}
+    labels = {"method": "GET", "route": "__unmatched__", "status_class": "2xx"}
+    elapsed = Mock(side_effect=[10.0, 10.5])
+    monkeypatch.setattr(metrics, "perf_counter", elapsed)
+
+    async def application(_scope, _receive, send):
+        await send({"type": "http.response.start", "status": 200})
+        await send({"type": "http.response.body", "body": b"first", "more_body": True})
+        assert registry.registry.get_sample_value("endesa_http_requests_total", labels) is None
+        await send({"type": "http.response.body", "body": b"last"})
+        assert registry.registry.get_sample_value("endesa_http_requests_total", labels) == 1
+        elapsed.side_effect = AssertionError("Background work cannot extend HTTP duration")
+        if failure == "background":
+            raise RuntimeError("Failure after completed response")
+
+    async def transport(message):
+        if failure == "transport" and message.get("body") == b"last":
+            raise RuntimeError("Transport interrupted after headers")
+
+    async def receive():
+        return {"type": "http.disconnect"}
+
+    middleware = metrics.MetricsMiddleware(application, registry)
+    if failure:
+        with pytest.raises(RuntimeError):
+            asyncio.run(middleware(scope, receive, transport))
+    else:
+        asyncio.run(middleware(scope, receive, transport))
+    assert registry.registry.get_sample_value("endesa_http_requests_total", labels) == 1
+    assert (
+        registry.registry.get_sample_value(
+            "endesa_http_request_duration_seconds_sum",
+            {"method": "GET", "route": "__unmatched__"},
+        )
+        == 0.5
+    )
+    assert (
+        registry.registry.get_sample_value("endesa_http_errors_total", {"status_class": "5xx"})
+        == 0
+    )
 
 
 def test_unknown_routes_methods_and_request_values_cannot_expand_labels(service):
@@ -247,6 +295,12 @@ def test_monitoring_configuration_has_private_ports_and_resolvable_provisioning(
     directory = ROOT / "monitoring/service"
     compose = yaml.safe_load((directory / "compose.yml").read_text())
     assert compose["networks"]["monitoring"]["internal"]
+    api = compose["services"]["api"]
+    assert api["platform"] == "linux/amd64"
+    assert api["cpus"] == 2 and api["mem_limit"] == "2g"
+    assert api["read_only"] and api["tmpfs"] == ["/tmp:rw,noexec,nosuid,size=64m"]
+    assert api["volumes"][0]["read_only"]
+    assert api["volumes"][0]["bind"]["create_host_path"] is False
     for service_config in compose["services"].values():
         assert service_config["networks"] == ["monitoring"]
         assert all(port.startswith("127.0.0.1:") for port in service_config.get("ports", []))
@@ -264,3 +318,17 @@ def test_monitoring_configuration_has_private_ports_and_resolvable_provisioning(
         if "targets" in panel:
             assert panel["datasource"]["uid"] == datasource["uid"]
             assert panel["fieldConfig"]["defaults"]["noValue"] == "No telemetry"
+
+
+def test_promtool_dashboard_cases_exercise_the_configured_aggregate_queries():
+    directory = ROOT / "monitoring/service"
+    dashboard = json.loads((directory / "grafana/dashboards/service.json").read_text())
+    expected = {
+        target["expr"].replace("$__rate_interval", "1m")
+        for panel in dashboard["panels"]
+        if panel["id"] in (6, 7, 8)
+        for target in panel["targets"]
+    }
+    cases = yaml.safe_load((directory / "rules/dashboard-tests.yml").read_text())["tests"]
+    for case in cases:
+        assert {test["expr"] for test in case["promql_expr_test"]} == expected
