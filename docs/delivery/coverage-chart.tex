@@ -1,0 +1,14 @@
+\begin{tikzpicture}
+\begin{axis}[width=.94\linewidth,height=\chartheight,ymin=0,ymax=100,
+  ybar,bar width=22pt,xtick={0,1,2,3,4},xticklabels={NSW,VIC,QLD,SA,TAS},
+  ylabel={Empirical coverage (\%)},ytick={0,20,40,60,80,100},
+  xmin=-.6,xmax=4.6,axis x line*=bottom,axis y line*=left,
+  ymajorgrids=true,grid style={gray!20},tick label style={font=\small},
+  label style={font=\small},enlarge x limits=false]
+\addplot[fill=accent,draw=accent,point meta=y,nodes near coords,
+ nodes near coords style={font=\small,/pgf/number format/fixed,/pgf/number format/precision=1}]
+ table[x=index,y=coverage,col sep=comma]{coverage.csv};
+\addplot[sharp plot,dashed,thick,ink,forget plot] coordinates {(-.6,80) (4.6,80)};
+\node[anchor=south east,font=\small] at (axis cs:4.55,82) {Nominal 80\%};
+\end{axis}
+\end{tikzpicture}

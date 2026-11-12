@@ -82,8 +82,14 @@ demand-test accuracy or energy measurements.
 
 On test, the selected model's mean worst-5%-of-origins error share is 0.183,
 against 0.147 for the control. Its remaining errors are more concentrated in
-the worst origins. Interval coverage, a civil-calendar holiday breakdown and
-operational robustness are not established by these point-error results.
+the worst origins. These point-error results do not establish interval coverage,
+a civil-calendar holiday breakdown or operational robustness.
+
+The [historical validation replay subset](forecast-quality.md#bounded-selected-model-observation)
+separately records 30 origins per state (150 forecasts, 7,200 matched steps).
+Empirical p10-p90 coverage was 74.93% NSW, 71.25% VIC, 62.22% QLD, 63.13% SA
+and 61.25% TAS. These dependent forecast observations describe a small validation
+subset; they do not establish calibration on the complete block or a coverage SLO.
 
 ## Resources, inference and deployment
 
@@ -96,8 +102,13 @@ CodeCarbon/NVML figures are estimates, not wattmeter measurements.
 Install the locked `forecast` extra to load the checkpoint. Its DVC directory
 is approximately 176 MiB. [Replication instructions](replication.md) separate
 fast checks, data validation, optional synthetic inference and historical results.
-The checkpoint is selected for later serving; no deployed forecasting API or
-serving latency/energy claim is made for this first delivery.
+The merged [API](api.md) verifies the selected weights and training run at startup
+and reuses one predictor. A historical local HTTP smoke and
+[2 November VM benchmark](experiments/009-serving-benchmark.md) are recorded at
+their actual sources. The pending container/release/monitoring PRs are integrated
+in the [delivery candidate](final-delivery.md). Final-source native-amd64
+selected-model startup, private image publication and target rollout/recovery
+remain unexecuted. Serving energy is unmeasured, and no latency target is adopted.
 
 ## Limitations and licensing
 
@@ -107,8 +118,8 @@ serving latency/energy claim is made for this first delivery.
   dataset. That disclosure is not an independent audit of pretraining exposure.
 - Hardware changes can change sampled forecasts even with an identical seed.
   The observed validation seed spread is not a general uncertainty bound.
-- Twenty trajectories give coarse p10/p90 estimates; an 80% interval's actual
-  coverage remains to be measured before a coverage target is claimed.
+- Twenty trajectories give coarse p10/p90 estimates; the bounded validation
+  coverage above remains below nominal 80%, with no adopted coverage target.
 - The base model is [Apache 2.0](https://huggingface.co/amazon/chronos-t5-small/tree/a971ba21945c4f1796b17a91fe69214b5f4ad472).
   The dataset is CC BY 4.0; retain both attributions when reusing artifacts.
 

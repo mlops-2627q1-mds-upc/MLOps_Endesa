@@ -1,0 +1,16 @@
+\resizebox{.98\linewidth}{!}{%
+\begin{tikzpicture}[x=.145cm,y=1cm,font=\small,>=Stealth]
+\draw[->,ink!50] (0,0) -- (84,0);
+\draw[line width=3pt,ink!25] (0,0) -- (\OutageStart,0);
+\draw[line width=3pt,orange!65!black] (\OutageStart,0) -- (\OutageFire,0);
+\draw[line width=3pt,red!65!black] (\OutageFire,0) -- (\OutageClear,0);
+\draw[line width=3pt,accent] (\OutageClear,0) -- (82,0);
+\foreach \x in {0,20,40,60,80}{\draw (\x,0) -- (\x,-.09);\node[below] at (\x,-.1){\x};}
+\node[below] at (42,-.55){Seconds from scenario start};
+\draw[->] (9,.7) -- (\OutageStart,.07);
+\node[above,align=center] at (10,.7){Fault onset\\\OutageStart{} s};
+\draw[->] (54,1.2) -- (\OutageFire,.08);
+\node[above,align=center] at (52,1.2){Alert firing\\\OutageFire{} s};
+\draw[->] (79,.8) -- (\OutageClear,.08);
+\node[above,align=center] at (81,.8){Cleared \OutageClear{} s\\HTTP 200 at \OutageHttp{} s};
+\end{tikzpicture}}

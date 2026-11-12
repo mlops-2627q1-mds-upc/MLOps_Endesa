@@ -1,0 +1,15 @@
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[font=\small,>=Stealth,
+  box/.style={draw=ink!65,rounded corners=2pt,align=center,minimum width=3.7cm,minimum height=1.1cm,fill=white}]
+\draw[<->,thick] (1.9,0) -- node[above,align=center]{512 in\\48 out} (4.4,0);
+\draw[->,thick] (10.6,0) -- node[above,align=center]{load and\\verify} (8.1,0);
+\draw[->,thick] (0,-.6) -- node[left]{record} (0,-2.0);
+\draw[->,thick] (1.9,-2.6) -- node[above,align=center]{released\\rows} (4.4,-2.6);
+\draw[->,thick] (6.25,-.6) -- (6.25,-1.2) -- (12.5,-1.2) -- node[right]{metrics} (12.5,-2.0);
+\node[box] at (0,0) {Replay client\\explicit observation clock};
+\node[box] at (6.25,0) {FastAPI\\one verified predictor};
+\node[box] at (12.5,0) {Read-only checkpoint\\tracked provenance};
+\node[box] at (0,-2.6) {SQLite journal\\forecasts and actuals};
+\node[box] at (6.25,-2.6) {Quality / Alibi\\training reference};
+\node[box] at (12.5,-2.6) {Prometheus / Grafana\\scrapes and service signals};
+\end{tikzpicture}}

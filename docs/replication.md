@@ -1,8 +1,14 @@
-# Replicating the first delivery
+# Replication and release evidence
 
-Use the exact reviewed commit linked from the report cover. `main` and task
+The [final delivery checklist](final-delivery.md) pins the integrated
+implementation candidate and distinguishes pending PRs from merged `main`.
+The [editable report/presentation sources](delivery/README.md) remain DRAFT while
+human review and runtime gates are open. Use the fast route below for source
+checks; the later release route is a separately authorized execution.
+
+Use the exact candidate or reviewed commit linked from the report cover. `main` and task
 branches can move; record `git rev-parse HEAD` before running anything. The
-submission tag is created only after review and merge. The report and slides
+submission tag is created only after review, merge and explicit authorization. The report and slides
 must identify the same version.
 
 The [17 October verification record](evidence/submission-replication-2026-10-17.json)
@@ -29,7 +35,7 @@ checks skip when their DVC inputs are absent, and real-model checks are opt-in.
 The coverage percentage changes with the measured source and available tests;
 do not copy a percentage from a different commit or environment.
 
-## Retrieve and validate artifacts
+## Retrieve and validate data and model artifacts
 
 DVC and MLflow authentication are separate. Use your own authorized DagsHub
 account; [the evaluation guide](evaluation.md#reproduction) provides an in-memory
@@ -37,10 +43,9 @@ DVC configuration example. Keep credentials out of Git and commands saved in
 shell history. Once authentication is available:
 
 ```sh
-uv run dvc pull -r origin
-uv run dvc status
-uv run dvc repro
-make coverage
+uv run --locked dvc pull -r origin
+uv run --locked dvc status
+uv run --locked dvc repro
 ```
 
 The unrestricted pull includes raw data, processed blocks and the selected
@@ -116,3 +121,38 @@ Historical training and held-out model results are in
 [Experiment 004](experiments/004-chronos-fine-tuning.md). This replication route
 does not retrain a model, rerun the consumed demand-test comparison, deploy an
 API, or write to the shared experiment store.
+
+## Local monitoring and release route
+
+The [scenario guide](monitoring-scenarios.md#local-execution) provides bounded
+in-process controls that load no checkpoint. Use a fresh output directory for
+each run. Fresh Alibi uses the separate locked drift environment; Docker scenarios
+require an inspected compatible cached image and unique owned target identity.
+Recorded compact local results are in
+[`monitoring/scenarios/local-evidence-2026-11-12.json`](../monitoring/scenarios/local-evidence-2026-11-12.json).
+The selected-model, registry and target checks are separate:
+
+1. Obtain human peer review and merge the applicable dependency PRs, then pin the
+   exact clean integrated source. A changed commit needs matching release evidence.
+2. With separate execution authorization, run
+   [bounded release validation](release-validation.md#manual-github-workflow)
+   on that source and retain the authenticated run ID, attempt, artifact ID/digest
+   and complete successful handoff. A historical local pull or fast PR CI does
+   not satisfy this gate.
+3. Follow [private image publication](image-publication.md), retaining the
+   validated source, private metadata observations, immutable image digest and
+   trusted manifest. First publication is explicit and off by default. A 404 is
+   unobserved access/existence evidence.
+4. Verify independent reader access and native Linux amd64 selected-model startup
+   from that digest. Check `/health`, `/ready`, `/forecast` and invalid input;
+   retain actual 200/200/200/422 outcomes, selected weights/run and settings.
+5. Halt any UPC/VPN-dependent step and wait for the user. After separately
+   authorized access and target binding, use the exact
+   [deployment/recovery runbook](deployment-release.md) with a published baseline,
+   persistent lock and expected-current fence; capture restored forecasts and
+   monitoring timestamps. Recorded status alone does not establish target health.
+
+Do not execute target steps merely to test access. This documentation task
+does not initiate VPN/SSH/tunnels, publish an image, submit artifacts, train a
+model or repeat final-test tuning. The [delivery checklist](final-delivery.md)
+records which clean setup/retrieval checks actually ran for this draft.

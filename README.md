@@ -4,26 +4,29 @@ MLOps course project comparing seasonal baselines, pretrained Chronos-T5-small
 and a fine-tuned checkpoint on five Australian electricity-demand series.
 Each forecast uses the previous 512 values to predict the next 48 positions.
 
-The repository contains training and evaluation code, DVC data/checkpoint
-references, MLflow tracking, and data/model checks. The first
-[validation comparison](docs/experiments/001-baseline-chronos.md) was reviewed
-and merged; [fine-tuning results](docs/experiments/004-chronos-fine-tuning.md)
-are recorded. The combined first-delivery changes await current-version peer
-review. API serving, packaging and monitoring belong to later milestones.
+The reviewed first delivery and local FastAPI implementation are merged on
+`main`. This candidate branch integrates the pending container, release,
+deployment and monitoring implementations, including the
+[local monitoring scenarios](docs/monitoring-scenarios.md). Their source checks,
+historical model experiments and local synthetic runtime results have different
+scopes. Human peer review, exact-source release validation in Actions, private
+image publication, independent selected-model startup and final target rollout
+remain pending. See the [delivery status and checklist](docs/final-delivery.md).
 
 ## Dataset and model
 
 The dataset is **Australian Electricity Demand** from the
-[Monash Time Series Forecasting Repository](https://huggingface.co/datasets/Monash-University/monash_tsf/tree/main/data):
+[Monash Time Series Forecasting Repository](https://huggingface.co/datasets/Monash-University/monash_tsf/tree/58aafbe2712ff481c014f562e42723f2820fd5d4):
 five Australian states, half-hourly measurements, and roughly 231,000 observations
 per state. Splits are versioned in `params.yaml`; the dataset card tracks the
 remaining source-unit and calendar checks.
 
-The base model is [amazon/chronos-t5-small](https://huggingface.co/amazon/chronos-t5-small),
+The base model is [amazon/chronos-t5-small](https://huggingface.co/amazon/chronos-t5-small/tree/a971ba21945c4f1796b17a91fe69214b5f4ad472),
 a pretrained time-series model with approximately 46 million parameters.
 The evaluator reports the median of 20 sampled trajectories. The comparison
-records forecasting error and compute cost; interval coverage and serving
-performance remain to be measured.
+records forecasting error and compute cost. A bounded historical validation
+subset measures interval coverage, and a historical VM experiment measures
+serving performance; neither establishes an operating target or a final release.
 
 ## Working on the project
 
@@ -32,7 +35,12 @@ Use a task branch and a reviewed PR for changes to `main`.
 
 - [Working agreement](CONTRIBUTING.md): planning, ownership, branches, and reviews.
 - [Development setup](docs/setup.md): environment installation, directory layout, and adaptations from the CCDS template.
-- [First-delivery replication](docs/replication.md): artifact verification, local baseline reproduction and bounded model checks.
+- [Replication](docs/replication.md): fast setup, artifact identities, historical reproduction and release gates.
+- [Final delivery drafts](docs/delivery/README.md): editable report, PDF presentation, speaker guide and local build instructions.
+- [Final execution checklist](docs/final-delivery.md): candidate source, dependency PRs, reviewer access and remaining acceptance evidence.
+- [API](docs/api.md), [container](docs/container.md) and [release validation](docs/release-validation.md): separate interface, fixture and selected-model checks.
+- [Private image publication](docs/image-publication.md) and [deployment/recovery](docs/deployment-release.md): reviewed prerequisites and later execution procedures.
+- [Service monitoring](docs/monitoring-service.md), [chronological replay](docs/replay.md), [drift](docs/drift.md) and [forecast quality](docs/forecast-quality.md): signals, sample sufficiency and response procedures.
 - [MLflow tracking](docs/mlflow.md): shared setup, a small verification command, and run records for experiments.
 - [Validation comparison](docs/evaluation.md): comparable seasonal-baseline and pinned Chronos runs, metrics, and reproduction commands.
 - [Minimum functionality checks](docs/minimum-functionality.md): known synthetic continuations, declared error limits, and bounded real-model tests.
@@ -55,6 +63,7 @@ models/             DVC checkpoint references and ignored training outputs
 notebooks/          Exploration notebooks
 reports/figures/    Generated figures
 src/                Python package: data preparation, validation, evaluation and tracking
+monitoring/         Prometheus/Grafana configuration, drift lock and local evidence
 tests/              Pytest suite
 AGENTS.md           Instructions for AI-assisted contributions
 CONTRIBUTING.md     Working agreement

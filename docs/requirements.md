@@ -35,6 +35,10 @@ Sources:
 
 ## Scope
 
+The [12 November delivery reconciliation](final-delivery.md) records the
+implementation candidate and its pending PRs. Implementation status below does
+not adopt an open threshold or replace required human review and runtime checks.
+
 The system builds, evaluates, serves, and monitors one ML component: given past
 half-hourly demand for one of five Australian states, it forecasts the next 48
 steps. The immediate users are the team and course reviewers. It is not intended
@@ -46,9 +50,9 @@ for operational grid scheduling ([model card](MODEL_CARD.md#intended-use-and-inp
 
 - **FR-1 Pinned data.** Retrieve the Monash archive at revision `58aafbe` and
   reject it if its SHA-256 does not match the recorded value.
-  *Source:* Documented (dataset card); implementation planned in
-  [#46](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/46).
-  *Verify:* test with a corrupted file.
+  *Source:* Documented (dataset card); implemented in
+  [PR #51](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/51), integrated
+  in reviewed PR #69. *Verify:* corrupted-archive cases in `tests/test_dataset.py`.
 - **FR-2 Parsing.** Parse the TSF file into five state series, mapping source
   code `QUN` to `QLD`.
   *Source:* Documented (dataset card). *Verify:* unit test.
@@ -65,7 +69,7 @@ for operational grid scheduling ([model card](MODEL_CARD.md#intended-use-and-inp
   grid. A failed check stops the DVC pipeline at `validate-data`.
   *Source:* Course M3; implemented in [#37](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/37)
   ([data validation](data-validation.md#what-is-checked), [EDN-008](edn/0008-data-validation-design.md)).
-  *Verify:* `dvc repro`: 118 expectations pass on the real data; synthetic failure
+  *Verify:* historical `dvc repro`: 118 expectations pass on the real data; synthetic failure
   cases in `tests/test_validation_checks.py`.
 
 ### Modelling and evaluation
@@ -100,7 +104,8 @@ for operational grid scheduling ([model card](MODEL_CARD.md#intended-use-and-inp
   and lag 336, each by more than option 1's validation seed spread (0.0091).
   Otherwise serve untuned Chronos. **Outcome:** the rule is met (0.5571 against
   0.8175, 0.9885 and 0.9617, as reported in PR #53), so the fine-tuned checkpoint
-  `models/chronos-t5-small-fine-tuned` is selected for later serving. The API is not deployed.
+  `models/chronos-t5-small-fine-tuned` is selected for serving. Historical local
+  HTTP and VM checks are recorded; the final integrated release is not deployed.
   *Source:* Agreed (#5) selection; promotion rule and decision Agreed (#30); Course M2/M5.
   *Verify:* DVC record of the checkpoint; the serving code loads it.
 
@@ -114,33 +119,49 @@ for operational grid scheduling ([model card](MODEL_CARD.md#intended-use-and-inp
   script, not an endpoint.
   *Source:* Agreed (#30); Course M4; inference in [PR #52](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/52),
   API in [#49](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/issues/49).
-  *Verify:* endpoint tests; forecasts match the evaluator for the same history.
+  *Verify:* endpoint tests and the historical selected-model HTTP smoke in
+  [API verification](api.md#verification). Inference PR #52 and API PR #86 are
+  merged; final-image/target execution remains pending.
 - **FR-12 Input validation.** Reject invalid input (wrong length, non-numeric or
   non-finite values, unknown state) with a clear error.
-  *Source:* Course M4. *Verify:* endpoint tests.
+  *Source:* Course M4. *Verify:* merged endpoint tests in `tests/test_api.py`,
+  including strict numeric types, finite values, shape and state validation.
 - **FR-13 Versioning and health.** Include the model version in each response;
   provide a health-check endpoint.
-  *Source:* Proposed. *Verify:* endpoint tests.
+  *Source:* Proposed requirement; implemented in merged PR #86.
+  *Verify:* endpoint identity tests; `/health` checks the process and `/ready`
+  checks a loaded predictor. Neither probe alone verifies a forecast.
 
 ### Monitoring
 
 - **FR-14 Prediction logging.** Log requests and predictions, and compute forecast
   error once the observed values arrive.
-  *Source:* Course M6. *Verify:* dashboard or report.
+  *Source:* Course M6. *Verify:* [replay](replay.md) and
+  [forecast-quality](forecast-quality.md) public interfaces in pending PRs
+  #89/#92; synthetic delayed-truth joins and the bounded historical validation
+  subset are recorded. The stateless API does not automatically journal arbitrary
+  client traffic. Final target replay/dashboard checks remain pending.
 - **FR-15 Drift detection.** Detect drift in the input distribution relative to
   the training data.
-  *Source:* Course M6. *Verify:* simulated drift test.
+  *Source:* Course M6. *Verify:* pending PR #91 and
+  [fresh synthetic Alibi scenarios](monitoring-scenarios.md#recorded-local-results-12-november-2026).
+  Historical validation raised 8/30 control alarms and took 56-112 nominal days
+  for first shift detection, with missed windows retained. No operational
+  detection-delay target or notification delivery is established.
 
 ### Model testing
 
 - **FR-16 Behavioural model tests.** Test the selected model's behaviour on synthetic
   series with limits declared before inference: minimum functionality (constant,
   zero and repeating demand), directional expectations and invariance.
-  *Source:* Course M3; proposed in PRs
+  *Source:* Course M3; implemented and reviewed through PRs
   [#57](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/57),
   [#58](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/58) and
-  [#59](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/59).
-  *Verify:* the opt-in real-model test runner; results recorded with their limits.
+  [#59](https://github.com/mlops-2627q1-mds-upc/MLOps_Endesa/pull/59)
+  and integrated in merged PR #69.
+  *Verify:* [selected-checkpoint results](experiments/008-selected-checkpoint-behaviour.md)
+  separately record 10 minimum-functionality cases, 70 invariance pairs and 12
+  directional cases plus their control. Fast CI does not repeat these model runs.
 
 ## Non-functional requirements
 
@@ -186,9 +207,11 @@ for operational grid scheduling ([model card](MODEL_CARD.md#intended-use-and-inp
   *Source:* Course M3. *Verify:* `energy.*` metrics on each run.
 - **NFR-7 Latency.** *ISO 25010: performance efficiency / time behaviour. Scope:
   system.* A 48-step forecast for one state returns within *X* seconds at the 95th
-  percentile on the serving machine. The only measurement so far is 0.54–0.58 s
-  per call on an Apple M4 CPU with 20 samples (PR #52), which is not the serving
-  machine.
+  percentile on the serving machine. The historical
+  [2 November VM experiment](experiments/009-serving-benchmark.md) measured c1
+  warm p95 of 4.791/5.028 s and c2 p95 of 9.189/9.363 s in discovery/confirmation,
+  with 20 warm requests per phase. Its source, image and VM identity are retained.
+  This small, unadopted experiment does not qualify the final release.
   *Source:* Agreed (#30) to measure first. *Verify:* load test. *X*: **Open**,
   set from the serving-machine measurement with a margin.
 - **NFR-8 Compute budget.** *ISO 25010: performance efficiency / resource
@@ -239,7 +262,11 @@ for operational grid scheduling ([model card](MODEL_CARD.md#intended-use-and-inp
 - **NFR-17 Interval reporting.** *ISO 25059: transparency. Scope: model.* The 80%
   interval's empirical coverage is measured on validation before any coverage
   target is set. With 20 samples, the 10th and 90th percentiles are coarse.
-  *Source:* Agreed (#30). *Verify:* coverage report. Target: **Open**.
+  *Source:* Agreed (#30). *Verify:* the
+  [historical validation subset](forecast-quality.md#bounded-selected-model-observation)
+  has 30 origins per state, 7,200 matched steps and 61.25-74.93% empirical
+  coverage. It does not measure all validation origins or set a coverage target.
+  Target: **Open**.
 
 ### ISO characteristics considered and not applied
 
@@ -253,8 +280,10 @@ for operational grid scheduling ([model card](MODEL_CARD.md#intended-use-and-inp
 
 ## Remaining open items
 
-1. **Latency target** (NFR-7): measure on the serving machine, then set *X*.
-2. **Interval coverage target** (NFR-17): measure the 80% interval's coverage on validation first.
+1. **Latency target** (NFR-7): review the historical VM experiment, verify release
+   applicability and obtain a human decision on *X*; no SLO has been adopted.
+2. **Interval coverage target** (NFR-17): review the bounded subset and decide
+   whether further validation is needed before setting a target.
 3. **Cross-device tolerance** (NFR-1): agree the proposed 0.002 mean-MASE tolerance or another value.
 4. **Holiday errors** (FR-8): amend the #5 protocol to record the deferral; revisit once
    the timestamp alignment in #6 is resolved.
