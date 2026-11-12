@@ -92,16 +92,13 @@ class MetricsMiddleware:  # pylint: disable=too-few-public-methods
             return
         started = perf_counter()
         status = 500  # An unhandled error before response start is a server failure.
+        observed = False
 
-        async def observe_send(message: Message):
-            nonlocal status
-            if message["type"] == "http.response.start":
-                status = message["status"]
-            await send(message)
-
-        try:
-            await self.app(scope, receive, observe_send)
-        finally:
+        def observe_completion():
+            nonlocal observed
+            if observed:
+                return
+            observed = True
             route = getattr(scope.get("route"), "path", None)
             route = route if route in ROUTES else "__unmatched__"
             method = scope["method"] if scope["method"] in METHODS else "OTHER"
@@ -110,3 +107,16 @@ class MetricsMiddleware:  # pylint: disable=too-few-public-methods
             self.metrics.duration.labels(method, route).observe(perf_counter() - started)
             if status_class in ("4xx", "5xx"):
                 self.metrics.errors.labels(status_class).inc()
+
+        async def observe_send(message: Message):
+            nonlocal status
+            if message["type"] == "http.response.start":
+                status = message["status"]
+            await send(message)
+            if message["type"] == "http.response.body" and not message.get("more_body", False):
+                observe_completion()
+
+        try:
+            await self.app(scope, receive, observe_send)
+        finally:
+            observe_completion()

@@ -1,12 +1,18 @@
-name: endesa-service-monitoring
+name: ${COMPOSE_PROJECT_NAME:?Set a unique Compose project for this run}
 
 services:
   api:
-    image: endesa-forecast:monitoring-local
+    image: ${FORECAST_IMAGE:-endesa-forecast:monitoring-${GIT_SHA:?Set GIT_SHA to the full source commit}}
+    platform: linux/amd64
     build:
       context: ../..
       args:
         GIT_SHA: ${GIT_SHA:?Set GIT_SHA to the full source commit}
+    cpus: 2
+    mem_limit: 2g
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
     volumes:
       - type: bind
         source: ${FORECAST_CHECKPOINT_DIR:?Set an absolute path to the selected checkpoint}
@@ -15,7 +21,7 @@ services:
         bind:
           create_host_path: false
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${FORECAST_PORT:-8000}:8000"
     networks: [monitoring]
 
   prometheus:
@@ -31,7 +37,7 @@ services:
       - ./rules:/etc/prometheus/rules:ro
       - prometheus-data:/prometheus
     ports:
-      - "127.0.0.1:9090:9090"
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
     networks: [monitoring]
 
   grafana:
@@ -49,12 +55,13 @@ services:
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
     networks: [monitoring]
 
 networks:
   monitoring:
-    internal: true
+    driver: bridge
+    internal: false
 
 volumes:
   prometheus-data:

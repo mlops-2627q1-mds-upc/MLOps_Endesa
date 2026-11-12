@@ -30,13 +30,13 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "One API process, one worker. CPU is consumed cores; RSS is process resident bytes, not host/container usage or limits. Zero forecast rate means no completed forecasts; missing telemetry stays missing. Latency needs completed requests. Capacity thresholds await #76. [Prometheus alerts](http://127.0.0.1:9090/alerts) have no notification receiver configured."
+        "content": "One API worker. CPU: consumed cores; RSS: process bytes. Missing samples stay missing. Zero traffic has no latency estimate. #76 thresholds await owner adoption. Prometheus evaluates alerts; external notifications are not configured."
       }
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "API scrape reachable (1/0)",
+      "title": "API reachable (1/0)",
       "description": "0 means a failed scrape; no value means no target data.",
       "gridPos": {
         "x": 0,
@@ -60,7 +60,39 @@
         "defaults": {
           "unit": "none",
           "noValue": "No telemetry",
-          "min": 0
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#8e8e93"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "0",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "1",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No telemetry",
+                  "color": "#8e8e93",
+                  "index": 2
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -71,7 +103,8 @@
           ],
           "fields": "",
           "values": false
-        }
+        },
+        "colorMode": "value"
       }
     },
     {
@@ -101,7 +134,39 @@
         "defaults": {
           "unit": "none",
           "noValue": "No telemetry",
-          "min": 0
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#8e8e93"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "0",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "1",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No telemetry",
+                  "color": "#8e8e93",
+                  "index": 2
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -112,7 +177,8 @@
           ],
           "fields": "",
           "values": false
-        }
+        },
+        "colorMode": "value"
       }
     },
     {
@@ -142,7 +208,24 @@
         "defaults": {
           "unit": "none",
           "noValue": "No telemetry",
-          "min": 0
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#8e8e93"
+          },
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No telemetry",
+                  "color": "#8e8e93",
+                  "index": 2
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -153,13 +236,14 @@
           ],
           "fields": "",
           "values": false
-        }
+        },
+        "colorMode": "value"
       }
     },
     {
       "id": 5,
       "type": "stat",
-      "title": "Process CPU/RSS available (1/0)",
+      "title": "Process samples (1/0)",
       "description": "0 is expected on macOS; unsupported CPU/RSS samples remain absent.",
       "gridPos": {
         "x": 18,
@@ -183,7 +267,39 @@
         "defaults": {
           "unit": "none",
           "noValue": "No telemetry",
-          "min": 0
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#8e8e93"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "0",
+                  "color": "orange",
+                  "index": 0
+                },
+                "1": {
+                  "text": "1",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No telemetry",
+                  "color": "#8e8e93",
+                  "index": 2
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -194,7 +310,8 @@
           ],
           "fields": "",
           "values": false
-        }
+        },
+        "colorMode": "value"
       }
     },
     {
@@ -215,7 +332,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (status_class) (rate(endesa_http_requests_total{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval])) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "expr": "sum by (status_class) (rate(endesa_http_requests_total{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1))",
           "legendFormat": "{{status_class}}",
           "instant": false
         }
@@ -253,13 +370,13 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval])) > 0) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1)) > 0)",
           "legendFormat": "p50",
           "instant": false
         },
         {
           "refId": "B",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval])) > 0) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(endesa_http_request_duration_seconds_bucket{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1))) and on() (sum(rate(endesa_http_request_duration_seconds_count{job=\"forecast-api\", route=\"/forecast\", method=\"POST\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1)) > 0)",
           "legendFormat": "p95"
         }
       ],
@@ -296,7 +413,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (status_class) (rate(endesa_http_errors_total{job=\"forecast-api\"}[$__rate_interval])) and on() (max(up{job=\"forecast-api\"} == 1))",
+          "expr": "sum by (status_class) (rate(endesa_http_errors_total{job=\"forecast-api\"}[$__rate_interval]) and on(job, instance) (up{job=\"forecast-api\"} == 1))",
           "legendFormat": "{{status_class}}",
           "instant": false
         }
