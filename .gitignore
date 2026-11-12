@@ -36,6 +36,7 @@ emissions.csv
 /reports/minimum-functionality/
 /reports/directional/
 /reports/invariance/
+/reports/replay/
 /reports/fine-tuning/
 
 # Python caches and build outputs
@@ -70,3 +71,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Raw serving benchmark observations and local declarations (#76)
+/reports/serving-benchmark/
