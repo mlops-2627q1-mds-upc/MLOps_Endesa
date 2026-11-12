@@ -50,7 +50,7 @@ two-CPU container ceiling, 2 GiB memory ceiling, read-only root filesystem and
 64 MiB temporary filesystem follow the [container contract](container.md).
 These ceilings are execution budgets, not measured capacity or alert limits.
 The selected checkpoint is mounted read-only and still passes the production
-loader's provenance checks. The internal Compose network has no external egress;
+loader's provenance checks. Services share a dedicated Compose bridge;
 all published ports bind only `127.0.0.1`. Do not publish these unauthenticated API
 or Prometheus endpoints on a public interface. The Grafana password is supplied
 locally, with anonymous access and signup disabled. A required Compose project
@@ -58,6 +58,15 @@ name isolates each run's containers, network and volumes. Optional `FORECAST_POR
 `PROMETHEUS_PORT` and `GRAFANA_PORT` change only the loopback ports; the internal
 API target remains `api:8000` and the Grafana data source remains
 `http://prometheus:9090`.
+
+The bridge permits outbound traffic. An `internal: true` bridge omitted actual
+host port mappings on the tested Docker Engine 29.1.3, despite healthy containers
+and valid Compose syntax. This stack uses bridge port publishing with explicit
+loopback addresses; it does not claim egress isolation. See Docker's
+[bridge networking](https://docs.docker.com/engine/network/drivers/bridge/) and
+[loopback publishing](https://docs.docker.com/engine/network/port-publishing/)
+contracts. The monitoring CI job checks a real published HTTP endpoint to catch
+this integration failure.
 
 When a working Docker engine and verified checkpoint are available, from the
 repository root:
@@ -139,8 +148,9 @@ promtool check rules rules/alerts.yml
 promtool test rules rules/tests.yml rules/dashboard-tests.yml
 ```
 
-The separate `Monitoring / configuration` Actions job validates Compose and runs
-the same Prometheus checks in the pinned Prometheus image. It is an additional
+The separate `Monitoring / configuration` Actions job validates Compose, starts
+only Prometheus to check its actual loopback HTTP publication, and runs the same
+Prometheus checks in the pinned image. It is an additional
 check; the required `CI / lint` and `CI / test` names are unchanged. To run the
 Prometheus checks locally with Docker, from `monitoring/service`:
 

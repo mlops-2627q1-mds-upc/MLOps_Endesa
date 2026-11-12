@@ -16,16 +16,15 @@ jobs:
     timeout-minutes: 5
     env:
       PROMETHEUS_IMAGE: prom/prometheus:v3.15.1@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2
+      COMPOSE_PROJECT_NAME: endesa-monitoring-config
+      GIT_SHA: ${{ github.sha }}
+      FORECAST_CHECKPOINT_DIR: /tmp/validation-only-checkpoint
+      GRAFANA_ADMIN_PASSWORD: validation-only-placeholder
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Validate private Compose configuration
-        env:
-          COMPOSE_PROJECT_NAME: endesa-monitoring-config
-          GIT_SHA: ${{ github.sha }}
-          FORECAST_CHECKPOINT_DIR: /tmp/validation-only-checkpoint
-          GRAFANA_ADMIN_PASSWORD: validation-only-placeholder
         run: docker compose -f monitoring/service/compose.yml config --quiet
       - name: Validate Prometheus configuration, alerts and dashboard queries
         run: |
@@ -38,3 +37,20 @@ jobs:
           docker run --rm --network none --workdir /etc/prometheus \
             --mount "type=bind,src=$GITHUB_WORKSPACE/monitoring/service,dst=/etc/prometheus,readonly" \
             --entrypoint /bin/promtool "$PROMETHEUS_IMAGE" test rules rules/tests.yml rules/dashboard-tests.yml
+      - name: Verify actual loopback port publication
+        run: |
+          docker compose -f monitoring/service/compose.yml up --no-build --pull never -d prometheus
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:9090/-/ready; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:9090/-/ready
+          container_id=$(docker compose -f monitoring/service/compose.yml ps -q prometheus)
+          test "$(docker port "$container_id" 9090/tcp)" = '127.0.0.1:9090'
+      - name: Retain logs and stop owned service
+        if: always()
+        run: |
+          docker compose -f monitoring/service/compose.yml logs --no-color prometheus
+          docker compose -f monitoring/service/compose.yml stop --timeout 10 prometheus

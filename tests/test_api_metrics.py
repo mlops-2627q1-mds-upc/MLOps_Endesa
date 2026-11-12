@@ -294,7 +294,8 @@ def test_current_platform_process_samples_are_present_or_explicitly_unavailable(
 def test_monitoring_configuration_has_private_ports_and_resolvable_provisioning():
     directory = ROOT / "monitoring/service"
     compose = yaml.safe_load((directory / "compose.yml").read_text())
-    assert compose["networks"]["monitoring"]["internal"]
+    assert compose["networks"]["monitoring"]["driver"] == "bridge"
+    assert compose["networks"]["monitoring"]["internal"] is False
     api = compose["services"]["api"]
     assert api["platform"] == "linux/amd64"
     assert api["cpus"] == 2 and api["mem_limit"] == "2g"
