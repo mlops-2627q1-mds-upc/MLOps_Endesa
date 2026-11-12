@@ -11,8 +11,8 @@ selected checkpoint, prediction settings and hashes of the complete retained
 validation reports. It calls #77's public `check_handoff` without inference;
 validation runs separately before publication.
 
-Implementation and fixture tests do not establish publication. Registry/access
-agreement, human peer review, merged dependencies, an actual successful workflow
+Implementation and fixture tests do not establish publication. Package-reader
+access, human peer review, merged dependencies, an actual successful workflow
 and an independent pull/start check remain release prerequisites. A failed push
 or manifest step can leave a registry image without a completed release record;
 retain that run's evidence and investigate before another dispatch. Never treat
@@ -20,21 +20,43 @@ an image alone as a completed release or delete it to hide a partial attempt.
 
 ## Registry and execution prerequisites
 
-The concrete proposal is
-`ghcr.io/mlops-2627q1-mds-upc/endesa-forecast`, initially private, associated with
-this repository. The workflow would use its short-lived `GITHUB_TOKEN` with
-`contents: read` and `packages: write`; independent authorized readers would need
-package read access. This proposal has not been agreed or configured. The local
-decision proposal is in ignored `temporary/issue-78/decision-proposal.txt`; EDN
-PR #97 remains separate, with no invented assessment or approval.
+The user selected **private GHCR** at
+`ghcr.io/mlops-2627q1-mds-upc/endesa-forecast`. The production workflow accepts
+only that destination and uses its short-lived `GITHUB_TOKEN`, with
+`contents: read`, `actions: read` and `packages: write`. It does not create
+credentials or change visibility/access settings. Package existence, workflow
+publication access and independent reader access still require runtime evidence.
 
-The workflow requires an explicit `image_repository` and has no default registry.
-GHCR uses the workflow token; another agreed registry requires narrowly scoped
-`IMAGE_REGISTRY_USER` and `IMAGE_REGISTRY_PASSWORD` secrets. It never creates
-these secrets or changes package visibility/access. A first package's absent tag
-must produce an explicit `manifest unknown` or `no such manifest` response;
-ambiguous authentication/network errors stop publication. Resolve registry access
-as a separate authorized step if the registry cannot establish absence.
+Before the build and immediately before the push, `src.ghcr_privacy` authenticates
+read-only repository/organization checks and reads the [package metadata API](https://docs.github.com/en/rest/packages/packages#get-a-package-for-an-organization):
+`GET /orgs/mlops-2627q1-mds-upc/packages/container/endesa-forecast`. Existing
+package metadata must match the exact organization/name/type and say `private`.
+Public, internal, unexpected or malformed identities/visibility fail. Other HTTP,
+authentication and network failures also stop publication; the guard never
+changes visibility or deletes a package to recover.
+
+`first_publication` defaults to `false`: a pre-push `404` stops normal publication.
+Explicitly enabling it permits a private-default bootstrap attempt only after
+the authenticated expected repository/namespace checks succeed. The receipt
+records `UNOBSERVED` and `private_default_bootstrap: true`, not absence, package
+access or reader access. GitHub documents [private visibility on first publication](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#pushing-container-images);
+its [API troubleshooting guidance](https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api#404-not-found-for-an-existing-resource)
+also explains why `404` alone cannot establish absence. This flag is an explicit
+operator-controlled bootstrap mechanism; it never permits an observed nonprivate
+package or an error in the identity checks.
+
+After a push, the workflow requires live HTTP 200/private metadata before it
+creates the manifest or can succeed. It allows at most five package reads, with
+10-second request timeouts and two-second waits for post-push `404` propagation;
+other errors fail immediately. Sanitized pre-build, pre-push and post-push receipts
+are retained as `ghcr-*.json`, including failed/unverified checks. A push followed
+by unverified privacy is a failed release attempt; retain its evidence without
+automatically changing/deleting the package. Metadata checks are observations,
+not a lock against later administrator visibility changes.
+
+The occupied-tag check also remains active: only an explicit `manifest unknown`
+or `no such manifest` response permits a missing tag; ambiguous registry responses
+stop the attempt even in bootstrap mode. Resolve access separately if needed.
 
 After review and integration, run the manual release validator on the intended
 clean `main` source. Pin the actual successful run ID/attempt and the unexpired
@@ -47,7 +69,8 @@ source_sha=$(git rev-parse origin/main)
 gh workflow run image-publication.yml \
   --repo mlops-2627q1-mds-upc/MLOps_Endesa --ref main \
   -f source_sha="$source_sha" \
-  -f image_repository=AGREED_REGISTRY/AGREED_REPOSITORY \
+  -f image_repository=ghcr.io/mlops-2627q1-mds-upc/endesa-forecast \
+  -f first_publication=false \
   -f release_version=v0.1.0 \
   -f validation_run_id=RUN_ID -f validation_run_attempt=ATTEMPT \
   -f validation_artifact_id=ARTIFACT_ID \
@@ -79,6 +102,10 @@ does not download weights or data. DVC credentials remain scoped to #77's
 retrieval path. Registry credentials stay in the runner's private Docker
 configuration and never enter build arguments, the allowlisted context, image
 layers or evidence uploads. Weights/raw data also stay outside that context.
+
+For an explicitly intended first publication, replace `first_publication=false`
+with `first_publication=true`; all source/evidence, tag and post-push privacy
+checks still apply. This source update did not create or publish the package.
 
 ## Workflow semantic validation
 

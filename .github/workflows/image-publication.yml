@@ -8,9 +8,16 @@ on:
         required: true
         type: string
       image_repository:
-        description: Agreed registry/repository, without tag (no default destination)
+        description: Selected private GHCR destination
         required: true
-        type: string
+        type: choice
+        default: ghcr.io/mlops-2627q1-mds-upc/endesa-forecast
+        options:
+          - ghcr.io/mlops-2627q1-mds-upc/endesa-forecast
+      first_publication:
+        description: Permit UNOBSERVED package bootstrap using GHCR's private default
+        type: boolean
+        default: false
       release_version:
         description: Version such as v0.1.0; the tag also includes the source SHA
         required: true
@@ -51,6 +58,7 @@ jobs:
     env:
       SOURCE_SHA: ${{ inputs.source_sha }}
       IMAGE_REPOSITORY: ${{ inputs.image_repository }}
+      FIRST_PUBLICATION: ${{ inputs.first_publication }}
       RELEASE_VERSION: ${{ inputs.release_version }}
       VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
       VALIDATION_ATTEMPT: ${{ inputs.validation_run_attempt }}
@@ -88,15 +96,15 @@ jobs:
         run: |
           uv run --no-sync python - <<'PY'
           import os, re
-          from src.release_manifest import REPOSITORY, VERSION
+          from src.ghcr_privacy import DESTINATION
+          from src.release_manifest import VERSION
           repository = os.environ['IMAGE_REPOSITORY']
-          host = repository.split('/')[0]
-          if not re.fullmatch(REPOSITORY, repository) or not ('.' in host or ':' in host):
-              raise SystemExit('Use an explicit lowercase registry/repository, without credentials')
+          if repository != DESTINATION:
+              raise SystemExit('Only the selected private GHCR destination is permitted')
           if not re.fullmatch(VERSION, os.environ['RELEASE_VERSION']):
               raise SystemExit('Use a version such as v0.1.0')
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as stream:
-              stream.write(f'REGISTRY={host}\n')
+              stream.write('REGISTRY=ghcr.io\n')
               stream.write(f'IMAGE_TAG={os.environ["RELEASE_VERSION"]}-{os.environ["SOURCE_SHA"]}\n')
           PY
           mkdir -p temporary/image-publication
@@ -131,19 +139,21 @@ jobs:
             --run-attempt "$VALIDATION_ATTEMPT" --artifact-id "$VALIDATION_ARTIFACT_ID" \
             --artifact-digest "$VALIDATION_ARTIFACT_DIGEST" \
             --output-dir temporary/release-validation
-      - name: Authenticate only to the explicit registry
+      - name: Check selected GHCR package identity and privacy before building
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bootstrap=(--phase before)
+          if [ "$FIRST_PUBLICATION" = true ]; then bootstrap+=(--first-publication); fi
+          uv run --no-sync python -m src.ghcr_privacy --repository "$IMAGE_REPOSITORY" \
+            "${bootstrap[@]}" --output temporary/image-publication/ghcr-before.json
+      - name: Authenticate to the selected GHCR destination
         timeout-minutes: 2
         env:
           WORKFLOW_TOKEN: ${{ github.token }}
-          REGISTRY_USER: ${{ secrets.IMAGE_REGISTRY_USER }}
-          REGISTRY_PASSWORD: ${{ secrets.IMAGE_REGISTRY_PASSWORD }}
         run: |
-          if [ "$REGISTRY" = ghcr.io ]; then
-            printf '%s' "$WORKFLOW_TOKEN" | docker login "$REGISTRY" --username "$GITHUB_ACTOR" --password-stdin
-          else
-            test -n "$REGISTRY_USER" && test -n "$REGISTRY_PASSWORD"
-            printf '%s' "$REGISTRY_PASSWORD" | docker login "$REGISTRY" --username "$REGISTRY_USER" --password-stdin
-          fi
+          printf '%s' "$WORKFLOW_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
       - name: Refuse an occupied version or an ambiguous registry response
         timeout-minutes: 2
         run: |
@@ -185,12 +195,20 @@ jobs:
         timeout-minutes: 6
         env:
           VALIDATION_DIR: ${{ steps.evidence.outputs.directory }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           uv run --no-sync python -m src.release_manifest check \
             --validation-dir "$VALIDATION_DIR" --source-sha "$SOURCE_SHA" \
             --repository "$IMAGE_REPOSITORY" --version "$IMAGE_TAG" --architecture amd64 \
             --image-inspect temporary/image-publication/built-image-inspect.json
+          bootstrap=(--phase before)
+          if [ "$FIRST_PUBLICATION" = true ]; then bootstrap+=(--first-publication); fi
+          uv run --no-sync python -m src.ghcr_privacy --repository "$IMAGE_REPOSITORY" \
+            "${bootstrap[@]}" --output temporary/image-publication/ghcr-before-push.json
           docker push "$IMAGE_REPOSITORY:$IMAGE_TAG" | tee temporary/image-publication/push.log
+          uv run --no-sync python -m src.ghcr_privacy --repository "$IMAGE_REPOSITORY" \
+            --phase after --output temporary/image-publication/ghcr-after.json
           docker image inspect "$IMAGE_REPOSITORY:$IMAGE_TAG" > temporary/image-publication/image-inspect.json
           uv run --no-sync python -m src.release_manifest create \
             --validation-dir "$VALIDATION_DIR" --source-sha "$SOURCE_SHA" \
@@ -207,6 +225,7 @@ jobs:
             temporary/image-publication/manifest.json
             temporary/image-publication/image-inspect.json
             temporary/image-publication/built-image-inspect.json
+            temporary/image-publication/ghcr-*.json
             temporary/image-publication/*.log
             temporary/release-validation/**/report.json
             temporary/release-validation/**/identities.json
