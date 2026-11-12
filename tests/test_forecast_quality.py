@@ -17,6 +17,7 @@ from src.forecast_quality import QualityPolicy, main, quality_report
 from src.monitoring import JournalReader, ModelIdentity, ReplayConfig
 from src.monitoring.replay import Replay
 from src.monitoring.source import ReplaySource
+from tests.replay_fixture import create_replay_fixture
 
 
 @pytest.fixture
@@ -358,6 +359,52 @@ def test_overlap_counts_forecast_errors_and_unique_targets_separately(quality_ca
     assert group["forecast_count"] == group["matched_forecast_count"] == 2
     assert group["matched_steps"] == 96 and group["unique_matched_targets"] == 49
     assert group["seasonal_lag48"]["mae"] == 48
+
+
+def test_shared_replay_contract_preserves_delayed_overlap_and_recovery(tmp_path):
+    fixture = create_replay_fixture(tmp_path / "shared-replay")
+
+    def read():
+        with JournalReader(fixture.journal) as reader:
+            return quality_report(
+                reader, fixture.directory, fixture.directory / "params.yaml", QualityPolicy(2)
+            )
+
+    partial = read()
+    assert partial["replay_counts"]["matched_steps"] == 6
+    assert partial["replay_counts"]["pending_steps"] == 186
+    for group in partial["by_state"]:
+        assert group["sample_status"] == "sufficient"
+        assert group["matched_steps"] == 3 and group["pending_steps"] == 93
+        assert group["unique_matched_targets"] == 2
+        assert group["selected"]["mae"] == 0
+        assert group["selected"]["mean_interval_width"] == 2
+        assert group["seasonal_lag48"]["mae"] == 48
+    first = partial["by_state_horizon"][:3]
+    assert [group["sample_status"] for group in first] == [
+        "sufficient",
+        "insufficient_samples",
+        "pending_observations",
+    ]
+    assert [group["matched_steps"] for group in first] == [2, 1, 0]
+    with Replay(fixture.journal, fixture.source, fixture.config) as replay:
+        replay.release(563)
+    final = read()
+    assert final["metadata"]["run_id"] == partial["metadata"]["run_id"]
+    assert final["replay_counts"]["matched_steps"] == 192
+    assert final["replay_counts"]["pending_steps"] == 0
+    for group in final["by_state"]:
+        assert group["matched_steps"] == 96
+        assert group["unique_matched_targets"] == 49
+    for group in final["by_state_horizon"]:
+        assert group["sample_status"] == "sufficient"
+        assert group["matched_steps"] == 2
+        assert group["selected"] == {
+            "mae": 0.0,
+            "mase": 0.0,
+            "empirical_coverage": 1.0,
+            "mean_interval_width": 2.0,
+        }
 
 
 def test_cli_reports_valid_json_and_fails_without_partial_output(quality_case, capsys):

@@ -2,7 +2,7 @@
   "uid": "endesa-quality",
   "title": "Endesa forecast quality",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "editable": false,
   "timezone": "browser",
   "refresh": "15s",
@@ -67,7 +67,7 @@
         "x": 0,
         "y": 0,
         "w": 24,
-        "h": 4
+        "h": 5
       },
       "options": {
         "mode": "markdown",
@@ -81,8 +81,8 @@
       "description": "A failed scrape is 0; absent target data stays absent.",
       "gridPos": {
         "x": 0,
-        "y": 4,
-        "w": 8,
+        "y": 5,
+        "w": 6,
         "h": 4
       },
       "datasource": {
@@ -93,7 +93,36 @@
         "defaults": {
           "unit": "none",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Unreachable (0)",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Reachable (1)",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#8e8e93"
+          }
         },
         "overrides": []
       },
@@ -112,7 +141,8 @@
           ],
           "fields": "",
           "values": false
-        }
+        },
+        "colorMode": "value"
       }
     },
     {
@@ -121,9 +151,9 @@
       "type": "stat",
       "description": "0 covers missing, invalid or stale reports. Quality panels omit these measurements.",
       "gridPos": {
-        "x": 8,
-        "y": 4,
-        "w": 8,
+        "x": 6,
+        "y": 5,
+        "w": 6,
         "h": 4
       },
       "datasource": {
@@ -134,7 +164,36 @@
         "defaults": {
           "unit": "none",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Unavailable (0)",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Available (1)",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#8e8e93"
+          }
         },
         "overrides": []
       },
@@ -153,7 +212,8 @@
           ],
           "fields": "",
           "values": false
-        }
+        },
+        "colorMode": "value"
       }
     },
     {
@@ -162,9 +222,9 @@
       "type": "stat",
       "description": "Age of report publication, not observation age or replay progress.",
       "gridPos": {
-        "x": 16,
-        "y": 4,
-        "w": 8,
+        "x": 12,
+        "y": 5,
+        "w": 6,
         "h": 4
       },
       "datasource": {
@@ -175,7 +235,23 @@
         "defaults": {
           "unit": "s",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#8e8e93"
+          }
         },
         "overrides": []
       },
@@ -198,13 +274,58 @@
       }
     },
     {
+      "id": 15,
+      "title": "Minimum matched rows per group",
+      "type": "stat",
+      "description": "Report-declared display threshold; no independence or statistical-power claim.",
+      "gridPos": {
+        "x": 18,
+        "y": 5,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "endesa-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No current evidence",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#8e8e93"
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "endesa_quality_minimum_samples{job=\"forecast-quality\"} and on(job, instance) (up{job=\"forecast-quality\"} == 1) and on(job, instance) (endesa_quality_report_available{job=\"forecast-quality\"} == 1)",
+          "legendFormat": "{{instance}}",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
       "id": 5,
       "title": "State MAE on identical matched rows",
       "type": "timeseries",
       "description": "",
       "gridPos": {
         "x": 0,
-        "y": 8,
+        "y": 9,
         "w": 12,
         "h": 7
       },
@@ -216,7 +337,22 @@
         "defaults": {
           "unit": "short",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
@@ -239,7 +375,7 @@
           "displayMode": "table",
           "placement": "bottom",
           "calcs": [
-            "lastNotNull"
+            "last"
           ]
         }
       }
@@ -251,7 +387,7 @@
       "description": "",
       "gridPos": {
         "x": 12,
-        "y": 8,
+        "y": 9,
         "w": 12,
         "h": 7
       },
@@ -263,7 +399,23 @@
         "defaults": {
           "unit": "percentunit",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          },
+          "max": 1
         },
         "overrides": []
       },
@@ -280,7 +432,7 @@
           "displayMode": "table",
           "placement": "bottom",
           "calcs": [
-            "lastNotNull"
+            "last"
           ]
         }
       }
@@ -292,7 +444,7 @@
       "description": "",
       "gridPos": {
         "x": 0,
-        "y": 15,
+        "y": 16,
         "w": 12,
         "h": 7
       },
@@ -304,7 +456,22 @@
         "defaults": {
           "unit": "short",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
@@ -327,7 +494,7 @@
           "displayMode": "table",
           "placement": "bottom",
           "calcs": [
-            "lastNotNull"
+            "last"
           ]
         }
       }
@@ -339,7 +506,7 @@
       "description": "",
       "gridPos": {
         "x": 12,
-        "y": 15,
+        "y": 16,
         "w": 12,
         "h": 7
       },
@@ -351,7 +518,22 @@
         "defaults": {
           "unit": "short",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
@@ -368,7 +550,7 @@
           "displayMode": "table",
           "placement": "bottom",
           "calcs": [
-            "lastNotNull"
+            "last"
           ]
         }
       }
@@ -380,7 +562,7 @@
       "description": "",
       "gridPos": {
         "x": 0,
-        "y": 22,
+        "y": 23,
         "w": 12,
         "h": 7
       },
@@ -392,7 +574,22 @@
         "defaults": {
           "unit": "short",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
@@ -415,7 +612,7 @@
           "displayMode": "table",
           "placement": "bottom",
           "calcs": [
-            "lastNotNull"
+            "last"
           ]
         }
       }
@@ -427,7 +624,7 @@
       "description": "Forecast errors may share targets; these are distinct counts, not independent-sample claims.",
       "gridPos": {
         "x": 12,
-        "y": 22,
+        "y": 23,
         "w": 12,
         "h": 7
       },
@@ -439,7 +636,22 @@
         "defaults": {
           "unit": "short",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "spanNulls": false
+          }
         },
         "overrides": []
       },
@@ -462,7 +674,7 @@
           "displayMode": "table",
           "placement": "bottom",
           "calcs": [
-            "lastNotNull"
+            "last"
           ]
         }
       }
@@ -474,7 +686,7 @@
       "description": "",
       "gridPos": {
         "x": 0,
-        "y": 29,
+        "y": 30,
         "w": 12,
         "h": 10
       },
@@ -486,7 +698,20 @@
         "defaults": {
           "unit": "percentunit",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ],
+          "max": 1
         },
         "overrides": []
       },
@@ -548,7 +773,7 @@
       "description": "",
       "gridPos": {
         "x": 12,
-        "y": 29,
+        "y": 30,
         "w": 12,
         "h": 10
       },
@@ -560,7 +785,19 @@
         "defaults": {
           "unit": "short",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -622,7 +859,7 @@
       "description": "",
       "gridPos": {
         "x": 0,
-        "y": 39,
+        "y": 40,
         "w": 12,
         "h": 10
       },
@@ -634,7 +871,19 @@
         "defaults": {
           "unit": "short",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
@@ -696,7 +945,7 @@
       "description": "",
       "gridPos": {
         "x": 12,
-        "y": 39,
+        "y": 40,
         "w": 12,
         "h": 10
       },
@@ -708,7 +957,45 @@
         "defaults": {
           "unit": "none",
           "noValue": "No current evidence",
-          "min": 0
+          "min": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "No forecasts (0)",
+                  "color": "#8e8e93"
+                },
+                "1": {
+                  "text": "Pending observations (1)",
+                  "color": "blue"
+                },
+                "2": {
+                  "text": "Insufficient samples (2)",
+                  "color": "orange"
+                },
+                "3": {
+                  "text": "Sufficient samples (3)",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "No current evidence",
+                  "color": "#8e8e93"
+                }
+              }
+            }
+          ],
+          "custom": {
+            "cellOptions": {
+              "type": "color-text"
+            }
+          }
         },
         "overrides": []
       },

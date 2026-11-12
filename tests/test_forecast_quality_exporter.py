@@ -183,6 +183,42 @@ def test_conflicting_report_identity_is_suppressed(report_file):
         assert _value(client, "report_valid") == 0
 
 
+def test_duplicate_json_keys_are_invalid_even_when_last_value_is_valid(report_file):
+    raw = report_file.read_text()
+    report_file.write_text('{"schema_version":999,' + raw[1:])
+    with TestClient(create_app(report_file)) as client:
+        assert _value(client, "report_valid") == 0
+        assert not any(sample.labels for sample in _samples(client))
+
+
+@pytest.mark.parametrize("field,value", [("schema_version", True), ("horizon", "1")])
+def test_report_schema_and_horizon_require_integers(report_file, field, value):
+    report = json.loads(report_file.read_text())
+    if field == "schema_version":
+        report[field] = value
+    else:
+        report["by_state_horizon"][0][field] = value
+    report_file.write_text(json.dumps(report))
+    with TestClient(create_app(report_file)) as client:
+        assert _value(client, "report_valid") == 0
+
+
+@pytest.mark.parametrize("kind", ["forecast_dimensions", "aggregate_matches"])
+def test_inconsistent_state_and_horizon_counts_are_suppressed(report_file, kind):
+    report = json.loads(report_file.read_text())
+    if kind == "forecast_dimensions":
+        report["by_state"][0]["expected_forecasts"] = 3
+        report["by_state"][0]["forecast_count"] = 3
+    else:
+        group = report["by_state_horizon"][0]
+        group.update(
+            matched_steps=1, pending_steps=1, matched_forecast_count=1, unique_matched_targets=1
+        )
+    report_file.write_text(json.dumps(report))
+    with TestClient(create_app(report_file)) as client:
+        assert _value(client, "report_valid") == 0
+
+
 @pytest.mark.parametrize("horizon", ["arbitrary-private-horizon", "all", 1])
 def test_state_summary_cannot_declare_a_horizon_label(report_file, horizon):
     report = json.loads(report_file.read_text())
@@ -209,13 +245,22 @@ def test_freshness_policy_bounds(report_file, maximum):
         create_app(report_file, maximum)
 
 
-def test_quality_compose_preserves_private_service_monitoring():
+def test_quality_compose_preserves_loopback_service_monitoring():
     service = yaml.safe_load((ROOT / "monitoring/service/compose.yml").read_text())
     quality = yaml.safe_load((ROOT / "monitoring/quality/compose.yml").read_text())
     exporter = quality["services"]["quality"]
     assert exporter["networks"] == ["monitoring"]
     assert "ports" not in exporter
-    assert service["networks"]["monitoring"]["internal"] is True
+    assert service["networks"]["monitoring"] == {"driver": "bridge", "internal": False}
+    assert exporter["image"] == service["services"]["api"]["image"]
+    assert exporter["platform"] == "linux/amd64"
+    assert exporter["read_only"] is True
+    assert exporter["mem_limit"] == "256m"
+    assert all(
+        port.startswith("127.0.0.1:")
+        for name in ("api", "prometheus", "grafana")
+        for port in service["services"][name]["ports"]
+    )
     assert all("ro" in volume or volume["read_only"] for volume in exporter["volumes"])
     assert not any("model" in str(volume) for volume in exporter["volumes"])
     scrape = yaml.safe_load((ROOT / "monitoring/quality/prometheus.yml").read_text())
@@ -252,3 +297,29 @@ def test_quality_dashboard_uses_availability_gates_and_existing_datasource():
     assert any("seasonal_lag48" in expression for expression in expressions)
     assert any("_sample_status{" in expression for expression in expressions)
     assert set(STATUS_CODES.values()) == {0, 1, 2, 3}
+
+
+def test_promtool_scenarios_cover_every_dashboard_expression():
+    dashboard = json.loads(
+        (ROOT / "monitoring/quality/grafana/dashboards/quality.json").read_text()
+    )
+    expressions = {
+        target["expr"].replace("$state", "NSW")
+        for panel in dashboard["panels"]
+        for target in panel.get("targets", [])
+    }
+    cases = yaml.safe_load((ROOT / "monitoring/quality/dashboard-tests.yml").read_text())
+    assert len(cases["tests"]) == 6
+    for case in cases["tests"]:
+        assert {check["expr"] for check in case["promql_expr_test"]} == expressions
+    panels = {panel["id"]: panel for panel in dashboard["panels"]}
+    for panel_id in (2, 3):
+        defaults = panels[panel_id]["fieldConfig"]["defaults"]
+        mappings = defaults["mappings"][0]["options"]
+        assert mappings["0"]["color"] == "red"
+        assert mappings["1"]["color"] == "green"
+    assert "minimum_samples" in panels[15]["targets"][0]["expr"]
+    for panel in dashboard["panels"]:
+        if panel["type"] == "timeseries":
+            assert panel["options"]["legend"]["calcs"] == ["last"]
+            assert panel["fieldConfig"]["defaults"]["custom"]["spanNulls"] is False

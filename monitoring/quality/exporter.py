@@ -50,6 +50,19 @@ def _reject_constant(value):
     raise ValueError(f"Nonfinite JSON constant: {value}")
 
 
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate JSON object key")
+        result[key] = value
+    return result
+
+
+def _decode(raw):
+    return json.loads(raw, parse_constant=_reject_constant, object_pairs_hook=_unique_object)
+
+
 def _validate_group(group, minimum):
     if group["sample_status"] not in STATUS_CODES or any(
         not _integer(group[name]) for name in COUNTS
@@ -84,7 +97,7 @@ def _validate_group(group, minimum):
 
 
 def _validate_report(report):
-    if report["schema_version"] != 1:
+    if not _integer(report["schema_version"]) or report["schema_version"] != 1:
         raise ValueError("Unsupported quality report schema")
     metadata = report["metadata"]
     if (
@@ -92,7 +105,7 @@ def _validate_report(report):
         or _hash(metadata["source_reference"]) != metadata["source_sha256"]
     ):
         raise ValueError("Quality report identity mismatch")
-    config = json.loads(metadata["config_json"], parse_constant=_reject_constant)
+    config = _decode(metadata["config_json"])
     if (
         config["mode"] != "historical_replay"
         or config["value_scale"] != "source"
@@ -106,7 +119,7 @@ def _validate_report(report):
         or len(set(states)) != len(states)
         or not set(states) <= STATES
         or not _integer(minimum)
-        or minimum == 0
+        or not 1 <= minimum <= 1_000_000
     ):
         raise ValueError("Invalid quality state set/sample policy")
     for collection, horizons in (("by_state", ("all",)), ("by_state_horizon", range(1, 49))):
@@ -115,6 +128,8 @@ def _validate_report(report):
         for group in report[collection]:
             if collection == "by_state" and "horizon" in group:
                 raise ValueError("State summaries must not declare a horizon")
+            if collection == "by_state_horizon" and not _integer(group["horizon"]):
+                raise ValueError("Horizon must be an integer")
             key = (
                 group["state"],
                 str(group["horizon"]) if collection == "by_state_horizon" else "all",
@@ -125,6 +140,24 @@ def _validate_report(report):
             observed.add(key)
         if observed != expected:
             raise ValueError("Missing quality state/horizon groups")
+    for summary in report["by_state"]:
+        horizons = [g for g in report["by_state_horizon"] if g["state"] == summary["state"]]
+        if (
+            summary["forecast_steps"] != 48 * summary["forecast_count"]
+            or any(
+                group["expected_forecasts"] != summary["expected_forecasts"]
+                or group["forecast_count"] != summary["forecast_count"]
+                or group["forecast_steps"] != group["forecast_count"]
+                or group["matched_forecast_count"] != group["matched_steps"]
+                or group["unique_matched_targets"] != group["matched_steps"]
+                for group in horizons
+            )
+            or any(
+                sum(group[name] for group in horizons) != summary[name]
+                for name in ("forecast_steps", "matched_steps", "pending_steps")
+            )
+        ):
+            raise ValueError("State and horizon counts do not describe the same forecasts")
     return report
 
 
@@ -152,7 +185,7 @@ class QualityCollector:  # pylint: disable=too-few-public-methods
                 raw = stream.read(MAX_REPORT_BYTES + 1)
             if len(raw) > MAX_REPORT_BYTES or age < 0:
                 raise ValueError("Report is oversized or has a future modification time")
-            report = _validate_report(json.loads(raw, parse_constant=_reject_constant))
+            report = _validate_report(_decode(raw))
             valid = 1
             fresh = int(age <= self.max_age_seconds)
         except (

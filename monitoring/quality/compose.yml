@@ -1,7 +1,13 @@
 # Use after monitoring/service/compose.yml; relative paths resolve from that file.
 services:
   quality:
-    image: endesa-forecast:monitoring-local
+    image: ${FORECAST_IMAGE:-endesa-forecast:monitoring-${GIT_SHA:?Set GIT_SHA to the full source commit}}
+    platform: linux/amd64
+    cpus: 1
+    mem_limit: 256m
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
     command:
       - uvicorn
       - quality_exporter:create_app

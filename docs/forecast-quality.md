@@ -57,16 +57,27 @@ stream is bounded by `max_steps` (at most 1,000,000); excess volume or a truncat
 export fails instead of scoring a subset. Read transactions close before metric
 aggregation.
 
+The consumer uses schema 1 from replay PR #89, verified at
+`067ff119530b0f8cf221778a6a2fc5ce8d5cdda9`. It reads `run_info`, `counts`,
+`forecast_steps` and `matched_observations`, checks identity before and inside the
+snapshot, and starts each paginated export at zero. It does not persist cursors;
+an incremental consumer must bind every cursor to its `run_id`. The service
+configuration follows PR #90 at `da39aa6acc4ebed5bdf6878c23f8f7ae4e2e88c9`.
+These source dependencies still require human review and integration.
+
 Focused behavioral checks:
 
 ```sh
-python -m pytest tests/test_forecast_quality.py -q
+OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 \
+  uv run --locked --dev pytest tests/test_forecast_quality.py \
+  tests/test_forecast_quality_exporter.py tests/test_replay_contract.py -q
 ```
 
 These fixtures establish arithmetic, training-only scaling, positional release,
 source verification, duplicate/conflict handling and concurrent snapshot behavior.
-Actual selected-model replay coverage, monitoring-stack integration, hosted CI,
-peer review and target deployment are separate evidence.
+The shared delayed-overlap fixture from `tests/replay_fixture.py` also exercises
+the consumer through the public reader. Fixture arithmetic, retained selected-model
+coverage, hosted CI, local stack rendering and target deployment are separate evidence.
 
 ## Separate exporter and monitoring stack
 
@@ -92,6 +103,8 @@ ENDESA_QUALITY_REPORT="$PWD/temporary/quality/report.json" \
 when the file is missing, invalid, oversized, future-dated or stale; no previous
 values are cached. The exporter stays reachable with availability 0, so Prometheus
 can distinguish report failure from exporter failure. JSON is limited to 1 MiB.
+Duplicate JSON keys, noninteger schema/horizon fields and state/horizon counts
+that describe different forecast populations also invalidate the whole report.
 
 `ENDESA_QUALITY_MAX_AGE_SECONDS` defaults to 300 and accepts 1..86400. This is an
 operational report-refresh limit, not a coverage or forecasting SLO. Report age
@@ -107,17 +120,23 @@ and, for error/interval metrics, `model_role` (`selected` or `seasonal_lag48`).
 a computed zero error is exported as zero. Model/settings/source/config identities
 stay in the JSON metadata.
 
-The [Compose override](../monitoring/quality/compose.yml) extends the existing
-[private service stack](monitoring-service.md). It reuses its built image, mounts
+The [Compose override](../monitoring/quality/compose.yml) extends the
+[service stack](monitoring-service.md). It uses the API's exact image selector, mounts
 the exporter source and report directory read-only, and exposes port 9101 only
-inside the internal monitoring network. No checkpoint is mounted into this
-service. The source mount must come from the same reviewed checkout as the image;
+to the dedicated monitoring network. The ordinary Docker bridge permits outbound
+traffic; host publications for the other services bind to `127.0.0.1`. This is
+not egress isolation. No checkpoint is mounted into the quality service. It has a
+read-only root, one CPU, a 256 MiB memory limit and a 16 MiB `/tmp` mount. The
+source mount must come from the same reviewed checkout as the image;
 it is an explicit local integration configuration, not an immutable deployment
 artifact. No dependency or API instrumentation changes are required.
 
 ```sh
 export QUALITY_REPORT_DIR="$PWD/temporary/quality"
-# Set the base stack's GIT_SHA, FORECAST_CHECKPOINT_DIR and local Grafana password.
+export COMPOSE_PROJECT_NAME="endesa-quality-$(date +%s)"
+export GIT_SHA="$(git rev-parse HEAD)"
+# Set FORECAST_CHECKPOINT_DIR and GRAFANA_ADMIN_PASSWORD for the local stack.
+# Choose unused FORECAST_PORT, PROMETHEUS_PORT and GRAFANA_PORT before starting.
 docker compose -f monitoring/service/compose.yml -f monitoring/quality/compose.yml config --quiet
 docker compose -f monitoring/service/compose.yml -f monitoring/quality/compose.yml up --build -d
 ```
@@ -127,13 +146,73 @@ The override retains the API/Prometheus jobs and service alerts, adds a separate
 (`/d/endesa-quality`) with datasource UID `endesa-prometheus`. State error/baseline
 comparisons, coverage/width, counts and per-horizon evidence tables share scrape
 and report-availability gates. Missing data stays missing. The state selector
-controls the horizon tables; sample statuses explain omitted metric cells.
+controls the horizon tables; sample statuses explain omitted metric cells. The
+report-declared minimum appears beside availability and report age. Availability
+0 is red, 1 is green, and absent evidence is neutral. Time-series gaps stay open;
+legends use the final sample, including null, so an earlier value does not imply
+current availability. No numerical coverage/error threshold is configured.
 
 After a controlled report rename or an age-limit breach, availability must become
 0 and quality measurements must disappear; restore and atomically refresh the
 report to recover. Stopping the exporter must set `up{job="forecast-quality"}` to
 0 and remove current panel measurements. These conditions are evidence-display
 checks, with no external notification receiver or quality alert threshold.
+
+Stop only the selected project after inspection, retaining its data and unrelated
+resources:
+
+```sh
+docker compose -f monitoring/service/compose.yml -f monitoring/quality/compose.yml stop --timeout 10
+```
+
+## Quality-state and fixture contract for #84
+
+`up{job="forecast-quality"}` describes the scrape. Availability, age and all
+measurement queries match their own `job,instance`; one healthy exporter cannot
+expose another failed exporter's retained samples. Quality measurements and
+counts additionally require `endesa_quality_report_available == 1`. A missing
+target stays absent. The exporter health check proves HTTP reachability only.
+
+| Report state with exporter reachable | Present | Valid | Fresh | Available | Measurement/count series |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Valid and within age limit | 1 | 1 | 1 | 1 | Present; insufficient metrics omitted |
+| Missing | 0 | 0 | 0 | 0 | Absent |
+| Malformed, conflicting, oversized or future dated | 1 | 0 | 0 | 0 | Absent |
+| Valid but stale | 1 | 1 | 0 | 0 | Absent |
+
+Report status metrics use the `endesa_quality_report_` prefix. A failed scrape
+sets `up` to 0; dashboard report and measurement queries become absent even if
+Prometheus retains earlier samples. Restoring a valid report and successful
+scrapes recovers measurements. File freshness is unrelated to observation age.
+
+The deterministic fixture uses NSW and TAS, origins 512/513, stride1, delay2,
+training MASE scales 336, p50 equal to truth, width2 and baseline absolute error48.
+With `minimum_samples=2`, clock516 has 6 matched / 186 pending rows overall.
+Each state has 3 matched / 93 pending, 2 matched forecasts and 2 unique targets;
+horizons 1/2/3 have 2/1/0 matches and statuses sufficient/insufficient/pending.
+Releasing at 563 produces 192 matches, 0 pending and 98 unique state/targets;
+every state/horizon has 2 sufficient samples. Minimum30 would keep the final
+horizon metrics suppressed. These are synthetic expectations, not model results.
+
+The [Prometheus scenarios](../monitoring/quality/dashboard-tests.yml) exercise all
+18 dashboard expressions for sufficient and insufficient samples, unavailable
+reports, failed/missing targets and mixed healthy/failed exporters. Run them with
+the pinned Prometheus image, without network access:
+
+```sh
+docker run --rm --network none --workdir /quality \
+  --mount "type=bind,src=$PWD/monitoring/quality,dst=/quality,readonly" \
+  --entrypoint /bin/promtool \
+  prom/prometheus:v3.15.1@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2 \
+  test rules dashboard-tests.yml
+```
+
+For actual #84 execution, retain the source/image/config identities, report hash
+and run ID, successful/failed scrape times and actual Grafana screenshots at each
+transition. Use an isolated owned project and fixture report for tooling checks;
+selected-model and deployment evidence require their separately reviewed runtime
+prerequisites. Full validation coverage and owner assessment remain pending;
+no coverage target is adopted by this configuration.
 
 ## Bounded selected-model observation
 
