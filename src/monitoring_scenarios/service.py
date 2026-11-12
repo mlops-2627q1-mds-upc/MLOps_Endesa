@@ -1,5 +1,6 @@
 """Service fault injection confined to an injected app or two owned containers."""
 
+from contextlib import ExitStack
 from datetime import UTC, datetime
 import json
 import os
@@ -215,6 +216,7 @@ class OwnedStack:
         self.api_url = self.url(self.api, "8000/tcp")
         self.prometheus_url = self.url(self.prometheus, "9090/tcp")
         self.runtime.update({"api_url": self.api_url, "prometheus_url": self.prometheus_url})
+        self.runtime["api_urls"] = [self.api_url]
         self.persist()
 
     @staticmethod
@@ -231,6 +233,10 @@ class OwnedStack:
             raise ValueError("Fixture API ownership mismatch")
         if running:
             docker("start", self.api)
+            self.api_url = self.url(self.api, "8000/tcp")
+            self.runtime["api_url"] = self.api_url
+            self.runtime["api_urls"].append(self.api_url)
+            self.persist()
         else:
             docker("stop", "--time", "5", self.api)
 
@@ -323,10 +329,13 @@ def docker_service(directory, scenario, declaration, owner, image):
 
     try:
         stack.start()
-        with (
-            httpx.Client(base_url=stack.api_url, timeout=5, trust_env=False) as api,
-            httpx.Client(base_url=stack.prometheus_url, timeout=5, trust_env=False) as prom,
-        ):
+        with ExitStack() as clients:
+            api = clients.enter_context(
+                httpx.Client(base_url=stack.api_url, timeout=5, trust_env=False)
+            )
+            prom = clients.enter_context(
+                httpx.Client(base_url=stack.prometheus_url, timeout=5, trust_env=False)
+            )
             wait_for(
                 prom,
                 'endesa_model_ready{job="forecast-api"}',
@@ -350,6 +359,10 @@ def docker_service(directory, scenario, declaration, owner, image):
                     lambda rows: bool(rows),
                 )
                 stack.change_running(True)
+                record("api_restart", {"id": stack.api, "api_url": stack.api_url})
+                api = clients.enter_context(
+                    httpx.Client(base_url=stack.api_url, timeout=5, trust_env=False)
+                )
                 wait_for(
                     prom,
                     'endesa_model_ready{job="forecast-api"}',
@@ -375,6 +388,8 @@ def docker_service(directory, scenario, declaration, owner, image):
             alerts = prom.get("/api/v1/alerts")
             alerts.raise_for_status()
             record("all_alerts", alerts.json())
+            if scenario == "normal" and alerts.json()["data"]["alerts"]:
+                raise RuntimeError("Normal control has unexpected pending/firing service alerts")
             targets = prom.get("/api/v1/targets")
             targets.raise_for_status()
             record("targets", targets.json())

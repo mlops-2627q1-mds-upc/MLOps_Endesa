@@ -208,6 +208,27 @@ def test_cached_image_requires_exact_identity_before_creation(tmp_path):
     assert not (tmp_path / "runtime.json").exists()
 
 
+def test_restart_refreshes_dynamic_binding_before_recovery_request(tmp_path, monkeypatch):
+    owner = "endesa-84-rebind"
+    stack = service.OwnedStack(tmp_path, owner, "sha256:" + "a" * 64)
+    stack.api = "b" * 64
+    stack.api_url = "http://127.0.0.1:12345"
+    stack.runtime["api_urls"] = [stack.api_url]
+    monkeypatch.setattr(
+        service,
+        "inspect_container",
+        lambda _id: {"Config": {"Labels": {service.OWNER_LABEL: owner}}},
+    )
+    commands = []
+    monkeypatch.setattr(service, "docker", lambda *args: commands.append(args))
+    monkeypatch.setattr(stack, "url", lambda *_args: "http://127.0.0.1:54321")
+    stack.change_running(True)
+    assert commands == [("start", "b" * 64)]
+    assert stack.api_url == "http://127.0.0.1:54321"
+    assert stack.runtime["api_urls"] == ["http://127.0.0.1:12345", "http://127.0.0.1:54321"]
+    assert json.loads((tmp_path / "runtime.json").read_text())["api_url"] == stack.api_url
+
+
 def test_actual_ks_control_shift_recovery_when_isolated_backend_available(tmp_path):
     pytest.importorskip("alibi_detect")
     from src.monitoring_scenarios.experiments import (  # pylint: disable=import-outside-toplevel

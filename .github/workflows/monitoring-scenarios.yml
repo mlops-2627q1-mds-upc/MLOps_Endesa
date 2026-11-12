@@ -1,0 +1,46 @@
+name: Monitoring scenario checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  alibi:
+    name: Scenarios / synthetic Alibi
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      OMP_NUM_THREADS: "2"
+      OPENBLAS_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "2"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.11.32"
+          python-version: "3.11"
+      - name: Install isolated locked drift dependencies
+        run: uv sync --project monitoring/drift --locked --dev
+      - name: Require the actual Alibi backend
+        run: monitoring/drift/.venv/bin/python -c 'from alibi_detect.cd import KSDrift'
+      - name: Test fresh control, shift and recovery
+        run: monitoring/drift/.venv/bin/python -m pytest --noconftest tests/test_monitoring_scenarios.py -k actual_ks -q
+      - name: Retain the declared synthetic experiment
+        run: |
+          monitoring/drift/.venv/bin/python -m src.monitoring_scenarios run \
+            --scenario shifted-demand --engine alibi \
+            --directory temporary/issue-84/ci-alibi
+      - name: Upload synthetic evidence including failures
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: issue-84-synthetic-alibi
+          path: temporary/issue-84/ci-alibi/
+          if-no-files-found: warn

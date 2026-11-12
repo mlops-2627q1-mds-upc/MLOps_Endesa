@@ -196,6 +196,8 @@ def supervise(
             )
             code = process.wait(timeout=duration - 30)
             status = "passed" if code == 0 else "failed"
+            if code != 0:
+                error = f"Child exited {code}; inspect execution.log and retained observations"
         except (OSError, subprocess.TimeoutExpired, KeyboardInterrupt) as exc:
             error = f"{type(exc).__name__}: {exc}"
         finally:
