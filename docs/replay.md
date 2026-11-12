@@ -139,6 +139,76 @@ Neither a running call nor an unknown outcome is reported as a confirmed failure
 Both consume the durable attempt budget until the run ends; an unknown outcome
 stays visible even if a later attempt succeeds.
 
+### Schema and identity contract
+
+`src.monitoring.SCHEMA_VERSION` is **1**. The frozen record fields are defined in
+[`src/monitoring/types.py`](../src/monitoring/types.py); the reader methods above
+are the consumer interface for #82, #83 and #84. No record fields or stored data
+were migrated when integrating the merged API from #86 and inference from #52.
+
+The version-1 SQLite layout is:
+
+| Table | Key and retained record |
+| --- | --- |
+| `run` | One singleton: run ID, canonical config/source manifests and hashes, clock and request cursor. |
+| `attempts` | Integer ID; unique `(request_index, number)`; bounded outcome code. |
+| `forecasts` | Forecast ID; unique `(state, origin)`; canonical request hash. |
+| `steps` | Integer step ID; unique `(forecast_id, horizon)`; target, quantiles and lag-48 baseline. |
+| `observations` | Integer observation ID; unique `(state, position)`; value and scheduled release position. |
+| `matches` | Integer match ID; unique forecast step ID joined to a released observation ID. |
+
+Readers and writers check the version, application marker and table/column
+layout. A foreign database with `user_version=1` is also refused before changing
+its journal mode. Table names describe the storage contract; consumers use the
+public reader instead of SQL.
+
+`input_sha256` hashes canonical JSON for `{state, history}` using sorted keys,
+compact separators and finite numbers. `forecast_id` is SHA-256 of the UTF-8
+string `run_id:state:origin:input_sha256`. It is deterministic within a run across
+retries and restarts. A separate journal receives a separate random run ID even
+when its source and configuration are identical. Step, match and observation IDs
+are independent monotonic cursors scoped to that run. Model/settings and source
+identities are carried by `RunInfo` and the exported records; do not combine
+rows from different runs or retain a cursor without its run ID.
+
+### Deterministic consumer fixture
+
+The shared [fixture generator](../tests/replay_fixture.py) creates synthetic
+train/validation files, parameters, a fictional model identity and a closed
+journal. It sends requests only through an explicitly injected HTTPX
+`MockTransport`; it loads no checkpoint and contacts no service. From the root:
+
+```sh
+uv run --locked --dev python -m tests.replay_fixture \
+  --directory reports/replay/contract-v1
+uv run --locked --dev python -m src.monitoring status \
+  --journal reports/replay/contract-v1/replay.sqlite
+```
+
+The destination must not exist; the generator refuses to overwrite a directory.
+Outputs stay under ignored `reports/replay/`. No final-test file is generated.
+Tests can call `create_replay_fixture(tmp_path / "fixture")` and open the returned
+`fixture.journal` with `JournalReader`; the returned source and config permit
+explicit writer/restart scenarios in tests.
+
+| Fixture declaration | Hand-calculated expectation |
+| --- | --- |
+| Source | Positions 0..607; `NSW[t]=t`, `TAS[t]=-t-1`; training ends at 512. |
+| Requests | Origins 512 and 513, stride 1, states NSW then TAS: four forecasts and 192 steps. |
+| Predictor | Exact linear continuation; p10/p90 are one unit below/above p50. Hashes `a` x 64 and training run `b` x 32 are fictional. |
+| Monitoring delay | 2; position 512 releases at 515 and position 513 at 516. |
+| Saved clock 516 | Six matched steps, four unique observations, 186 pending steps, zero failed/unfinished attempts. |
+| Explicit final release at 563 | 192 matches, 98 unique observations, zero pending steps; restart sends no further HTTP. |
+
+Overlapping origins intentionally produce more quality joins than unique drift
+samples. Every matched p50 equals its observation, each interval has width 2,
+and each lag-48 baseline has absolute error 48. These check consumer arithmetic
+and release handling; they are fixture expectations without model-performance
+meaning. Independent journals have different run/forecast IDs, while generated
+values, requests and expected counts are deterministic. The
+[contract tests](../tests/test_replay_contract.py) also check nested snapshots,
+late join cursors and request identity retention across restart.
+
 ## Persistence, retries and retention
 
 SQLite uses full synchronization, foreign keys and WAL. An empty database left by
@@ -166,10 +236,10 @@ sidecars under ignored `reports/replay/`; do not commit them or source datasets.
 ## Local evidence
 
 ```sh
-uv run --dev pytest tests/test_replay.py tests/test_api.py tests/test_splits.py -q
-uv run --dev ruff format --check
-uv run --dev ruff check
-uv run --dev pylint src tests
+uv run --locked --dev pytest tests/test_replay.py tests/test_replay_contract.py \
+  tests/test_api.py tests/test_splits.py -q
+make lint
+make coverage
 ```
 
 The replay tests use numbered positions to check input boundaries, every target
@@ -188,6 +258,8 @@ completed invocation left counts unchanged. The API used one worker and two CPU
 threads and was stopped afterward. The recorded 160.18 seconds covers startup
 and the whole replay; it is not a request-latency benchmark or target-capacity
 measurement. This subset does not establish full-validation interval calibration.
+The retained summary remains evidence from that source and date; the integration
+checks and synthetic fixture above do not constitute another real-model run.
 
 To reproduce that range with the CLI above, use `--origin-stop 197136`, all five
 states, `--max-forecasts 150 --max-seconds 300 --release-through 197140` and a new

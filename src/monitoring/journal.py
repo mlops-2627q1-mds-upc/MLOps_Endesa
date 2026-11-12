@@ -21,6 +21,14 @@ from src.monitoring.types import (
 )
 
 SCHEMA_VERSION = 1
+_SCHEMA_COLUMNS = {
+    "run": "singleton run_id config_json config_sha256 source_sha256 source_reference clock_position next_index",
+    "attempts": "id request_index number outcome",
+    "forecasts": "forecast_id state origin input_sha256",
+    "steps": "id forecast_id horizon target_position p10 p50 p90 seasonal_lag48",
+    "observations": "id state position value released_position",
+    "matches": "id step_id observation_id",
+}
 SCHEMA = """
 BEGIN IMMEDIATE;
 CREATE TABLE run (
@@ -117,7 +125,22 @@ class JournalReader:
             raise
 
     def _validate_schema(self):
-        if self.connection.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION:
+        version = self.connection.execute("PRAGMA user_version").fetchone()[0]
+        application = self.connection.execute("PRAGMA application_id").fetchone()[0]
+        tables = {
+            row[0]
+            for row in self.connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+        if (
+            version != SCHEMA_VERSION
+            or application != 0
+            or not _SCHEMA_COLUMNS.keys() <= tables
+            or any(
+                [row[1] for row in self.connection.execute(f"PRAGMA table_info({table})")]
+                != columns.split()
+                for table, columns in _SCHEMA_COLUMNS.items()
+            )
+        ):
             raise ValueError("Unsupported replay journal schema")
 
     def __enter__(self):

@@ -610,6 +610,42 @@ def test_writer_preserves_foreign_uninitialized_database(setup_replay, foreign_s
     assert case.calls == []
 
 
+def test_reader_and_writer_preserve_foreign_database_with_matching_version(setup_replay):
+    case = setup_replay
+    with sqlite3.connect(case.path) as connection:
+        connection.execute("CREATE TABLE unrelated (id INTEGER)")
+        connection.execute("PRAGMA user_version=1")
+    before = case.path.read_bytes()
+    with pytest.raises(ValueError, match="schema"):
+        JournalReader(case.path)
+    with pytest.raises(ValueError, match="schema"):
+        Replay(case.path, case.source, case.config, client=case.client)
+    assert case.path.read_bytes() == before
+    assert case.calls == []
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "ALTER TABLE steps RENAME COLUMN horizon TO lead",
+        "DROP TABLE matches",
+        "PRAGMA application_id=1",
+    ],
+)
+def test_reader_and_writer_refuse_an_incompatible_version_one_layout(setup_replay, mutation):
+    case = setup_replay
+    with Replay(case.path, case.source, case.config, client=case.client) as replay:
+        replay.run()
+        replay.journal.connection.execute(mutation)
+    before = case.path.read_bytes()
+    with pytest.raises(ValueError, match="schema"):
+        JournalReader(case.path)
+    with pytest.raises(ValueError, match="schema"):
+        Replay(case.path, case.source, case.config, client=case.client)
+    assert case.path.read_bytes() == before
+    assert len(case.calls) == 1
+
+
 def test_journal_aliases_share_the_single_writer_lock(tmp_path, setup_replay):
     case = setup_replay
     with Replay(case.path, case.source, case.config, client=case.client):

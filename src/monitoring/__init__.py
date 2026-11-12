@@ -1,6 +1,6 @@
 """Public historical replay exports for drift and delayed error monitoring."""
 
-from src.monitoring.journal import JournalReader
+from src.monitoring.journal import SCHEMA_VERSION, JournalReader
 from src.monitoring.types import (
     ForecastStep,
     MatchedObservation,
@@ -12,6 +12,7 @@ from src.monitoring.types import (
 )
 
 __all__ = [
+    "SCHEMA_VERSION",
     "ForecastStep",
     "JournalReader",
     "MatchedObservation",
