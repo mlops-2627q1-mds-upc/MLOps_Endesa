@@ -70,3 +70,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Raw serving benchmark observations and local declarations (#76)
+/reports/serving-benchmark/
