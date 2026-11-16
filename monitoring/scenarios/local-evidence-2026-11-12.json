@@ -1,0 +1,814 @@
+{
+  "evidence_directory": "temporary/issue-84/runs",
+  "promtool": {
+    "container": "7c9d14af984c858b6e252a29ea3cc44ec6e43ac60fa4d99b6024a0cbf833f7bc",
+    "image": "prom/prometheus:v3.15.1@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2",
+    "result": "three suites passed"
+  },
+  "recorded_on": "2026-11-12",
+  "records": [
+    {
+      "alerts": {
+        "clearing": null,
+        "delivery": "not_measured",
+        "firing": null
+      },
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "clock": "wall_seconds",
+      "declaration_sha256": "cc9490323cf7ecc65abdbb9373b603241c0109f744a5fd168e6219e0339b9f67",
+      "elapsed_wall_seconds": 0.8059660829603672,
+      "engine": "fixture",
+      "evidence_kind": "in_process_service_fixture",
+      "expected_signal": "Successful forecasts, ready=1, no service failure alert",
+      "max_seconds": 180,
+      "missed_detections": [],
+      "observed_signal": {
+        "control": {
+          "http_status": 200,
+          "wall_seconds": 0.0020918333902955055
+        },
+        "fault": [
+          {
+            "http_status": 200,
+            "wall_seconds": 0.00065633375197649
+          },
+          {
+            "http_status": 200,
+            "wall_seconds": 0.0006728330627083778
+          },
+          {
+            "http_status": 200,
+            "wall_seconds": 0.0006229998543858528
+          }
+        ]
+      },
+      "procedure_passed": true,
+      "recovery": {
+        "http_status": 200,
+        "wall_seconds": 0.0005606659688055515
+      },
+      "report_hashes": {
+        "fault-metrics.prom": "e3fcfff686d66797d6acde92e8d4642834adfcd0575cab443f0c88a0ec86b628",
+        "fault.json": "7ef51fee0997cc111fc7aefb038210e06a4f750c22b8422df2238f23b2ea6bce",
+        "request.json": "11d5edc447be442a9d2ce3c319ddae58b13407c7610cd735fe51224fbcab5327",
+        "result.json": "88f3126f9a5095bea236248f215e8a610e780d05810915d345aef844eda9ea99",
+        "summary.json": "0b8a91cf83f6fb5657dde1d6470d300294cbfd77a282b73b7e638d60512aa7d1"
+      },
+      "run": "fixture-normal-01",
+      "sample_sufficiency": {
+        "completed_requests": 3
+      },
+      "scenario": "normal",
+      "source_dirty": [],
+      "source_head": "ab3c925dbce7c3c9e847b9a0fb64b8a7c0285de1",
+      "source_tree": "27d91dcee6845d9de0c9b1fcc63b8f202142f89c",
+      "started_utc": "2026-11-12T14:18:38.369973+00:00",
+      "status": "passed"
+    },
+    {
+      "alerts": {
+        "clearing": null,
+        "delivery": "not_measured",
+        "firing": null
+      },
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "clock": "wall_seconds",
+      "declaration_sha256": "cc9490323cf7ecc65abdbb9373b603241c0109f744a5fd168e6219e0339b9f67",
+      "elapsed_wall_seconds": 0.5922447079792619,
+      "engine": "fixture",
+      "evidence_kind": "in_process_service_fixture",
+      "expected_signal": "Fixture: ready=0 and HTTP 503; owned Docker: up=0, ForecastApiDown fires then clears",
+      "max_seconds": 240,
+      "missed_detections": [],
+      "observed_signal": {
+        "control": {
+          "http_status": 200,
+          "wall_seconds": 0.0018186247907578945
+        },
+        "fault": [
+          {
+            "http_status": 503,
+            "wall_seconds": 0.0004987907595932484
+          }
+        ]
+      },
+      "procedure_passed": true,
+      "recovery": {
+        "http_status": 200,
+        "wall_seconds": 0.0006927922368049622
+      },
+      "report_hashes": {
+        "fault-metrics.prom": "44d4255892062e038072b6ab4a459cd021dcf2637123e3db4d18eabc132bef60",
+        "fault.json": "7ef51fee0997cc111fc7aefb038210e06a4f750c22b8422df2238f23b2ea6bce",
+        "request.json": "1de5e561fff106e063274de2e7d1d4bd2963763b27a708b0bae81e9312b9bbe7",
+        "result.json": "38ac56391adcb56671694d947b3dfc0a48621feddcfc337b4b82a99820ce5369",
+        "summary.json": "141f95e542d3e187db3cafe86a2b6cd3c87f30e53eec421b400943d068f775b2"
+      },
+      "run": "fixture-service-unavailable-01",
+      "sample_sufficiency": {
+        "completed_requests": 1
+      },
+      "scenario": "service-unavailable",
+      "source_dirty": [],
+      "source_head": "ab3c925dbce7c3c9e847b9a0fb64b8a7c0285de1",
+      "source_tree": "27d91dcee6845d9de0c9b1fcc63b8f202142f89c",
+      "started_utc": "2026-11-12T14:18:39.285999+00:00",
+      "status": "passed"
+    },
+    {
+      "alerts": {
+        "clearing": null,
+        "delivery": "not_measured",
+        "firing": null
+      },
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "clock": "wall_seconds",
+      "declaration_sha256": "cc9490323cf7ecc65abdbb9373b603241c0109f744a5fd168e6219e0339b9f67",
+      "elapsed_wall_seconds": 1.3594208327122033,
+      "engine": "fixture",
+      "evidence_kind": "in_process_service_fixture",
+      "expected_signal": "Completed forecast durations include the declared fixture delay; recovery succeeds",
+      "max_seconds": 180,
+      "missed_detections": [],
+      "observed_signal": {
+        "control": {
+          "http_status": 200,
+          "wall_seconds": 0.001574499998241663
+        },
+        "fault": [
+          {
+            "http_status": 200,
+            "wall_seconds": 0.2592219999060035
+          },
+          {
+            "http_status": 200,
+            "wall_seconds": 0.2608398338779807
+          },
+          {
+            "http_status": 200,
+            "wall_seconds": 0.2610223749652505
+          }
+        ]
+      },
+      "procedure_passed": true,
+      "recovery": {
+        "http_status": 200,
+        "wall_seconds": 0.0007933750748634338
+      },
+      "report_hashes": {
+        "fault-metrics.prom": "2a109fc5199f0af06bf05bdebeb908e4c040d910d6c430fafe9fbc94a5d17f4b",
+        "fault.json": "7ef51fee0997cc111fc7aefb038210e06a4f750c22b8422df2238f23b2ea6bce",
+        "request.json": "96eaf5ddb909d3a70df175e67f8d5e8b759172b5bc91f721a33ecd987a7df163",
+        "result.json": "086b2f031fbdbcf749cd4a66e3ca5f41c1dcfe0096ee86189632165a7ccb6145",
+        "summary.json": "2596f9020179f0177bd3fe6cfe50fb879e1f2aed4470e4a1b0c0379a60e44dfc"
+      },
+      "run": "fixture-slow-request-01",
+      "sample_sufficiency": {
+        "completed_requests": 3
+      },
+      "scenario": "slow-request",
+      "source_dirty": [],
+      "source_head": "ab3c925dbce7c3c9e847b9a0fb64b8a7c0285de1",
+      "source_tree": "27d91dcee6845d9de0c9b1fcc63b8f202142f89c",
+      "started_utc": "2026-11-12T14:18:39.990835+00:00",
+      "status": "passed"
+    },
+    {
+      "alerts": {
+        "clearing": null,
+        "delivery": "not_measured",
+        "firing": null
+      },
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "clock": "replay_position",
+      "declaration_sha256": "cc9490323cf7ecc65abdbb9373b603241c0109f744a5fd168e6219e0339b9f67",
+      "elapsed_wall_seconds": 0.8734679170884192,
+      "engine": "fixture",
+      "evidence_kind": "deterministic_fixture",
+      "expected_signal": "Pending and insufficient horizon groups before release; complete joins after release",
+      "max_seconds": 120,
+      "missed_detections": [],
+      "phases": [
+        {
+          "clock_position": 516,
+          "counts": {
+            "clock_position": 516,
+            "complete": false,
+            "completed_forecasts": 4,
+            "expected_forecasts": 4,
+            "failed_attempts": 0,
+            "forecast_steps": 192,
+            "matched_steps": 6,
+            "next_origin": null,
+            "pending_steps": 186,
+            "unfinished_attempts": 0
+          },
+          "default_minimum_30_statuses": [
+            "insufficient_samples",
+            "pending_observations"
+          ],
+          "phase": "delayed"
+        },
+        {
+          "clock_position": 563,
+          "counts": {
+            "clock_position": 563,
+            "complete": true,
+            "completed_forecasts": 4,
+            "expected_forecasts": 4,
+            "failed_attempts": 0,
+            "forecast_steps": 192,
+            "matched_steps": 192,
+            "next_origin": null,
+            "pending_steps": 0,
+            "unfinished_attempts": 0
+          },
+          "default_minimum_30_statuses": [
+            "insufficient_samples"
+          ],
+          "phase": "recovery"
+        }
+      ],
+      "procedure_passed": true,
+      "recovery": {
+        "observed": true
+      },
+      "report_hashes": {
+        "quality-delayed.json": "a3ba1c5d09a82d01653c612703441f37e56b0560b477da018fb8474d9c16520c",
+        "quality-delayed.prom": "f6b857ec720cb9b2bffd70c1736899594ad71bbb26e64421c698cb6c17bd6a49",
+        "quality-recovery.json": "e77f8f7df05d6b3943ab0a127e0a9b9f04d271e2ca433efe9e5e048c30668461",
+        "quality-recovery.prom": "05f7c775cb529634992abb141e81d6e4d7f95a8c5bc5b64033788f7f5c86bd4e",
+        "request.json": "e0b12db551441b188ae080d87c673a07b650388fe3fdc9d69d4a501b99b52cf4",
+        "result.json": "15327080716b674d7437a3e4c9fb0ced863ff84e96c7fb0930c0d328c4d0005d",
+        "summary.json": "7c93fcff90d0a0aeb3b5fe8eee891c59534a0aed88bf9794b17bcd8a5de3feda"
+      },
+      "run": "fixture-delayed-observation-03",
+      "sample_sufficiency": {
+        "default_horizons_remain_insufficient": true,
+        "default_minimum": 30,
+        "display_minimum": 2,
+        "overlapping_targets_are_dependent": true
+      },
+      "scenario": "delayed-observation",
+      "source_dirty": [],
+      "source_head": "aa33efba345c5f9e81f0bac322d28291f1b2eaaa",
+      "source_tree": "7a4bc6ef8417197d79da75174eb285d2332fee30",
+      "started_utc": "2026-11-12T14:29:30.192361+00:00",
+      "status": "passed"
+    },
+    {
+      "alerts": {
+        "clearing": null,
+        "delivery": "not_measured",
+        "firing": null
+      },
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "clock": "replay_position",
+      "declaration_sha256": "cc9490323cf7ecc65abdbb9373b603241c0109f744a5fd168e6219e0339b9f67",
+      "dependencies": {
+        "alibi-detect": "0.13.0",
+        "numpy": "1.26.4",
+        "pandas": "2.3.3",
+        "scipy": "1.17.1"
+      },
+      "elapsed_wall_seconds": 3.1282655419781804,
+      "engine": "alibi",
+      "evidence_kind": "fresh_synthetic_alibi",
+      "expected_signal": "Fresh Alibi KS comparisons: unchanged control, fixed level shift, restored distribution",
+      "max_seconds": 180,
+      "missed_detections": [],
+      "phases": [
+        {
+          "available_position": 37632,
+          "phase": "control",
+          "states": {
+            "NSW": "no_drift",
+            "QLD": "no_drift",
+            "SA": "no_drift",
+            "TAS": "no_drift",
+            "VIC": "no_drift"
+          }
+        },
+        {
+          "available_position": 40320,
+          "phase": "shift",
+          "states": {
+            "NSW": "drift",
+            "QLD": "drift",
+            "SA": "drift",
+            "TAS": "drift",
+            "VIC": "drift"
+          }
+        },
+        {
+          "available_position": 43008,
+          "phase": "recovery",
+          "states": {
+            "NSW": "no_drift",
+            "QLD": "no_drift",
+            "SA": "no_drift",
+            "TAS": "no_drift",
+            "VIC": "no_drift"
+          }
+        }
+      ],
+      "procedure_passed": true,
+      "recovery": {
+        "observed": true,
+        "position": 43008,
+        "semantics": "next scheduled KS result, not an operational alert clearing"
+      },
+      "report_hashes": {
+        "drift.json": "9a3a761f2cbb560aebd9df98c127e8ce2f0522cb03c408f6ef541961223c0502",
+        "request.json": "740490c9a98f44fc9750172be840fbaa147a5727dec415fb86e0aa5b42a6246c",
+        "result.json": "bc43532aceff1c06a757c6fd46451ece62cd2aee0a8e14c5cff3718c3adc4b96",
+        "summary.json": "ad7662f1e77c9cc43119a99581d62c12a843389dcdbe3d4cb87f4b8eeebc4783"
+      },
+      "run": "alibi-shift-02",
+      "sample_sufficiency": {
+        "expected_positions_per_state": 2688,
+        "reference_cycles": 104,
+        "test_cycles": 8
+      },
+      "scenario": "shifted-demand",
+      "source_dirty": [],
+      "source_head": "aa33efba345c5f9e81f0bac322d28291f1b2eaaa",
+      "source_tree": "7a4bc6ef8417197d79da75174eb285d2332fee30",
+      "started_utc": "2026-11-12T14:29:15.191381+00:00",
+      "status": "passed"
+    },
+    {
+      "alerts": {
+        "clearing": null,
+        "delivery": "not_configured",
+        "firing": null
+      },
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "clock": "wall_seconds",
+      "declaration_sha256": "cc9490323cf7ecc65abdbb9373b603241c0109f744a5fd168e6219e0339b9f67",
+      "elapsed_wall_seconds": 9.916375916916877,
+      "engine": "docker",
+      "evidence_kind": "owned_docker_service_fixture",
+      "expected_signal": "Successful forecasts, ready=1, no service failure alert",
+      "max_seconds": 180,
+      "missed_detections": [],
+      "observed_signal": {
+        "control": {
+          "elapsed_seconds": 8.177168125286698,
+          "kind": "control",
+          "utc": "2026-11-12T14:28:10.306936+00:00",
+          "value": {
+            "http_status": 200,
+            "wall_seconds": 0.04924212535843253
+          }
+        },
+        "fault_start": {
+          "elapsed_seconds": 8.177345625124872,
+          "kind": "fault_start",
+          "utc": "2026-11-12T14:28:10.307118+00:00",
+          "value": "normal"
+        },
+        "forecasts": [
+          {
+            "elapsed_seconds": 8.382002416066825,
+            "kind": "forecast",
+            "utc": "2026-11-12T14:28:10.511771+00:00",
+            "value": {
+              "http_status": 200,
+              "wall_seconds": 0.0041956668719649315
+            }
+          },
+          {
+            "elapsed_seconds": 8.38469541631639,
+            "kind": "forecast",
+            "utc": "2026-11-12T14:28:10.514464+00:00",
+            "value": {
+              "http_status": 200,
+              "wall_seconds": 0.002551124896854162
+            }
+          },
+          {
+            "elapsed_seconds": 8.387661375105381,
+            "kind": "forecast",
+            "utc": "2026-11-12T14:28:10.517430+00:00",
+            "value": {
+              "http_status": 200,
+              "wall_seconds": 0.0028201667591929436
+            }
+          }
+        ]
+      },
+      "procedure_passed": true,
+      "recovery": {
+        "elapsed_seconds": 8.56191354105249,
+        "kind": "recovery",
+        "utc": "2026-11-12T14:28:10.691683+00:00",
+        "value": {
+          "http_status": 200,
+          "wall_seconds": 0.0036359578371047974
+        }
+      },
+      "report_hashes": {
+        "fault.json": "52a999c2850c4d0e4a92edba0e8b21d4a818cafa9b63e0b7d1dda0836cd84224",
+        "observations.jsonl": "1216ac4d4676911afa966455aba0739ddad60844dbad0c3362767a1f80e8d396",
+        "request.json": "f1caa0d84bf5a0e7a3f3ff8b3e35b9f1e83474b22726eb1725daca7ce572c42d",
+        "result.json": "a8ade964a0e5440eb682b00285b730953565bd95419ea1c1ea99b76010f1b76c",
+        "runtime.json": "8caa8412252030a0f10c3fed0302c3454756167038cbda273cdbee239e416d77",
+        "service-metrics.prom": "a149ba5f8708bc736c63a2d3544ba08204994a8455728c2c1e2aeb3dfce8b171",
+        "summary.json": "b55585cd4323645d7292ef7b47b2d929ddaa52ded74a4794fd2e3612b66c9a46"
+      },
+      "run": "docker-final-normal-01",
+      "runtime": {
+        "api_bindings": [
+          "http://127.0.0.1:64773"
+        ],
+        "container_ids": [
+          "2d0d35bf608136f74515c51f4b2a625692b0e37ab86820ed0b492e9ade479307",
+          "0a2932816fe9ee1943e6b8fbcb0cf9836a2391a3855924cf8e8312fbf4513f7d"
+        ],
+        "fixture_image_id": "sha256:673b9b4c5c37fd20452fe9662a070e56201bd4459911290dd643f4a590cf7df3",
+        "fixture_image_source": "ae7a9151ee945292fff8d4a18343754f43ddeb12",
+        "network": "4a16d8eff86dbc2df04d6c5d8517f9f5bc0d278f138b80391dfa8eca4592e698",
+        "prometheus_image_id": "sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2",
+        "target": "endesa-84-final-normal-01"
+      },
+      "sample_sufficiency": {
+        "completed_requests": 3,
+        "latency_slo": "not_adopted"
+      },
+      "scenario": "normal",
+      "source_dirty": [],
+      "source_head": "aa33efba345c5f9e81f0bac322d28291f1b2eaaa",
+      "source_tree": "7a4bc6ef8417197d79da75174eb285d2332fee30",
+      "started_utc": "2026-11-12T14:28:01.949109+00:00",
+      "status": "passed"
+    },
+    {
+      "alerts": {
+        "clearing": {
+          "elapsed_seconds": 76.59067633422092,
+          "kind": "ALERTS{alertname=\"ForecastApiDown\",alertstate=\"firing\"}",
+          "utc": "2026-11-12T14:29:28.762217+00:00",
+          "value": []
+        },
+        "delivery": "not_configured",
+        "firing": {
+          "elapsed_seconds": 70.30941474996507,
+          "kind": "ALERTS{alertname=\"ForecastApiDown\",alertstate=\"firing\"}",
+          "utc": "2026-11-12T14:29:22.480969+00:00",
+          "value": [
+            {
+              "metric": {
+                "__name__": "ALERTS",
+                "alertname": "ForecastApiDown",
+                "alertstate": "firing",
+                "instance": "api:8000",
+                "job": "forecast-api",
+                "severity": "critical"
+              },
+              "value": [
+                1794493762.479,
+                "1"
+              ]
+            }
+          ]
+        }
+      },
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "clock": "wall_seconds",
+      "declaration_sha256": "cc9490323cf7ecc65abdbb9373b603241c0109f744a5fd168e6219e0339b9f67",
+      "elapsed_wall_seconds": 77.9866764168255,
+      "engine": "docker",
+      "evidence_kind": "owned_docker_service_fixture",
+      "expected_signal": "Fixture: ready=0 and HTTP 503; owned Docker: up=0, ForecastApiDown fires then clears",
+      "max_seconds": 240,
+      "missed_detections": [],
+      "observed_signal": {
+        "control": {
+          "elapsed_seconds": 7.239778500050306,
+          "kind": "control",
+          "utc": "2026-11-12T14:28:19.411466+00:00",
+          "value": {
+            "http_status": 200,
+            "wall_seconds": 0.04671191656962037
+          }
+        },
+        "fault_start": {
+          "elapsed_seconds": 7.23997558420524,
+          "kind": "fault_start",
+          "utc": "2026-11-12T14:28:19.411668+00:00",
+          "value": "service-unavailable"
+        },
+        "forecasts": []
+      },
+      "procedure_passed": true,
+      "recovery": {
+        "elapsed_seconds": 76.63614187482744,
+        "kind": "recovery",
+        "utc": "2026-11-12T14:29:28.807681+00:00",
+        "value": {
+          "http_status": 200,
+          "wall_seconds": 0.045298291835933924
+        }
+      },
+      "report_hashes": {
+        "fault.json": "52a999c2850c4d0e4a92edba0e8b21d4a818cafa9b63e0b7d1dda0836cd84224",
+        "observations.jsonl": "53d7c228841d7e25fb583e002cd1cb4e061ac2d7218e72c93282fdd9c6d4b697",
+        "request.json": "5208081def1d2507d521c735ee4ebc6beac1c7bbfd71b418b32b751527ad77b0",
+        "result.json": "393686490b00109ea6ea6f627c35794363f49451e445445d0bd9095031805b12",
+        "runtime.json": "b3289614589d7fadfbfb33e0b6915dafc70d2e80aa8ef5307adb82869d38cf35",
+        "service-metrics.prom": "6fd325bac91559c14bc4eab01b60641c866853edd4d7c369f14350bb484eb551",
+        "summary.json": "8e67ed35ef8c2a89dd2233275eabf692d16c4c9da60d923c868c3ac7275fec79"
+      },
+      "run": "docker-final-service-unavailable-01",
+      "runtime": {
+        "api_bindings": [
+          "http://127.0.0.1:64828",
+          "http://127.0.0.1:65032"
+        ],
+        "container_ids": [
+          "5c7a2d0b93cad00249a15aa69f7e929c0f0bda882a4614d5cbfd825099de8e37",
+          "0f9d25b2f81f6296a2bf446da388001b2bf348654b0131083fcd43fa23c068ed"
+        ],
+        "fixture_image_id": "sha256:673b9b4c5c37fd20452fe9662a070e56201bd4459911290dd643f4a590cf7df3",
+        "fixture_image_source": "ae7a9151ee945292fff8d4a18343754f43ddeb12",
+        "network": "e7d6e737b23cfdbed804b632f8b32545970571210fe8954fd72926a150952fec",
+        "prometheus_image_id": "sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2",
+        "target": "endesa-84-final-service-unavailable-01"
+      },
+      "sample_sufficiency": {
+        "completed_requests": 0,
+        "latency_slo": "not_adopted"
+      },
+      "scenario": "service-unavailable",
+      "source_dirty": [],
+      "source_head": "aa33efba345c5f9e81f0bac322d28291f1b2eaaa",
+      "source_tree": "7a4bc6ef8417197d79da75174eb285d2332fee30",
+      "started_utc": "2026-11-12T14:28:12.000700+00:00",
+      "status": "passed"
+    },
+    {
+      "alerts": {
+        "clearing": null,
+        "delivery": "not_configured",
+        "firing": null
+      },
+      "child_exit_code": 0,
+      "cleanup_verified": true,
+      "clock": "wall_seconds",
+      "declaration_sha256": "cc9490323cf7ecc65abdbb9373b603241c0109f744a5fd168e6219e0339b9f67",
+      "elapsed_wall_seconds": 10.162945582997054,
+      "engine": "docker",
+      "evidence_kind": "owned_docker_service_fixture",
+      "expected_signal": "Completed forecast durations include the declared fixture delay; recovery succeeds",
+      "max_seconds": 180,
+      "missed_detections": [],
+      "observed_signal": {
+        "control": {
+          "elapsed_seconds": 7.479443584103137,
+          "kind": "control",
+          "utc": "2026-11-12T14:26:33.631219+00:00",
+          "value": {
+            "http_status": 200,
+            "wall_seconds": 0.06695183273404837
+          }
+        },
+        "fault_start": {
+          "elapsed_seconds": 7.47989054210484,
+          "kind": "fault_start",
+          "utc": "2026-11-12T14:26:33.631672+00:00",
+          "value": "slow-request"
+        },
+        "forecasts": [
+          {
+            "elapsed_seconds": 7.963979166932404,
+            "kind": "forecast",
+            "utc": "2026-11-12T14:26:34.115742+00:00",
+            "value": {
+              "http_status": 200,
+              "wall_seconds": 0.2565772500820458
+            }
+          },
+          {
+            "elapsed_seconds": 8.2291927090846,
+            "kind": "forecast",
+            "utc": "2026-11-12T14:26:34.380972+00:00",
+            "value": {
+              "http_status": 200,
+              "wall_seconds": 0.26452525006607175
+            }
+          },
+          {
+            "elapsed_seconds": 8.489005624782294,
+            "kind": "forecast",
+            "utc": "2026-11-12T14:26:34.640785+00:00",
+            "value": {
+              "http_status": 200,
+              "wall_seconds": 0.2595027503557503
+            }
+          }
+        ]
+      },
+      "procedure_passed": true,
+      "recovery": {
+        "elapsed_seconds": 8.696101374924183,
+        "kind": "recovery",
+        "utc": "2026-11-12T14:26:34.847882+00:00",
+        "value": {
+          "http_status": 200,
+          "wall_seconds": 0.003776916768401861
+        }
+      },
+      "report_hashes": {
+        "fault.json": "52a999c2850c4d0e4a92edba0e8b21d4a818cafa9b63e0b7d1dda0836cd84224",
+        "observations.jsonl": "433241861f7bcc453aefd5b51d27e7b60b599610e7fcab3ca69cbc7741b74be0",
+        "request.json": "112730188cc8a4d630573da58b0658836e21a0a177457fbf27fd45474614e3b7",
+        "result.json": "476b8ec0016c11c140717c4c6a6f6d61ef781481aaf19cb57b2cc58c172beeb6",
+        "runtime.json": "872a16cf4d7f723b152d84176c6c777e2380c1644f6a0eba6c8b06abcc645e5f",
+        "service-metrics.prom": "94fad4c2af9062f10262959df137e26e335e2de6cd5393cf9d26afbef16fbd0b",
+        "summary.json": "accd57ca0979204cc20f3c93676ac510e41ddc58a3628ef1b8b6d58c7bb654fb"
+      },
+      "run": "docker-slow-02",
+      "runtime": {
+        "api_bindings": [
+          "http://127.0.0.1:64413"
+        ],
+        "container_ids": [
+          "dca11ef0368eaece8d2141f376127c0ffd473a1a650ce6d06986b1a8ae6e0da5",
+          "07f50e517cc696903416bde0540bc8a67e46e122e047e25962d7d1426800f9b3"
+        ],
+        "fixture_image_id": "sha256:673b9b4c5c37fd20452fe9662a070e56201bd4459911290dd643f4a590cf7df3",
+        "fixture_image_source": "ae7a9151ee945292fff8d4a18343754f43ddeb12",
+        "network": "4ebff2bc1c6a23dd8b152f783aa597ab3753b5f1daaee75e3b8948edbb14a84e",
+        "prometheus_image_id": "sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2",
+        "target": "endesa-84-slow-1794496801"
+      },
+      "sample_sufficiency": {
+        "completed_requests": 3,
+        "latency_slo": "not_adopted"
+      },
+      "scenario": "slow-request",
+      "source_dirty": [],
+      "source_head": "aa33efba345c5f9e81f0bac322d28291f1b2eaaa",
+      "source_tree": "7a4bc6ef8417197d79da75174eb285d2332fee30",
+      "started_utc": "2026-11-12T14:26:25.992712+00:00",
+      "status": "passed"
+    },
+    {
+      "child_exit_code": 1,
+      "cleanup_verified": true,
+      "declaration_sha256": "cc9490323cf7ecc65abdbb9373b603241c0109f744a5fd168e6219e0339b9f67",
+      "elapsed_wall_seconds": 74.45746674994007,
+      "engine": "docker",
+      "failure": "Prometheus firing/clearing observed; HTTP recovery refused at retained dynamic host port; fixed by rebinding and a fresh client",
+      "max_seconds": 240,
+      "report_hashes": {
+        "fault.json": "7ef51fee0997cc111fc7aefb038210e06a4f750c22b8422df2238f23b2ea6bce",
+        "observations.jsonl": "5f8ab6a5b5b13ad9be54b897ef1540340ef9739af90021baf944f33586973984",
+        "request.json": "f522d4f5f268dd60b313e667abfac80a0e8faa3e043040cd282f995baeaef894",
+        "runtime.json": "70452fd905d4888333cf3e9615f6fa777506027ecbc84e413c73166a46f162fb",
+        "summary.json": "0b56c848ccc896e4ce8c74ee40a18e1f1349b590ce67c9d6a5daeea7f3fa9bb6"
+      },
+      "run": "docker-down-01",
+      "runtime": {
+        "api_bindings": [
+          "http://127.0.0.1:63148"
+        ],
+        "container_ids": [
+          "46695fc8bee000beb5044852f73ed4d06aab92c9babe856177ed1f95c2f143e9",
+          "55ac1b1335b56c1b62fd51d48475ccb965f5d8946596791663b4233e18662b7f"
+        ],
+        "fixture_image_id": "sha256:673b9b4c5c37fd20452fe9662a070e56201bd4459911290dd643f4a590cf7df3",
+        "fixture_image_source": "ae7a9151ee945292fff8d4a18343754f43ddeb12",
+        "network": "55891f1a6110fb74a05a1390e2367c7668ad546ac3fc8bf704285127074ab4d0",
+        "prometheus_image_id": "sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2",
+        "target": "endesa-84-down-1794496800"
+      },
+      "scenario": "service-unavailable",
+      "source_dirty": [],
+      "source_head": "ab3c925dbce7c3c9e847b9a0fb64b8a7c0285de1",
+      "source_tree": "27d91dcee6845d9de0c9b1fcc63b8f202142f89c",
+      "started_utc": "2026-11-12T14:19:17.380246+00:00",
+      "status": "failed"
+    },
+    {
+      "alerts": {
+        "clearing": null,
+        "delivery": "not_configured",
+        "firing": null
+      },
+      "child_exit_code": 1,
+      "cleanup_verified": true,
+      "clock": "wall_seconds",
+      "declaration_sha256": "cc9490323cf7ecc65abdbb9373b603241c0109f744a5fd168e6219e0339b9f67",
+      "elapsed_wall_seconds": 10.00034020934254,
+      "engine": "docker",
+      "evidence_kind": "owned_docker_service_fixture",
+      "expected_signal": "Completed forecast durations include the declared fixture delay; recovery succeeds",
+      "failure": "Three fault-phase HTTP 503 responses and HTTP 200 recovery; atomic file publication/read-back added; precise initial predictor exception was not captured",
+      "max_seconds": 180,
+      "missed_detections": [],
+      "observed_signal": {
+        "control": {
+          "elapsed_seconds": 8.322205333039165,
+          "kind": "control",
+          "utc": "2026-11-12T14:24:12.203405+00:00",
+          "value": {
+            "http_status": 200,
+            "wall_seconds": 0.07153925020247698
+          }
+        },
+        "fault_start": {
+          "elapsed_seconds": 8.323102541267872,
+          "kind": "fault_start",
+          "utc": "2026-11-12T14:24:12.204317+00:00",
+          "value": "slow-request"
+        },
+        "forecasts": [
+          {
+            "elapsed_seconds": 8.327497125137597,
+            "kind": "forecast",
+            "utc": "2026-11-12T14:24:12.208719+00:00",
+            "value": {
+              "http_status": 503,
+              "wall_seconds": 0.0032091252505779266
+            }
+          },
+          {
+            "elapsed_seconds": 8.32972800033167,
+            "kind": "forecast",
+            "utc": "2026-11-12T14:24:12.210949+00:00",
+            "value": {
+              "http_status": 503,
+              "wall_seconds": 0.001985667273402214
+            }
+          },
+          {
+            "elapsed_seconds": 8.332031583413482,
+            "kind": "forecast",
+            "utc": "2026-11-12T14:24:12.213248+00:00",
+            "value": {
+              "http_status": 503,
+              "wall_seconds": 0.0020612082444131374
+            }
+          }
+        ]
+      },
+      "procedure_passed": false,
+      "recovery": {
+        "elapsed_seconds": 8.335436083376408,
+        "kind": "recovery",
+        "utc": "2026-11-12T14:24:12.216659+00:00",
+        "value": {
+          "http_status": 200,
+          "wall_seconds": 0.0024982918985188007
+        }
+      },
+      "report_hashes": {
+        "fault.json": "7ef51fee0997cc111fc7aefb038210e06a4f750c22b8422df2238f23b2ea6bce",
+        "observations.jsonl": "2491d56575f37e5bab02ae2cc91069b0ab7817d4134a2f3df166b9a311624695",
+        "request.json": "cc00b49ce9018dcb4c99586270b6333aa3c35372e52771bd21b129bb8f86ddd0",
+        "result.json": "36ba3d0837349c699563b4223eb5c70fe8cc3656a9143c8d7741361fa941dabc",
+        "runtime.json": "6a4c0cbed58c8afc19ccadeaa45a300c67e2f5e33b665ddef18338daceb130cb",
+        "service-metrics.prom": "f777b97ab6d54f6dfbfc6fb0705459d4c72451927912eda92030e28e50a0dbd3",
+        "summary.json": "30d7ff61c3b8bfa00d2e60b548f7a6469dcee7367b92b9292ce03c9cdcd8a6c4"
+      },
+      "run": "docker-slow-01",
+      "runtime": {
+        "api_bindings": [
+          "http://127.0.0.1:64026"
+        ],
+        "container_ids": [
+          "eb894ba9899a1bd1810a9d6cbb9352ffb460e19fd9c0ff2629932327f5c5a840",
+          "00c4dc2718950b52fd94a80f7da89bc018cf4dcd8d9a9bf8dbe7c4be89e4d3b1"
+        ],
+        "fixture_image_id": "sha256:673b9b4c5c37fd20452fe9662a070e56201bd4459911290dd643f4a590cf7df3",
+        "fixture_image_source": "ae7a9151ee945292fff8d4a18343754f43ddeb12",
+        "network": "fdafbeb507d2f8aee71caf29d40e120cd30a52b6932b1adaf634a3feac3a512a",
+        "prometheus_image_id": "sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2",
+        "target": "endesa-84-slow-1794496800"
+      },
+      "sample_sufficiency": {
+        "completed_requests": 3,
+        "latency_slo": "not_adopted"
+      },
+      "scenario": "slow-request",
+      "source_dirty": [
+        " M src/monitoring_scenarios/experiments.py"
+      ],
+      "source_head": "bf97080f5a6aeabc1d65514c9344e1974696f456",
+      "source_tree": "5c1d59453329860eacb544921cfc50b6d5557630",
+      "started_utc": "2026-11-12T14:24:03.708649+00:00",
+      "status": "failed"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "synthetic local evidence only; selected-model execution, notification delivery, publication and target deployment unexecuted"
+}

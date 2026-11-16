@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "scenarios": {
+    "normal": {
+      "max_seconds": 180,
+      "clock": "wall_seconds",
+      "expected_signal": "Successful forecasts, ready=1, no service failure alert",
+      "requests": 3
+    },
+    "service-unavailable": {
+      "max_seconds": 240,
+      "clock": "wall_seconds",
+      "expected_signal": "Fixture: ready=0 and HTTP 503; owned Docker: up=0, ForecastApiDown fires then clears",
+      "requests": 1
+    },
+    "slow-request": {
+      "max_seconds": 180,
+      "clock": "wall_seconds",
+      "expected_signal": "Completed forecast durations include the declared fixture delay; recovery succeeds",
+      "requests": 3,
+      "delay_seconds": 0.25
+    },
+    "shifted-demand": {
+      "max_seconds": 180,
+      "clock": "replay_position",
+      "expected_signal": "Fresh Alibi KS comparisons: unchanged control, fixed level shift, restored distribution",
+      "shift_training_stddevs": 1
+    },
+    "delayed-observation": {
+      "max_seconds": 120,
+      "clock": "replay_position",
+      "expected_signal": "Pending and insufficient horizon groups before release; complete joins after release",
+      "partial_position": 516,
+      "recovered_position": 563,
+      "minimum_samples": 2
+    }
+  }
+}

@@ -1,0 +1,14 @@
+# Deliberately invalid semantic regression input, outside .github/workflows.
+# Valid YAML and shell syntax cannot detect this unavailable expression context.
+name: Unavailable job-env runner context fixture
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    env:
+      DOCKER_CONFIG: ${{ runner.temp }}/endesa-publication-docker
+    steps:
+      - run: echo 'This fixture is parsed, never dispatched'

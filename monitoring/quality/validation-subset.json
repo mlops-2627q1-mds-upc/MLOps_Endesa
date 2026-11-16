@@ -1,0 +1,234 @@
+{
+  "by_state": [
+    {
+      "expected_forecasts": 30,
+      "forecast_count": 30,
+      "forecast_steps": 1440,
+      "matched_forecast_count": 30,
+      "matched_steps": 1440,
+      "pending_steps": 0,
+      "sample_status": "sufficient",
+      "seasonal_lag48": {
+        "mae": 427.79307132297095,
+        "mase": 1.024072479437551
+      },
+      "selected": {
+        "empirical_coverage": 0.7493055555555556,
+        "mae": 210.53657853868273,
+        "mase": 0.5039930060803449,
+        "mean_interval_width": 518.6770850457087
+      },
+      "state": "NSW",
+      "unique_matched_targets": 1440
+    },
+    {
+      "expected_forecasts": 30,
+      "forecast_count": 30,
+      "forecast_steps": 1440,
+      "matched_forecast_count": 30,
+      "matched_steps": 1440,
+      "pending_steps": 0,
+      "sample_status": "sufficient",
+      "seasonal_lag48": {
+        "mae": 474.927613152398,
+        "mase": 1.612117218202486
+      },
+      "selected": {
+        "empirical_coverage": 0.7125,
+        "mae": 294.91336754692924,
+        "mase": 1.0010681723572938,
+        "mean_interval_width": 653.7454736497668
+      },
+      "state": "VIC",
+      "unique_matched_targets": 1440
+    },
+    {
+      "expected_forecasts": 30,
+      "forecast_count": 30,
+      "forecast_steps": 1440,
+      "matched_forecast_count": 30,
+      "matched_steps": 1440,
+      "pending_steps": 0,
+      "sample_status": "sufficient",
+      "seasonal_lag48": {
+        "mae": 217.82777048746746,
+        "mase": 1.0122118702473688
+      },
+      "selected": {
+        "empirical_coverage": 0.6222222222222222,
+        "mae": 118.81019405788845,
+        "mase": 0.552092547532672,
+        "mean_interval_width": 276.757539621989
+      },
+      "state": "QLD",
+      "unique_matched_targets": 1440
+    },
+    {
+      "expected_forecasts": 30,
+      "forecast_count": 30,
+      "forecast_steps": 1440,
+      "matched_forecast_count": 30,
+      "matched_steps": 1440,
+      "pending_steps": 0,
+      "sample_status": "sufficient",
+      "seasonal_lag48": {
+        "mae": 167.52478141784667,
+        "mase": 1.2840921683545194
+      },
+      "selected": {
+        "empirical_coverage": 0.63125,
+        "mae": 111.66525599161784,
+        "mase": 0.8559239981247554,
+        "mean_interval_width": 236.28435358683274
+      },
+      "state": "SA",
+      "unique_matched_targets": 1440
+    },
+    {
+      "expected_forecasts": 30,
+      "forecast_count": 30,
+      "forecast_steps": 1440,
+      "matched_forecast_count": 30,
+      "matched_steps": 1440,
+      "pending_steps": 0,
+      "sample_status": "sufficient",
+      "seasonal_lag48": {
+        "mae": 29.319810485839845,
+        "mase": 0.6422132832858044
+      },
+      "selected": {
+        "empirical_coverage": 0.6125,
+        "mae": 17.619534556070963,
+        "mase": 0.38593357016024715,
+        "mean_interval_width": 40.347797972361256
+      },
+      "state": "TAS",
+      "unique_matched_targets": 1440
+    }
+  ],
+  "full_report_sha256": "47630ed61167bf39e3f907d68a1e33d6b848d69380d04dcce507b878b6282c3c",
+  "interpretation": "Descriptive bounded subset only; no coverage SLO, threshold tuning, full-validation calibration, final test, deployment or target performance claim.",
+  "metadata": {
+    "config_json": "{\"context_length\":512,\"endpoint\":\"http://127.0.0.1:62691\",\"horizon\":48,\"max_attempts\":3,\"mode\":\"historical_replay\",\"model_identity\":{\"checkpoint_sha256\":\"746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9\",\"model_id\":\"chronos-t5-small-fine-tuned\",\"model_revision\":\"local-sha256:746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9\",\"settings_json\":\"{\\\"cpu_threads\\\":2,\\\"device\\\":\\\"cpu\\\",\\\"dtype\\\":\\\"float32\\\",\\\"num_samples\\\":20,\\\"point_statistic\\\":\\\"median\\\",\\\"quantile_method\\\":\\\"linear\\\",\\\"sampling\\\":{\\\"temperature\\\":1.0,\\\"top_k\\\":50,\\\"top_p\\\":1.0},\\\"seed\\\":7}\",\"training_run_id\":\"639eba4cc7e74de08ffab64beee715db\"},\"observation_delay\":4,\"origin_start\":195696,\"origin_stop\":197136,\"origin_stride\":48,\"release_rule\":\"target+1+delay\",\"retry_delay_seconds\":0.1,\"states\":[\"NSW\",\"VIC\",\"QLD\",\"SA\",\"TAS\"],\"timeout_seconds\":10.0,\"value_scale\":\"source\"}",
+    "config_sha256": "dfa3ea666253ad23f75fbe07809c34a907e43e284a4c70f9788868ef50e5ab80",
+    "coverage_interpretation": "descriptive inclusive p10-p90 coverage; no calibration SLO",
+    "model_identity": {
+      "checkpoint_sha256": "746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+      "model_id": "chronos-t5-small-fine-tuned",
+      "model_revision": "local-sha256:746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+      "settings_json": "{\"cpu_threads\":2,\"device\":\"cpu\",\"dtype\":\"float32\",\"num_samples\":20,\"point_statistic\":\"median\",\"quantile_method\":\"linear\",\"sampling\":{\"temperature\":1.0,\"top_k\":50,\"top_p\":1.0},\"seed\":7}",
+      "training_run_id": "639eba4cc7e74de08ffab64beee715db"
+    },
+    "origin_interval": {
+      "count": 30,
+      "start": 195696,
+      "stop": 197136,
+      "stride": 48
+    },
+    "overlap_interpretation": "forecast errors include correlated overlapping targets",
+    "policy": {
+      "max_steps": 100000,
+      "minimum_samples": 30,
+      "page_size": 1000
+    },
+    "run_id": "fa10d1080be943ebbf4586a235b2788a",
+    "source_reference": "{\"file_hashes\":{\"params.yaml\":\"a470aba4cedc7940052139315e4e03e5db5b26899d57d508ecfc693c6d79343c\",\"train.parquet\":\"b5107a0823fec17b60c2005eaf5391de1b68d0be11a08ea2673d8a108394811c\",\"validation.parquet\":\"9528f22f5235db3e2d1d7aa45203874f5d975d43b04d07a1a4ead3a103668ba1\"},\"reference\":\"validation:train.parquet+validation.parquet\",\"split\":{\"common_length\":230736,\"context_length\":512,\"horizon\":48,\"origin_stride\":48,\"states\":[\"NSW\",\"VIC\",\"QLD\",\"SA\",\"TAS\"],\"train_end\":195696,\"validation_end\":213216},\"values_sha256\":\"22d976bf20e854d424226229e2d3a396e56fa380f92da258d87d7fe3827efdee\"}",
+    "source_sha256": "616fafa6b761206cc894c95b5439bed093c9c74d2416fe75d2a1c3312fad85a5",
+    "target_interval": {
+      "start": 195696,
+      "stop": 197136
+    },
+    "training_scale": {
+      "by_state": {
+        "NSW": 417.7371034889315,
+        "QLD": 215.1997787125671,
+        "SA": 130.4616487401514,
+        "TAS": 45.65431959897914,
+        "VIC": 294.59868537471687
+      },
+      "lag": 336,
+      "start": 0,
+      "stop": 195696
+    }
+  },
+  "metric_source_sha256": "dd4243000de733e787f79e246cbcbd45a8e95a73b3966a2cf7208caf025ce783",
+  "per_horizon_evidence": {
+    "NSW": {
+      "empirical_coverage_max": 0.9,
+      "empirical_coverage_min": 0.6666666666666666,
+      "horizon_start": 1,
+      "horizon_stop_inclusive": 48,
+      "matched_samples_per_horizon": [
+        30
+      ],
+      "sample_statuses": [
+        "sufficient"
+      ]
+    },
+    "QLD": {
+      "empirical_coverage_max": 0.7666666666666667,
+      "empirical_coverage_min": 0.4666666666666667,
+      "horizon_start": 1,
+      "horizon_stop_inclusive": 48,
+      "matched_samples_per_horizon": [
+        30
+      ],
+      "sample_statuses": [
+        "sufficient"
+      ]
+    },
+    "SA": {
+      "empirical_coverage_max": 0.7666666666666667,
+      "empirical_coverage_min": 0.5,
+      "horizon_start": 1,
+      "horizon_stop_inclusive": 48,
+      "matched_samples_per_horizon": [
+        30
+      ],
+      "sample_statuses": [
+        "sufficient"
+      ]
+    },
+    "TAS": {
+      "empirical_coverage_max": 0.8333333333333334,
+      "empirical_coverage_min": 0.4,
+      "horizon_start": 1,
+      "horizon_stop_inclusive": 48,
+      "matched_samples_per_horizon": [
+        30
+      ],
+      "sample_statuses": [
+        "sufficient"
+      ]
+    },
+    "VIC": {
+      "empirical_coverage_max": 0.8666666666666667,
+      "empirical_coverage_min": 0.5666666666666667,
+      "horizon_start": 1,
+      "horizon_stop_inclusive": 48,
+      "matched_samples_per_horizon": [
+        30
+      ],
+      "sample_statuses": [
+        "sufficient"
+      ]
+    }
+  },
+  "quality_source_commit": "395a72c8600ef27738516b852765960e956dc85b",
+  "recorded_at": "2026-10-28",
+  "replay_counts": {
+    "clock_position": 197140,
+    "complete": true,
+    "completed_forecasts": 150,
+    "expected_forecasts": 150,
+    "failed_attempts": 0,
+    "forecast_steps": 7200,
+    "matched_steps": 7200,
+    "next_origin": null,
+    "pending_steps": 0,
+    "unfinished_attempts": 0
+  },
+  "replay_implementation_commit": "a021c3a03298d5668dce0f4dcceed0c0e408d800",
+  "replay_reader_commit": "8985ed016714017128d964c49ff2013c8662dcfd",
+  "scope": "First 30 validation origins across five states; historical positional replay"
+}

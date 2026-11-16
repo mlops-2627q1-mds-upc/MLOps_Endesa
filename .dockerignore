@@ -1,0 +1,21 @@
+# Deny by default, including .git, credentials, envs, data, weights, caches,
+# notebooks, tests, training code, reports and temporary outputs.
+**
+!Dockerfile
+!.dockerignore
+!pyproject.toml
+!uv.lock
+!params.yaml
+!src/__init__.py
+!src/config.py
+!src/evaluation.py
+!src/splits.py
+!src/api/__init__.py
+!src/api/app.py
+!src/api/metrics.py
+!src/api/schemas.py
+!src/api/settings.py
+!src/modeling/__init__.py
+!src/modeling/predict.py
+!src/modeling/checkpoints.py
+!models/chronos-t5-small-fine-tuned.provenance.json
