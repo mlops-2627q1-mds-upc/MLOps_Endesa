@@ -1,0 +1,58 @@
+groups:
+  - name: endesa-service
+    rules:
+      - alert: ForecastApiDown
+        expr: up{job="forecast-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Forecast API scrape is failing
+          description: Check API process logs, selected checkpoint mount and /health on the private API address; then check the Prometheus target error.
+      - alert: ForecastScrapeTargetMissing
+        expr: absent(up{job="forecast-api"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Forecast API scrape target is missing
+          description: Restore the forecast-api scrape job and target in prometheus.yml; verify target discovery before interpreting workload panels.
+      - alert: ForecastModelNotReady
+        expr: (endesa_model_ready{job="forecast-api"} == 0) and on(job, instance) (up{job="forecast-api"} == 1)
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: API is reachable but its model is unavailable
+          description: Check /ready and startup or shutdown logs; verify the selected checkpoint provenance and mount before retrying forecasts.
+      - alert: ForecastTelemetryMissing
+        expr: |
+          (up{job="forecast-api"} == 1
+            unless on(job, instance)
+              (endesa_model_ready{job="forecast-api"}
+                and on(job, instance) endesa_forecasts_in_flight{job="forecast-api"}
+                and on(job, instance) endesa_process_metrics_available{job="forecast-api"}
+                and on(job, instance) endesa_http_requests_total{job="forecast-api", method="POST", route="/forecast", status_class="2xx"}
+                and on(job, instance) endesa_http_request_duration_seconds_count{job="forecast-api", method="POST", route="/forecast"}
+                and on(job, instance) endesa_http_errors_total{job="forecast-api", status_class="4xx"}
+                and on(job, instance) endesa_http_errors_total{job="forecast-api", status_class="5xx"}))
+          or
+          ((up{job="forecast-api"} == 1
+              and on(job, instance) (endesa_process_metrics_available{job="forecast-api"} == 1))
+            unless on(job, instance)
+              (process_cpu_seconds_total{job="forecast-api"}
+                and on(job, instance) process_resident_memory_bytes{job="forecast-api"}))
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Reachable API has incomplete service telemetry
+          description: Inspect /metrics for the endesa service families and available process CPU/RSS samples; check the deployed image and scrape relabeling before treating absent data as zero.
+      - alert: ForecastProcessTelemetryUnavailable
+        expr: (endesa_process_metrics_available{job="forecast-api"} == 0) and on(job, instance) (up{job="forecast-api"} == 1)
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: API process CPU and RSS telemetry is unavailable
+          description: The Python process collector needs readable Linux /proc files; on macOS this is expected, so verify resource collection in the Linux serving container before capacity assessment.
