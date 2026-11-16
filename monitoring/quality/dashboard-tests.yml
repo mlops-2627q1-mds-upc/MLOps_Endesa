@@ -1,0 +1,810 @@
+rule_files: []
+fuzzy_compare: true
+evaluation_interval: 15s
+tests:
+- name: sufficient samples retain computed zero error and pending evidence
+  interval: 15s
+  input_series:
+  - series: up{instance="quality:9101",job="forecast-quality"}
+    values: 1+0x8
+  - series: endesa_quality_report_available{instance="quality:9101",job="forecast-quality"}
+    values: 1+0x8
+  - series: endesa_quality_report_age_seconds{instance="quality:9101",job="forecast-quality"}
+    values: 12+0x8
+  - series: endesa_quality_minimum_samples{instance="quality:9101",job="forecast-quality"}
+    values: 2+0x8
+  - series: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 0+0x8
+  - series: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+    values: 48+0x8
+  - series: endesa_quality_empirical_coverage{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 1+0x8
+  - series: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 0+0x8
+  - series: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+    values: 0.14285714285714285+0x8
+  - series: endesa_quality_mean_interval_width{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_matched_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 3+0x8
+  - series: endesa_quality_pending_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 93+0x8
+  - series: endesa_quality_matched_forecast_count{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_unique_matched_targets{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_empirical_coverage{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 1+0x8
+  - series: endesa_quality_mean_interval_width{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_matched_steps{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_sample_status{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 3+0x8
+  promql_expr_test:
+  - expr: up{job="forecast-quality"}
+    eval_time: 1m
+    exp_samples:
+    - labels: up{instance="quality:9101",job="forecast-quality"}
+      value: 1
+  - expr: endesa_quality_report_available{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_report_available{instance="quality:9101",job="forecast-quality"}
+      value: 1
+  - expr: endesa_quality_report_age_seconds{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_report_age_seconds{instance="quality:9101",job="forecast-quality"}
+      value: 12
+  - expr: endesa_quality_minimum_samples{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_minimum_samples{instance="quality:9101",job="forecast-quality"}
+      value: 2
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 0
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+      value: 48
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_empirical_coverage{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 1
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 0
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+      value: 0.14285714285714285
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mean_interval_width{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 2
+  - expr: endesa_quality_matched_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_matched_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 3
+  - expr: endesa_quality_pending_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_pending_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 93
+  - expr: endesa_quality_matched_forecast_count{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_matched_forecast_count{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 2
+  - expr: endesa_quality_unique_matched_targets{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_unique_matched_targets{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 2
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_empirical_coverage{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 1
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mean_interval_width{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 2
+  - expr: endesa_quality_matched_steps{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_matched_steps{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 2
+  - expr: endesa_quality_sample_status{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_sample_status{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 3
+- name: insufficient samples omit error metrics but retain sample status
+  interval: 15s
+  input_series:
+  - series: up{instance="quality:9101",job="forecast-quality"}
+    values: 1+0x8
+  - series: endesa_quality_report_available{instance="quality:9101",job="forecast-quality"}
+    values: 1+0x8
+  - series: endesa_quality_report_age_seconds{instance="quality:9101",job="forecast-quality"}
+    values: 12+0x8
+  - series: endesa_quality_minimum_samples{instance="quality:9101",job="forecast-quality"}
+    values: 2+0x8
+  - series: endesa_quality_matched_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 3+0x8
+  - series: endesa_quality_pending_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 93+0x8
+  - series: endesa_quality_matched_forecast_count{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_unique_matched_targets{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_matched_steps{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_sample_status{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  promql_expr_test:
+  - expr: up{job="forecast-quality"}
+    eval_time: 1m
+    exp_samples:
+    - labels: up{instance="quality:9101",job="forecast-quality"}
+      value: 1
+  - expr: endesa_quality_report_available{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_report_available{instance="quality:9101",job="forecast-quality"}
+      value: 1
+  - expr: endesa_quality_report_age_seconds{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_report_age_seconds{instance="quality:9101",job="forecast-quality"}
+      value: 12
+  - expr: endesa_quality_minimum_samples{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_minimum_samples{instance="quality:9101",job="forecast-quality"}
+      value: 2
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_matched_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_matched_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 3
+  - expr: endesa_quality_pending_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_pending_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 93
+  - expr: endesa_quality_matched_forecast_count{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_matched_forecast_count{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 2
+  - expr: endesa_quality_unique_matched_targets{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_unique_matched_targets{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 2
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_matched_steps{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_matched_steps{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 2
+  - expr: endesa_quality_sample_status{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_sample_status{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 2
+- name: unavailable report suppresses retained measurement samples
+  interval: 15s
+  input_series:
+  - series: up{instance="quality:9101",job="forecast-quality"}
+    values: 1+0x8
+  - series: endesa_quality_report_available{instance="quality:9101",job="forecast-quality"}
+    values: 0+0x8
+  - series: endesa_quality_report_age_seconds{instance="quality:9101",job="forecast-quality"}
+    values: 12+0x8
+  - series: endesa_quality_minimum_samples{instance="quality:9101",job="forecast-quality"}
+    values: 2+0x8
+  - series: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 0+0x8
+  - series: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+    values: 48+0x8
+  - series: endesa_quality_empirical_coverage{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 1+0x8
+  - series: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 0+0x8
+  - series: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+    values: 0.14285714285714285+0x8
+  - series: endesa_quality_mean_interval_width{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_matched_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 3+0x8
+  - series: endesa_quality_pending_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 93+0x8
+  - series: endesa_quality_matched_forecast_count{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_unique_matched_targets{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_empirical_coverage{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 1+0x8
+  - series: endesa_quality_mean_interval_width{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_matched_steps{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_sample_status{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 3+0x8
+  promql_expr_test:
+  - expr: up{job="forecast-quality"}
+    eval_time: 1m
+    exp_samples:
+    - labels: up{instance="quality:9101",job="forecast-quality"}
+      value: 1
+  - expr: endesa_quality_report_available{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_report_available{instance="quality:9101",job="forecast-quality"}
+      value: 0
+  - expr: endesa_quality_report_age_seconds{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_report_age_seconds{instance="quality:9101",job="forecast-quality"}
+      value: 12
+  - expr: endesa_quality_minimum_samples{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_matched_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_pending_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_matched_forecast_count{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_unique_matched_targets{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_matched_steps{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_sample_status{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+- name: failed exporter scrape suppresses retained report samples
+  interval: 15s
+  input_series:
+  - series: up{instance="quality:9101",job="forecast-quality"}
+    values: 0+0x8
+  - series: endesa_quality_report_available{instance="quality:9101",job="forecast-quality"}
+    values: 1+0x8
+  - series: endesa_quality_report_age_seconds{instance="quality:9101",job="forecast-quality"}
+    values: 12+0x8
+  - series: endesa_quality_minimum_samples{instance="quality:9101",job="forecast-quality"}
+    values: 2+0x8
+  - series: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 0+0x8
+  - series: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+    values: 48+0x8
+  - series: endesa_quality_empirical_coverage{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 1+0x8
+  - series: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 0+0x8
+  - series: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+    values: 0.14285714285714285+0x8
+  - series: endesa_quality_mean_interval_width{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_matched_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 3+0x8
+  - series: endesa_quality_pending_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 93+0x8
+  - series: endesa_quality_matched_forecast_count{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_unique_matched_targets{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_empirical_coverage{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 1+0x8
+  - series: endesa_quality_mean_interval_width{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_matched_steps{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_sample_status{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 3+0x8
+  promql_expr_test:
+  - expr: up{job="forecast-quality"}
+    eval_time: 1m
+    exp_samples:
+    - labels: up{instance="quality:9101",job="forecast-quality"}
+      value: 0
+  - expr: endesa_quality_report_available{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_report_age_seconds{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_minimum_samples{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_matched_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_pending_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_matched_forecast_count{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_unique_matched_targets{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_matched_steps{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_sample_status{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+- name: missing target stays absent
+  interval: 15s
+  input_series: []
+  promql_expr_test:
+  - expr: up{job="forecast-quality"}
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_report_available{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_report_age_seconds{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_minimum_samples{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_matched_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_pending_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_matched_forecast_count{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_unique_matched_targets{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_matched_steps{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+  - expr: endesa_quality_sample_status{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples: []
+- name: healthy exporter cannot expose failed target measurements
+  interval: 15s
+  input_series:
+  - series: up{instance="quality:9101",job="forecast-quality"}
+    values: 1+0x8
+  - series: up{instance="failed-quality:9101",job="forecast-quality"}
+    values: 0+0x8
+  - series: endesa_quality_report_available{instance="quality:9101",job="forecast-quality"}
+    values: 1+0x8
+  - series: endesa_quality_report_available{instance="failed-quality:9101",job="forecast-quality"}
+    values: 1+0x8
+  - series: endesa_quality_report_age_seconds{instance="quality:9101",job="forecast-quality"}
+    values: 12+0x8
+  - series: endesa_quality_report_age_seconds{instance="failed-quality:9101",job="forecast-quality"}
+    values: 999+0x8
+  - series: endesa_quality_minimum_samples{instance="quality:9101",job="forecast-quality"}
+    values: 2+0x8
+  - series: endesa_quality_minimum_samples{instance="failed-quality:9101",job="forecast-quality"}
+    values: 999+0x8
+  - series: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 0+0x8
+  - series: endesa_quality_mae{horizon="all",instance="failed-quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+    values: 48+0x8
+  - series: endesa_quality_mae{horizon="all",instance="failed-quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_empirical_coverage{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 1+0x8
+  - series: endesa_quality_empirical_coverage{horizon="all",instance="failed-quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 0+0x8
+  - series: endesa_quality_mase{horizon="all",instance="failed-quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+    values: 0.14285714285714285+0x8
+  - series: endesa_quality_mase{horizon="all",instance="failed-quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_mean_interval_width{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_mean_interval_width{horizon="all",instance="failed-quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_matched_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 3+0x8
+  - series: endesa_quality_matched_steps{horizon="all",instance="failed-quality:9101",job="forecast-quality",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_pending_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 93+0x8
+  - series: endesa_quality_pending_steps{horizon="all",instance="failed-quality:9101",job="forecast-quality",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_matched_forecast_count{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_matched_forecast_count{horizon="all",instance="failed-quality:9101",job="forecast-quality",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_unique_matched_targets{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_unique_matched_targets{horizon="all",instance="failed-quality:9101",job="forecast-quality",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_empirical_coverage{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 1+0x8
+  - series: endesa_quality_empirical_coverage{horizon="1",instance="failed-quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_mean_interval_width{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_mean_interval_width{horizon="1",instance="failed-quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_matched_steps{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 2+0x8
+  - series: endesa_quality_matched_steps{horizon="1",instance="failed-quality:9101",job="forecast-quality",state="NSW"}
+    values: 999+0x8
+  - series: endesa_quality_sample_status{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+    values: 3+0x8
+  - series: endesa_quality_sample_status{horizon="1",instance="failed-quality:9101",job="forecast-quality",state="NSW"}
+    values: 999+0x8
+  promql_expr_test:
+  - expr: up{job="forecast-quality"}
+    eval_time: 1m
+    exp_samples:
+    - labels: up{instance="quality:9101",job="forecast-quality"}
+      value: 1
+    - labels: up{instance="failed-quality:9101",job="forecast-quality"}
+      value: 0
+  - expr: endesa_quality_report_available{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_report_available{instance="quality:9101",job="forecast-quality"}
+      value: 1
+  - expr: endesa_quality_report_age_seconds{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_report_age_seconds{instance="quality:9101",job="forecast-quality"}
+      value: 12
+  - expr: endesa_quality_minimum_samples{job="forecast-quality"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_minimum_samples{instance="quality:9101",job="forecast-quality"}
+      value: 2
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 0
+  - expr: endesa_quality_mae{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mae{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+      value: 48
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_empirical_coverage{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 1
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="selected"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 0
+  - expr: endesa_quality_mase{job="forecast-quality",horizon="all",model_role="seasonal_lag48"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mase{horizon="all",instance="quality:9101",job="forecast-quality",model_role="seasonal_lag48",state="NSW"}
+      value: 0.14285714285714285
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",horizon="all",model_role="selected"} and on(job,
+      instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mean_interval_width{horizon="all",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 2
+  - expr: endesa_quality_matched_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_matched_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 3
+  - expr: endesa_quality_pending_steps{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_pending_steps{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 93
+  - expr: endesa_quality_matched_forecast_count{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_matched_forecast_count{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 2
+  - expr: endesa_quality_unique_matched_targets{job="forecast-quality",horizon="all"} and on(job, instance) (up{job="forecast-quality"}
+      == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"} == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_unique_matched_targets{horizon="all",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 2
+  - expr: endesa_quality_empirical_coverage{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_empirical_coverage{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 1
+  - expr: endesa_quality_mean_interval_width{job="forecast-quality",state="NSW",horizon!="all",model_role="selected"}
+      and on(job, instance) (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_mean_interval_width{horizon="1",instance="quality:9101",job="forecast-quality",model_role="selected",state="NSW"}
+      value: 2
+  - expr: endesa_quality_matched_steps{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_matched_steps{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 2
+  - expr: endesa_quality_sample_status{job="forecast-quality",state="NSW",horizon!="all"} and on(job, instance)
+      (up{job="forecast-quality"} == 1) and on(job, instance) (endesa_quality_report_available{job="forecast-quality"}
+      == 1)
+    eval_time: 1m
+    exp_samples:
+    - labels: endesa_quality_sample_status{horizon="1",instance="quality:9101",job="forecast-quality",state="NSW"}
+      value: 3

@@ -1,0 +1,70 @@
+{
+  "mode": "bounded validation replay, first 30 origins across five states",
+  "commit": "a021c3a03298d5668dce0f4dcceed0c0e408d800",
+  "source_sha256": "616fafa6b761206cc894c95b5439bed093c9c74d2416fe75d2a1c3312fad85a5",
+  "checkpoint_sha256": "746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+  "budget_seconds": 300,
+  "interpretation": "Historical validation subset; no tuning, final-test scoring, container or target performance evidence.",
+  "status": "passed",
+  "first": {
+    "expected_forecasts": 150,
+    "completed_forecasts": 5,
+    "forecast_steps": 240,
+    "matched_steps": 0,
+    "pending_steps": 240,
+    "failed_attempts": 0,
+    "clock_position": 195696,
+    "next_origin": 195744,
+    "complete": false
+  },
+  "partial": {
+    "expected_forecasts": 150,
+    "completed_forecasts": 5,
+    "forecast_steps": 240,
+    "matched_steps": 120,
+    "pending_steps": 120,
+    "failed_attempts": 0,
+    "clock_position": 195724,
+    "next_origin": 195744,
+    "complete": false
+  },
+  "final": {
+    "expected_forecasts": 150,
+    "completed_forecasts": 150,
+    "forecast_steps": 7200,
+    "matched_steps": 7200,
+    "pending_steps": 0,
+    "failed_attempts": 0,
+    "clock_position": 197140,
+    "next_origin": null,
+    "complete": true
+  },
+  "repeated_invocation_unchanged": true,
+  "elapsed_seconds": 160.18466308293864,
+  "server_stopped": true,
+  "config": {
+    "origin_start": 195696,
+    "origin_stop": 197136,
+    "states": [
+      "NSW",
+      "VIC",
+      "QLD",
+      "SA",
+      "TAS"
+    ],
+    "model_identity": {
+      "model_id": "chronos-t5-small-fine-tuned",
+      "model_revision": "local-sha256:746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+      "checkpoint_sha256": "746f9c3a9b61d452754f461a64c1529b2c07d8327ab8c33f804daa98c94c8cd9",
+      "training_run_id": "639eba4cc7e74de08ffab64beee715db",
+      "settings_json": "{\"cpu_threads\":2,\"device\":\"cpu\",\"dtype\":\"float32\",\"num_samples\":20,\"point_statistic\":\"median\",\"quantile_method\":\"linear\",\"sampling\":{\"temperature\":1.0,\"top_k\":50,\"top_p\":1.0},\"seed\":7}"
+    },
+    "origin_stride": 48,
+    "observation_delay": 4,
+    "max_attempts": 3,
+    "timeout_seconds": 10.0,
+    "retry_delay_seconds": 0.1
+  },
+  "recorded_at": "2026-10-28",
+  "execution": "native macOS arm64; local HTTP; one Uvicorn worker; two CPU threads"
+}
