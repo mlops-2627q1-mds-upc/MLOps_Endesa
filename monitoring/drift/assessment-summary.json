@@ -1,0 +1,808 @@
+{
+  "assessment_repetition": "Initial PyArrow 26 reader failure was fixed with <26. The same declared assessment was repeated after explicit float64 intervention arithmetic and identity/schema fixes; every alert window and first delay matched the initial successful result. No settings search was performed.",
+  "assessment_source_commit": "3e81efad5b49d501f0cac52af27e988dcd6a1b03",
+  "implementation_hash_scope": "Source used for the recorded assessments. Later CLI checkpoint-recovery changes do not change the detector or these measurements.",
+  "implementation_sha256": {
+    "src/drift/__init__.py": "ea14c155f35323dc82123c9b2cc48c5478496524376afdd2f6e3876e800960ef",
+    "src/drift/__main__.py": "53f130dced4159387f7eb929720aa1adc06ac9690e2cc9c7ebb8619ad093ac06",
+    "src/drift/assessment.py": "e5f042900c583b077f116a09daded0141c767753c451ba3c2694d5821e6ae2e6",
+    "src/drift/core.py": "ea803b1a36bba940c19b19d8788918631d34b7df3c688a05cf3377b23d7c51ff",
+    "src/drift/data.py": "186d6c840a16a373f925adaa4c376cc964959e54fac1a4a81025c381c369761d",
+    "src/drift/replay.py": "5e522200c34564aac58aef52f307c676db0e5139d6a0cbea6ce6165629160ed5"
+  },
+  "isolated_lock_sha256": "df18da4f1b5044c686031b06c137f52edd7501d5937478f0877d2d77c25b55cf",
+  "recorded_at": "2026-10-28",
+  "results": {
+    "fixture": {
+      "configuration": {
+        "alpha_interpretation": "nominal allocation; autocorrelated cycle features are not iid",
+        "config_sha256": "f62bc57256466245c9c4c7c0b57afc30d1dde33e4fbfc0961cf84ab420546baf",
+        "detector": {
+          "alternative": "two-sided",
+          "correction": "bonferroni",
+          "library": "alibi-detect",
+          "method": "KSDrift",
+          "update_x_ref": null,
+          "version": "0.13.0"
+        },
+        "excluded_validation_edges": [
+          [
+            34944,
+            34944
+          ],
+          [
+            51072,
+            51072
+          ]
+        ],
+        "nominal_feature_alpha": 0.0008333333333333334,
+        "nominal_state_window_alpha": 0.0016666666666666668,
+        "reference_bounds": [
+          0,
+          34944
+        ],
+        "settings": {
+          "cycle_steps": 336,
+          "detector_version": "alibi-ks-0.13.0-v1",
+          "family_alpha": 0.05,
+          "feature_version": "weekly-residual-v1",
+          "max_windows": 6,
+          "reference_cycles": 104,
+          "states": [
+            "NSW",
+            "VIC",
+            "QLD",
+            "SA",
+            "TAS"
+          ],
+          "train_end": 34944,
+          "validation_end": 51072,
+          "window_cycles": 8
+        },
+        "windows": [
+          [
+            34944,
+            37632
+          ],
+          [
+            37632,
+            40320
+          ],
+          [
+            40320,
+            43008
+          ],
+          [
+            43008,
+            45696
+          ],
+          [
+            45696,
+            48384
+          ],
+          [
+            48384,
+            51072
+          ]
+        ]
+      },
+      "dependencies": {
+        "alibi-detect": "0.13.0",
+        "numpy": "1.26.4",
+        "pandas": "2.3.3",
+        "scipy": "1.17.1"
+      },
+      "evidence_kind": "fixture",
+      "full_report_sha256": "23dbe1880eff73eac63d7eb2c744a651bd6be83a118e24ca2824c6069910d1c2",
+      "interpretation": "Unchanged historical validation alarms are a false-alert proxy: natural drift may be present. Fixture controls have a known unchanged distribution. Detection delays use positional 30-minute steps, not civil timestamps or forecast error. Each scenario has a separate nominal budget; no joint iid guarantee is asserted.",
+      "interventions": {
+        "level_offset_by_state": {
+          "NSW": 14.720808956098683,
+          "QLD": 44.162426868296045,
+          "SA": 58.88323582439473,
+          "TAS": 73.60404478049341,
+          "VIC": 29.441617912197366
+        },
+        "selection": "single declared assessment; no parameter search",
+        "start_position": 37632,
+        "variability_residual_multiplier": 2
+      },
+      "reference_sha256": "ee5a4a1c0c4fd6b772a8c0e3e1051572e30a93c7395dc1c57bbd9c05224ad981",
+      "scenarios": {
+        "level": {
+          "NSW": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "QLD": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "SA": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "TAS": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "VIC": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          }
+        },
+        "unchanged": {
+          "NSW": {
+            "alert_windows": [],
+            "control_alert_fraction": 0.0,
+            "detected_after_shift": null,
+            "first_detection_delay_positions": null,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": null,
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "QLD": {
+            "alert_windows": [],
+            "control_alert_fraction": 0.0,
+            "detected_after_shift": null,
+            "first_detection_delay_positions": null,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": null,
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "SA": {
+            "alert_windows": [],
+            "control_alert_fraction": 0.0,
+            "detected_after_shift": null,
+            "first_detection_delay_positions": null,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": null,
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "TAS": {
+            "alert_windows": [],
+            "control_alert_fraction": 0.0,
+            "detected_after_shift": null,
+            "first_detection_delay_positions": null,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": null,
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "VIC": {
+            "alert_windows": [],
+            "control_alert_fraction": 0.0,
+            "detected_after_shift": null,
+            "first_detection_delay_positions": null,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": null,
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          }
+        },
+        "variability": {
+          "NSW": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "QLD": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "SA": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "TAS": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "VIC": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          }
+        }
+      },
+      "schema_version": 1,
+      "source": {
+        "kind": "fixture",
+        "seed": 7,
+        "version": "seasonal-dependent-v1"
+      }
+    },
+    "validation": {
+      "configuration": {
+        "alpha_interpretation": "nominal allocation; autocorrelated cycle features are not iid",
+        "config_sha256": "94d3e70a884c40b17ce97e849a0112a9faf8e1376b69728f7b8d1904f0ba8c86",
+        "detector": {
+          "alternative": "two-sided",
+          "correction": "bonferroni",
+          "library": "alibi-detect",
+          "method": "KSDrift",
+          "update_x_ref": null,
+          "version": "0.13.0"
+        },
+        "excluded_validation_edges": [
+          [
+            195696,
+            195888
+          ],
+          [
+            212016,
+            213216
+          ]
+        ],
+        "nominal_feature_alpha": 0.0008333333333333334,
+        "nominal_state_window_alpha": 0.0016666666666666668,
+        "reference_bounds": [
+          160608,
+          195552
+        ],
+        "settings": {
+          "cycle_steps": 336,
+          "detector_version": "alibi-ks-0.13.0-v1",
+          "family_alpha": 0.05,
+          "feature_version": "weekly-residual-v1",
+          "max_windows": 6,
+          "reference_cycles": 104,
+          "states": [
+            "NSW",
+            "VIC",
+            "QLD",
+            "SA",
+            "TAS"
+          ],
+          "train_end": 195696,
+          "validation_end": 213216,
+          "window_cycles": 8
+        },
+        "windows": [
+          [
+            195888,
+            198576
+          ],
+          [
+            198576,
+            201264
+          ],
+          [
+            201264,
+            203952
+          ],
+          [
+            203952,
+            206640
+          ],
+          [
+            206640,
+            209328
+          ],
+          [
+            209328,
+            212016
+          ]
+        ]
+      },
+      "dependencies": {
+        "alibi-detect": "0.13.0",
+        "numpy": "1.26.4",
+        "pandas": "2.3.3",
+        "scipy": "1.17.1"
+      },
+      "evidence_kind": "dvc",
+      "full_report_sha256": "9b4a2b254cb423f0bd1f8d569a6d773d1a5e75942e4572593c2d9d783db6ce6e",
+      "interpretation": "Unchanged historical validation alarms are a false-alert proxy: natural drift may be present. Fixture controls have a known unchanged distribution. Detection delays use positional 30-minute steps, not civil timestamps or forecast error. Each scenario has a separate nominal budget; no joint iid guarantee is asserted.",
+      "interventions": {
+        "level_offset_by_state": {
+          "NSW": 1278.9005251195472,
+          "QLD": 833.6168698776835,
+          "SA": 280.6372835984313,
+          "TAS": 136.47168782516601,
+          "VIC": 854.5082994477114
+        },
+        "selection": "single declared assessment; no parameter search",
+        "start_position": 198576,
+        "variability_residual_multiplier": 2
+      },
+      "reference_sha256": "9bfa30b8d0053cd28bdecf15bb1f2777279dcbab44aae159cf785236ce7398dd",
+      "scenarios": {
+        "level": {
+          "NSW": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "QLD": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "SA": {
+            "alert_windows": [
+              1,
+              2
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [
+              3,
+              4,
+              5
+            ],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "TAS": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "VIC": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [
+              5
+            ],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          }
+        },
+        "unchanged": {
+          "NSW": {
+            "alert_windows": [
+              3,
+              4
+            ],
+            "control_alert_fraction": 0.3333333333333333,
+            "detected_after_shift": null,
+            "first_detection_delay_positions": null,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": null,
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "QLD": {
+            "alert_windows": [
+              2,
+              3
+            ],
+            "control_alert_fraction": 0.3333333333333333,
+            "detected_after_shift": null,
+            "first_detection_delay_positions": null,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": null,
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "SA": {
+            "alert_windows": [
+              3,
+              4
+            ],
+            "control_alert_fraction": 0.3333333333333333,
+            "detected_after_shift": null,
+            "first_detection_delay_positions": null,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": null,
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "TAS": {
+            "alert_windows": [
+              2
+            ],
+            "control_alert_fraction": 0.16666666666666666,
+            "detected_after_shift": null,
+            "first_detection_delay_positions": null,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": null,
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "VIC": {
+            "alert_windows": [
+              4
+            ],
+            "control_alert_fraction": 0.16666666666666666,
+            "detected_after_shift": null,
+            "first_detection_delay_positions": null,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": null,
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          }
+        },
+        "variability": {
+          "NSW": {
+            "alert_windows": [
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 5376,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [
+              1
+            ],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "QLD": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [
+              5
+            ],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "SA": {
+            "alert_windows": [
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 5376,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [
+              1
+            ],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "TAS": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          },
+          "VIC": {
+            "alert_windows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "control_alert_fraction": null,
+            "detected_after_shift": true,
+            "first_detection_delay_positions": 2688,
+            "insufficient_windows": [],
+            "missed_post_shift_windows": [],
+            "pre_shift_alerts": 0,
+            "tested_windows": 6,
+            "undetected_exposure_positions": null
+          }
+        }
+      },
+      "schema_version": 1,
+      "source": {
+        "file_hashes": {
+          "params.yaml": "a470aba4cedc7940052139315e4e03e5db5b26899d57d508ecfc693c6d79343c",
+          "train.parquet": "b5107a0823fec17b60c2005eaf5391de1b68d0be11a08ea2673d8a108394811c",
+          "validation.parquet": "9528f22f5235db3e2d1d7aa45203874f5d975d43b04d07a1a4ead3a103668ba1"
+        },
+        "kind": "dvc",
+        "raw_md5": "ab1300b4a36e9e1df9fabfeec15b0f90.dir",
+        "split_parameters": {
+          "data": {
+            "common_length": 230736,
+            "states": [
+              "NSW",
+              "VIC",
+              "QLD",
+              "SA",
+              "TAS"
+            ]
+          },
+          "forecast": {
+            "context_length": 512,
+            "horizon": 48,
+            "origin_stride": 48
+          },
+          "split": {
+            "train_end": 195696,
+            "validation_end": 213216
+          }
+        },
+        "split_sha256": "6df5429631a4b0be922d2451870e3d24ec63128807be1837628e0bc36d55f1a5",
+        "split_source_md5": "12cffbd11320d5d296fc24fddfcbb103",
+        "train_md5": "76fc8921b85ad9d35e98b9b2451c1c09",
+        "validation_md5": "7d3a853328e8e21438ef90a4a17fcf03"
+      }
+    }
+  },
+  "scope": "Single declared fixture and DVC validation assessment; no final-test data or model inference",
+  "short_real_replay": {
+    "evidence_kind": "historical-replay",
+    "first_window": {
+      "bounds": [
+        195888,
+        198576
+      ],
+      "campaign_sha256": "c66223f9816d6599824b278655a4465ea2bcc4c55ede05c37eed3cd6e248b564",
+      "config_sha256": "94d3e70a884c40b17ce97e849a0112a9faf8e1376b69728f7b8d1904f0ba8c86",
+      "reference_sha256": "ac92d3a22a7694eefbfcd01fd205a6cc9b88708b0dc1e7414625d22920767ac0",
+      "states": {
+        "NSW": {
+          "expected_positions": 2688,
+          "missing_positions": 1440,
+          "observed_positions": 1248,
+          "reference_cycles": 104,
+          "state": "NSW",
+          "status": "insufficient_data",
+          "test_cycles": 0
+        },
+        "QLD": {
+          "expected_positions": 2688,
+          "missing_positions": 1440,
+          "observed_positions": 1248,
+          "reference_cycles": 104,
+          "state": "QLD",
+          "status": "insufficient_data",
+          "test_cycles": 0
+        },
+        "SA": {
+          "expected_positions": 2688,
+          "missing_positions": 1440,
+          "observed_positions": 1248,
+          "reference_cycles": 104,
+          "state": "SA",
+          "status": "insufficient_data",
+          "test_cycles": 0
+        },
+        "TAS": {
+          "expected_positions": 2688,
+          "missing_positions": 1440,
+          "observed_positions": 1248,
+          "reference_cycles": 104,
+          "state": "TAS",
+          "status": "insufficient_data",
+          "test_cycles": 0
+        },
+        "VIC": {
+          "expected_positions": 2688,
+          "missing_positions": 1440,
+          "observed_positions": 1248,
+          "reference_cycles": 104,
+          "state": "VIC",
+          "status": "insufficient_data",
+          "test_cycles": 0
+        }
+      },
+      "window": 0,
+      "window_end_reached": false
+    },
+    "identical_retry_sha256": "973b472492cb35d6a1ea4896d5f6b5d4e59ffcf6590ab891cd9db33cc1631136",
+    "interpretation": "The retained selected-model replay spans 30 nominal days, shorter than one 8-week detector window; no KS comparison or additional inference ran.",
+    "reference_sha256": "ac92d3a22a7694eefbfcd01fd205a6cc9b88708b0dc1e7414625d22920767ac0",
+    "related_evidence": "monitoring/replay/validation-smoke.json",
+    "released_observations_read": 7200,
+    "released_observations_used": 6240,
+    "remaining_windows_status": "insufficient_data for every state",
+    "replay_config_sha256": "dfa3ea666253ad23f75fbe07809c34a907e43e284a4c70f9788868ef50e5ab80",
+    "run_id": "fa10d1080be943ebbf4586a235b2788a",
+    "snapshot_clock_position": 197140,
+    "source_sha256": "616fafa6b761206cc894c95b5439bed093c9c74d2416fe75d2a1c3312fad85a5",
+    "tested_state_windows": 0
+  }
+}

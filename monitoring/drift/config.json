@@ -1,0 +1,12 @@
+{
+  "feature_version": "weekly-residual-v1",
+  "detector_version": "alibi-ks-0.13.0-v1",
+  "states": ["NSW", "VIC", "QLD", "SA", "TAS"],
+  "train_end": 195696,
+  "validation_end": 213216,
+  "cycle_steps": 336,
+  "reference_cycles": 104,
+  "window_cycles": 8,
+  "max_windows": 6,
+  "family_alpha": 0.05
+}

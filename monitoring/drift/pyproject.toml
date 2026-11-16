@@ -1,0 +1,18 @@
+[project]
+name = "endesa-demand-drift"
+version = "0.1.0"
+description = "Isolated Alibi Detect checks for positional demand monitoring"
+requires-python = "~=3.11.0"
+dependencies = [
+    "alibi-detect==0.13.0",
+    "filelock",
+    "numpy>=1.26.4,<2",
+    "loguru",
+    "pyarrow>=25.0.1,<26",
+    "python-dotenv",
+    "pyyaml>=6.0.3",
+    "typer",
+]
+
+[dependency-groups]
+dev = ["httpx>=0.28.1,<1", "pytest"]
